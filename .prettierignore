@@ -1,0 +1,11 @@
+node_modules
+dist
+build
+.next
+.turbo
+coverage
+client/.next
+server/prisma/migrations
+package-lock.json
+*.md
+.env

@@ -1,0 +1,151 @@
+openapi: 3.0.3
+info:
+  title: Secure LMS MVP API
+  description: >
+    API contract for the Learning Management Platform MVP (Mech Spec Technologies).
+    Frontend (Alice) and backend (Daniel) both work off this file — update it
+    alongside any route change so the contract never drifts from the implementation.
+  version: 0.1.0
+
+servers:
+  - url: http://localhost:4000/api
+    description: Local development
+
+tags:
+  - name: Auth
+  - name: Courses
+  - name: Enrolments
+  - name: Payments
+  - name: Support
+  - name: Admin
+
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user (student or instructor)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, role]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                role: { type: string, enum: [student, instructor] }
+      responses:
+        "201":
+          description: User created
+        "400":
+          description: Validation error
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in and receive a JWT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200":
+          description: Login successful, returns access token
+        "401":
+          description: Invalid credentials
+
+  /courses:
+    get:
+      tags: [Courses]
+      summary: List published courses (student browse view)
+      responses:
+        "200":
+          description: List of courses
+    post:
+      tags: [Courses]
+      summary: Create a new course (instructor only)
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Course created
+        "403":
+          description: Forbidden — instructor role required
+
+  /courses/{courseId}:
+    get:
+      tags: [Courses]
+      summary: Get course detail by ID
+      parameters:
+        - name: courseId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Course detail
+        "404":
+          description: Course not found
+
+  /enrolments:
+    post:
+      tags: [Enrolments]
+      summary: Enrol the current student in a course (post-purchase)
+      security:
+        - bearerAuth: []
+      responses:
+        "201":
+          description: Enrolment created
+
+  /payments/checkout:
+    post:
+      tags: [Payments]
+      summary: Simulate checkout for a course purchase
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Simulated payment success
+
+  /support/ask:
+    post:
+      tags: [Support]
+      summary: Ask the FAQ/support assistant a question
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [question]
+              properties:
+                question: { type: string }
+      responses:
+        "200":
+          description: Assistant response
+
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: List all platform users (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of users
+        "403":
+          description: Forbidden — admin role required
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
