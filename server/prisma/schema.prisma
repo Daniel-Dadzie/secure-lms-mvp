@@ -1,0 +1,277 @@
+// ============================================================================
+// Secure LMS MVP — Database Schema
+// ============================================================================
+// System engineering notes (read before modifying):
+//
+// 1. MONEY: all monetary values are stored as Int (minor units / cents), never
+//    Float — floating point cannot represent currency exactly and will drift
+//    over enough transactions. $19.99 is stored as 1999.
+//
+// 2. SOFT DELETE on User, Course, Purchase: financial and audit records must
+//    remain queryable after a user is "deleted" (legal/audit trail, refund
+//    history). We flag records inactive (isActive / status) instead of hard
+//    deleting. Lesson/Module content can hard-delete since it carries no
+//    financial or audit weight.
+//
+// 3. AUDIT EVENTS are append-only by design: no updatedAt field, and the
+//    application layer must never expose UPDATE or DELETE operations on this
+//    table. Treat it as a write-once log, not a mutable record.
+//
+// 4. ROLE is a simple enum on User, not a joined Role table. RBAC checks run
+//    on nearly every authenticated request — a denormalized enum avoids a
+//    join on that hot path. If multi-role-per-user becomes a real requirement
+//    post-MVP, migrate to a UserRole join table then; don't pay that
+//    complexity cost now.
+//
+// 5. STORAGE BOUNDARY: this schema stores only *references* (URLs/paths) to
+//    files in Firebase Storage (thumbnails, lesson video). Postgres never
+//    stores file bytes — that's a deliberate system boundary between the
+//    transactional store and the blob store.
+//
+// 6. Every entity carries createdAt (and updatedAt where mutable) — this is
+//    non-negotiable for a platform the security team is threat-modeling;
+//    timestamps are the minimum viable audit trail even before AuditEvent
+//    entries exist for a given action.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  
+}
+
+// ----------------------------------------------------------------------------
+// Enums — explicit state machines instead of free-text status strings.
+// Invalid states become unrepresentable at the DB level.
+// ----------------------------------------------------------------------------
+
+enum Role {
+  ADMIN
+  INSTRUCTOR
+  STUDENT
+}
+
+enum CourseStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum PurchaseStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum LessonProgressStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+// ----------------------------------------------------------------------------
+// Users & Roles
+// ----------------------------------------------------------------------------
+
+model User {
+  id              String   @id @default(uuid())
+  email           String   @unique
+  passwordHash    String // bcrypt hash only — never plaintext, never returned by API serializers
+  fullName        String
+  role            Role     @default(STUDENT)
+  isActive        Boolean  @default(true) // soft delete flag — see header note
+  isEmailVerified Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  coursesTaught    Course[]         @relation("InstructorCourses")
+  purchases        Purchase[]
+  enrollments      Enrollment[]
+  lessonProgress   LessonProgress[]
+  auditEvents      AuditEvent[]
+
+  @@index([role])
+  @@map("users")
+}
+
+// ----------------------------------------------------------------------------
+// Catalogue: Category, Course, Module, Lesson
+// ----------------------------------------------------------------------------
+
+model Category {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+
+  courses Course[]
+
+  @@map("categories")
+}
+
+model Course {
+  id           String       @id @default(uuid())
+  title        String
+  slug         String       @unique
+  description  String
+  thumbnailUrl String? // Firebase Storage reference — see header note
+  priceCents   Int          @default(0) // stored in cents; see header note
+  status       CourseStatus @default(DRAFT)
+  isActive     Boolean      @default(true) // soft delete flag
+
+  instructorId String
+  instructor   User   @relation("InstructorCourses", fields: [instructorId], references: [id], onDelete: Restrict)
+  // Restrict, not Cascade: an instructor cannot be hard-deleted while they
+  // still own courses with purchase/enrollment history attached.
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  modules     Module[]
+  purchases   Purchase[]
+  enrollments Enrollment[]
+
+  @@index([instructorId])
+  @@index([status])
+  @@map("courses")
+}
+
+model Module {
+  id        String   @id @default(uuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  // Cascade is correct here: a module has no meaning or audit weight
+  // independent of its parent course.
+  title     String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lessons Lesson[]
+
+  @@index([courseId])
+  @@map("modules")
+}
+
+model Lesson {
+  id              String   @id @default(uuid())
+  moduleId        String
+  module          Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  title           String
+  contentUrl      String? // Firebase Storage reference (video/asset) — see header note
+  durationSeconds Int      @default(0)
+  order           Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  progress LessonProgress[]
+
+  @@index([moduleId])
+  @@map("lessons")
+}
+
+// ----------------------------------------------------------------------------
+// Commerce: Purchase, Enrollment
+// ----------------------------------------------------------------------------
+
+model Purchase {
+  id           String         @id @default(uuid())
+  userId       String
+  user         User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  courseId     String
+  course       Course         @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  // Restrict on both sides: a financial record must never silently
+  // disappear because a user or course row was removed.
+  amountCents  Int
+  currency     String         @default("GHS")
+  status       PurchaseStatus @default(PENDING)
+  provider     String         @default("SIMULATED") // swap for real gateway name post-MVP
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  enrollment Enrollment?
+
+  @@index([userId])
+  @@index([status])
+  @@map("purchases")
+}
+
+model Enrollment {
+  id         String           @id @default(uuid())
+  userId     String
+  user       User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  courseId   String
+  course     Course           @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  purchaseId String?          @unique // nullable: free-course enrollment has no purchase
+  purchase   Purchase?        @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
+  status     EnrollmentStatus @default(ACTIVE)
+  enrolledAt DateTime         @default(now())
+  completedAt DateTime?
+
+  progress LessonProgress[]
+
+  // A user can only enroll in a given course once — enforced at the DB
+  // level, not just in application logic.
+  @@unique([userId, courseId])
+  @@index([courseId])
+  @@map("enrollments")
+}
+
+// ----------------------------------------------------------------------------
+// Progress tracking
+// ----------------------------------------------------------------------------
+
+model LessonProgress {
+  id              String                @id @default(uuid())
+  userId          String
+  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lessonId        String
+  lesson          Lesson                @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  enrollmentId    String
+  enrollment      Enrollment            @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  status          LessonProgressStatus  @default(NOT_STARTED)
+  progressSeconds Int                   @default(0)
+  completedAt     DateTime?
+  updatedAt       DateTime              @updatedAt
+
+  @@unique([userId, lessonId])
+  @@index([enrollmentId])
+  @@map("lesson_progress")
+}
+
+// ----------------------------------------------------------------------------
+// Audit trail — append-only. See header note #3.
+// ----------------------------------------------------------------------------
+
+model AuditEvent {
+  id         String   @id @default(uuid())
+  userId     String? // nullable: some events are system-triggered, not user-triggered
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action     String // e.g. "course.publish", "auth.login_failed", "enrollment.create"
+  entityType String? // e.g. "Course", "User", "Purchase"
+  entityId   String?
+  metadata   Json? // structured details specific to the action
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+  // No updatedAt — this table is intentionally write-once.
+
+  @@index([userId])
+  @@index([action])
+  @@index([createdAt])
+  @@map("audit_events")
+}
