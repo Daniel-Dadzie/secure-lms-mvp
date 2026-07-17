@@ -5,21 +5,49 @@ info:
     API contract for the Learning Management Platform MVP (Mech Spec Technologies).
     Frontend (Alice) and backend (Daniel) both work off this file — update it
     alongside any route change so the contract never drifts from the implementation.
-  version: 0.1.0
+  version: 0.2.0
 
 servers:
   - url: http://localhost:4000/api
     description: Local development
 
 tags:
+  - name: Health
   - name: Auth
   - name: Courses
+  - name: Modules
+  - name: Lessons
   - name: Enrolments
   - name: Payments
+  - name: Progress
   - name: Support
   - name: Admin
 
 paths:
+  # ---------------------------------------------------------------------
+  # Health
+  # ---------------------------------------------------------------------
+  /health:
+    get:
+      tags: [Health]
+      summary: Verify API and database connectivity
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: ok }
+                  timestamp: { type: string, format: date-time }
+                  database: { type: string, example: connected }
+        "503":
+          description: Unhealthy — database unreachable
+
+  # ---------------------------------------------------------------------
+  # Auth
+  # ---------------------------------------------------------------------
   /auth/register:
     post:
       tags: [Auth]
@@ -30,16 +58,16 @@ paths:
           application/json:
             schema:
               type: object
-              required: [email, password, role]
+              required: [email, password, fullName, role]
               properties:
                 email: { type: string, format: email }
                 password: { type: string, minLength: 8 }
-                role: { type: string, enum: [student, instructor] }
+                fullName: { type: string }
+                role: { type: string, enum: [STUDENT, INSTRUCTOR] }
       responses:
-        "201":
-          description: User created
-        "400":
-          description: Validation error
+        "201": { description: User created }
+        "400": { description: Validation error }
+        "409": { description: Email already registered }
 
   /auth/login:
     post:
@@ -57,63 +85,311 @@ paths:
                 password: { type: string }
       responses:
         "200":
-          description: Login successful, returns access token
-        "401":
-          description: Invalid credentials
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken: { type: string }
+                  user: { $ref: "#/components/schemas/UserPublic" }
+        "401": { description: Invalid credentials }
 
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Invalidate the current session/token
+      security: [{ bearerAuth: [] }]
+      responses:
+        "204": { description: Logged out }
+
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get the currently authenticated user
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/UserPublic" }
+        "401": { description: Not authenticated }
+
+  # ---------------------------------------------------------------------
+  # Courses
+  # ---------------------------------------------------------------------
   /courses:
     get:
       tags: [Courses]
-      summary: List published courses (student browse view)
+      summary: List published courses (student/public browse view)
+      parameters:
+        - name: category
+          in: query
+          schema: { type: string }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 20 }
       responses:
         "200":
-          description: List of courses
+          description: Paginated course list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: "#/components/schemas/Course" }
+                  total: { type: integer }
+                  page: { type: integer }
     post:
       tags: [Courses]
       summary: Create a new course (instructor only)
-      security:
-        - bearerAuth: []
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CourseInput" }
       responses:
-        "201":
-          description: Course created
-        "403":
-          description: Forbidden — instructor role required
+        "201": { description: Course created }
+        "403": { description: Forbidden — instructor role required }
 
   /courses/{courseId}:
     get:
       tags: [Courses]
       summary: Get course detail by ID
       parameters:
-        - name: courseId
-          in: path
-          required: true
-          schema: { type: string }
+        - { name: courseId, in: path, required: true, schema: { type: string } }
       responses:
         "200":
           description: Course detail
-        "404":
-          description: Course not found
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Course" }
+        "404": { description: Course not found }
+    patch:
+      tags: [Courses]
+      summary: Update a course (owning instructor or admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: courseId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/CourseInput" }
+      responses:
+        "200": { description: Course updated }
+        "403": { description: Forbidden }
+        "404": { description: Course not found }
+    delete:
+      tags: [Courses]
+      summary: Archive a course (soft delete — owning instructor or admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: courseId, in: path, required: true, schema: { type: string } }
+      responses:
+        "204": { description: Course archived }
+        "403": { description: Forbidden }
 
+  # ---------------------------------------------------------------------
+  # Modules
+  # ---------------------------------------------------------------------
+  /courses/{courseId}/modules:
+    get:
+      tags: [Modules]
+      summary: List modules for a course
+      parameters:
+        - { name: courseId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: List of modules
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Module" }
+    post:
+      tags: [Modules]
+      summary: Add a module to a course (owning instructor only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: courseId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, order]
+              properties:
+                title: { type: string }
+                order: { type: integer }
+      responses:
+        "201": { description: Module created }
+
+  /modules/{moduleId}:
+    patch:
+      tags: [Modules]
+      summary: Update a module
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: moduleId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Module updated }
+    delete:
+      tags: [Modules]
+      summary: Delete a module (cascades to its lessons)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: moduleId, in: path, required: true, schema: { type: string } }
+      responses:
+        "204": { description: Module deleted }
+
+  # ---------------------------------------------------------------------
+  # Lessons
+  # ---------------------------------------------------------------------
+  /modules/{moduleId}/lessons:
+    get:
+      tags: [Lessons]
+      summary: List lessons for a module
+      parameters:
+        - { name: moduleId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200":
+          description: List of lessons
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Lesson" }
+    post:
+      tags: [Lessons]
+      summary: Add a lesson to a module (owning instructor only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: moduleId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [title, order]
+              properties:
+                title: { type: string }
+                contentUrl: { type: string, description: "Firebase Storage reference" }
+                durationSeconds: { type: integer }
+                order: { type: integer }
+      responses:
+        "201": { description: Lesson created }
+
+  /lessons/{lessonId}:
+    get:
+      tags: [Lessons]
+      summary: Get lesson detail (requires active enrolment)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: lessonId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Lesson detail }
+        "403": { description: Not enrolled in this course }
+
+  # ---------------------------------------------------------------------
+  # Enrolments
+  # ---------------------------------------------------------------------
   /enrolments:
+    get:
+      tags: [Enrolments]
+      summary: List the current user's enrolments
+      security: [{ bearerAuth: [] }]
+      responses:
+        "200":
+          description: List of enrolments
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Enrolment" }
     post:
       tags: [Enrolments]
-      summary: Enrol the current student in a course (post-purchase)
-      security:
-        - bearerAuth: []
+      summary: Enrol the current student in a course (after purchase, or directly if free)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [courseId]
+              properties:
+                courseId: { type: string }
+                purchaseId: { type: string, nullable: true }
       responses:
-        "201":
-          description: Enrolment created
+        "201": { description: Enrolment created }
+        "409": { description: Already enrolled in this course }
 
+  # ---------------------------------------------------------------------
+  # Payments
+  # ---------------------------------------------------------------------
   /payments/checkout:
     post:
       tags: [Payments]
       summary: Simulate checkout for a course purchase
-      security:
-        - bearerAuth: []
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [courseId]
+              properties:
+                courseId: { type: string }
       responses:
         "200":
-          description: Simulated payment success
+          description: Simulated payment success — returns the created Purchase
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Purchase" }
+        "402": { description: Simulated payment failure }
 
+  /payments/{purchaseId}:
+    get:
+      tags: [Payments]
+      summary: Get purchase/transaction detail
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: purchaseId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Purchase detail }
+
+  # ---------------------------------------------------------------------
+  # Progress
+  # ---------------------------------------------------------------------
+  /progress/{lessonId}:
+    patch:
+      tags: [Progress]
+      summary: Update lesson progress for the current user
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: lessonId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status: { type: string, enum: [NOT_STARTED, IN_PROGRESS, COMPLETED] }
+                progressSeconds: { type: integer }
+      responses:
+        "200": { description: Progress updated }
+
+  # ---------------------------------------------------------------------
+  # Support
+  # ---------------------------------------------------------------------
   /support/ask:
     post:
       tags: [Support]
@@ -130,18 +406,57 @@ paths:
       responses:
         "200":
           description: Assistant response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  answer: { type: string }
 
+  # ---------------------------------------------------------------------
+  # Admin
+  # ---------------------------------------------------------------------
   /admin/users:
     get:
       tags: [Admin]
       summary: List all platform users (admin only)
-      security:
-        - bearerAuth: []
+      security: [{ bearerAuth: [] }]
       responses:
         "200":
           description: List of users
-        "403":
-          description: Forbidden — admin role required
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/UserPublic" }
+        "403": { description: Forbidden — admin role required }
+
+  /admin/users/{userId}/deactivate:
+    post:
+      tags: [Admin]
+      summary: Deactivate a user account (soft delete)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - { name: userId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: User deactivated }
+        "403": { description: Forbidden }
+
+  /admin/audit-events:
+    get:
+      tags: [Admin]
+      summary: List audit log events (admin only)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: action
+          in: query
+          schema: { type: string }
+        - name: userId
+          in: query
+          schema: { type: string }
+      responses:
+        "200": { description: List of audit events }
+        "403": { description: Forbidden }
 
 components:
   securitySchemes:
@@ -149,3 +464,78 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
+  schemas:
+    UserPublic:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        fullName: { type: string }
+        role: { type: string, enum: [ADMIN, INSTRUCTOR, STUDENT] }
+        isActive: { type: boolean }
+        createdAt: { type: string, format: date-time }
+
+    Course:
+      type: object
+      properties:
+        id: { type: string }
+        title: { type: string }
+        slug: { type: string }
+        description: { type: string }
+        thumbnailUrl: { type: string, nullable: true }
+        priceCents: { type: integer }
+        status: { type: string, enum: [DRAFT, PUBLISHED, ARCHIVED] }
+        instructorId: { type: string }
+        categoryId: { type: string, nullable: true }
+        createdAt: { type: string, format: date-time }
+
+    CourseInput:
+      type: object
+      required: [title, description, priceCents]
+      properties:
+        title: { type: string }
+        description: { type: string }
+        thumbnailUrl: { type: string }
+        priceCents: { type: integer }
+        categoryId: { type: string }
+        status: { type: string, enum: [DRAFT, PUBLISHED, ARCHIVED] }
+
+    Module:
+      type: object
+      properties:
+        id: { type: string }
+        courseId: { type: string }
+        title: { type: string }
+        order: { type: integer }
+
+    Lesson:
+      type: object
+      properties:
+        id: { type: string }
+        moduleId: { type: string }
+        title: { type: string }
+        contentUrl: { type: string, nullable: true }
+        durationSeconds: { type: integer }
+        order: { type: integer }
+
+    Enrolment:
+      type: object
+      properties:
+        id: { type: string }
+        userId: { type: string }
+        courseId: { type: string }
+        purchaseId: { type: string, nullable: true }
+        status: { type: string, enum: [ACTIVE, COMPLETED, CANCELLED] }
+        enrolledAt: { type: string, format: date-time }
+
+    Purchase:
+      type: object
+      properties:
+        id: { type: string }
+        userId: { type: string }
+        courseId: { type: string }
+        amountCents: { type: integer }
+        currency: { type: string }
+        status: { type: string, enum: [PENDING, COMPLETED, FAILED, REFUNDED] }
+        createdAt: { type: string, format: date-time }
