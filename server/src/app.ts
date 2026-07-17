@@ -17,7 +17,8 @@ app.get("/api/health", async (_req, res) => {
       timestamp: new Date().toISOString(),
       database: "connected",
     });
-  } catch (error) {
+  } catch (_error) {
+    console.error("Health check database failure:", _error);
     res.status(503).json({
       status: "error",
       timestamp: new Date().toISOString(),
