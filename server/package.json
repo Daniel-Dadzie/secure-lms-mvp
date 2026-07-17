@@ -5,6 +5,8 @@
   "main": "src/index.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "lint": "eslint . --ext .ts",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "node prisma/seed.js",
     "prisma:studio": "prisma studio"
@@ -25,6 +27,7 @@
     "@types/pg": "^8.20.0",
     "dotenv": "^17.4.2",
     "prisma": "^7.8.0",
-    "tsx": "^4.23.1"
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2"
   }
 }
