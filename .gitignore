@@ -9,3 +9,6 @@ build/
 .vscode
 *.log
 .next
+
+#local security testing logs
+security-logs/

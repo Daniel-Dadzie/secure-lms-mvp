@@ -1,0 +1,44 @@
+version: 2
+updates:
+  # npm workspaces monorepo (client, server, packages/shared) — a single
+  # root entry is correct here: Dependabot reads the root package.json's
+  # "workspaces" field and resolves all three workspaces from the one
+  # root package-lock.json. Do NOT add separate /client or /server entries;
+  # that would have Dependabot try (and fail) to resolve them as standalone
+  # projects with no lockfile of their own.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "security"
+    groups:
+      security-updates:
+        applies-to: security-updates
+        patterns:
+          - "*"
+    commit-message:
+      prefix: "chore(deps)"
+
+  # GitHub Actions workflow dependencies themselves
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "ci"
+      - "security"
+
+  # Docker base image used in server/Dockerfile
+  - package-ecosystem: "docker"
+    directory: "/server"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "docker"
+      - "security"

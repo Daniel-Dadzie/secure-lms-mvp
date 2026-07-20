@@ -1,0 +1,35 @@
+title = "Secure LMS - Gitleaks Config"
+
+# Uses gitleaks' default detection rules (covers generic API keys/tokens,
+# AWS/GCP/Azure keys, private keys, JWTs, DB connection strings, etc.)
+# and layers on project-specific allowlisting only.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Global allowlist. Known-safe paths and confirmed false positives only"
+
+paths = [
+  '''.*\.lock$''',
+  '''.*package-lock\.json$''',
+  '''.*/node_modules/.*''',
+  '''.*/dist/.*''',
+  '''.*/\.next/.*''',
+  '''.*\.test\.(ts|tsx|js)$''',
+]
+
+# Example placeholder values used in .env.example / seed scripts.
+# Real secrets must NEVER be added here — this list is for values that
+# are provably fake (e.g. "changeme", documentation placeholders).
+regexes = [
+  '''CHANGEME''',
+  '''example-jwt-secret-do-not-use-in-production''',
+  '''sk_test_placeholder''',
+]
+
+# --- Team process note ---
+# If Gitleaks flags a real secret that was actually committed:
+#   1. Rotate the credential immediately at the provider (do this first).
+#   2. Remove it from git history (git filter-repo / BFG), not just HEAD.
+#   3. Only then consider whether an allowlist entry is appropriate —
+#      it almost never is for a real secret, only for confirmed test fixtures.
