@@ -99,10 +99,27 @@ model User {
   purchases        Purchase[]
   enrollments      Enrollment[]
   lessonProgress   LessonProgress[]
+  refreshTokens    RefreshToken[]
   auditEvents      AuditEvent[]
 
   @@index([role])
   @@map("users")
+}
+
+model RefreshToken {
+  id          String    @id @default(uuid())
+  tokenHash   String    @unique
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  family      String    // groups tokens for reuse detection — revoke whole family on replay
+  expiresAt   DateTime
+  revokedAt   DateTime?
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([family])
+  @@map("refresh_tokens")
 }
 
 // ----------------------------------------------------------------------------
@@ -275,3 +292,5 @@ model AuditEvent {
   @@index([createdAt])
   @@map("audit_events")
 }
+
+
