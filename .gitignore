@@ -1,14 +1,30 @@
-.dist
-dist/
+# Dependencies
 node_modules/
+
+# Build output
+.dist/
+dist/
 build/
-.env
-.env.local
-.DS_Store
+.next/
+coverage/
 
-.vscode
+# Environment files
+.env*
+!.env.example
+
+# Logs and local security output
 *.log
-.next
-
-#local security testing logs
+*.sarif
 security-logs/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.swp
