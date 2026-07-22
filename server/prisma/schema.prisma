@@ -101,6 +101,8 @@ model User {
   lessonProgress   LessonProgress[]
   refreshTokens    RefreshToken[]
   auditEvents      AuditEvent[]
+  certificates     Certificate[]
+  cart             Cart?
 
   @@index([role])
   @@map("users")
@@ -154,13 +156,16 @@ model Course {
 
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-
+  
+  cartItems CartItem[]
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   modules     Module[]
   purchases   Purchase[]
   enrollments Enrollment[]
+  certificates Certificate[]
 
   @@index([instructorId])
   @@index([status])
@@ -227,6 +232,32 @@ model Purchase {
   @@map("purchases")
 }
 
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  items CartItem[]
+
+  @@map("carts")
+}
+
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  // A course can only appear once per cart
+  @@unique([cartId, courseId])
+  @@index([cartId])
+  @@map("cart_items")
+}
+
 model Enrollment {
   id         String           @id @default(uuid())
   userId     String
@@ -268,6 +299,27 @@ model LessonProgress {
   @@unique([userId, lessonId])
   @@index([enrollmentId])
   @@map("lesson_progress")
+}
+
+model Certificate {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  // Restrict: certificate records must survive even if user is deactivated —
+  // they're proof of achievement and may be referenced externally.
+  courseId     String
+  course       Course   @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  // Restrict: same reason — a certificate can't silently disappear because
+  // a course was archived after the student completed it.
+  certificateNumber String @unique @default(cuid())
+  // Human-readable unique ID printed on the certificate itself.
+  // cuid() gives a collision-resistant, URL-safe string.
+  issuedAt     DateTime @default(now())
+
+  // A student earns one certificate per course — no duplicates.
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@map("certificates")
 }
 
 // ----------------------------------------------------------------------------
