@@ -65,5 +65,5 @@ jobs:
         run: npm run test --workspaces --if-present
 
       - name: Dependency vulnerability scan
-        run: npm audit --audit-level=critical
-        continue-on-error: true
+        run: npm audit --audit-level=high || true
+        
