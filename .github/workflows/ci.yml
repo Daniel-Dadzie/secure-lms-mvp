@@ -38,6 +38,15 @@ jobs:
           node-version: "20"
           cache: "npm"
 
+      - name: Configure test environment
+        run: |
+          echo "JWT_ACCESS_SECRET=$(openssl rand -hex 64)" >> "$GITHUB_ENV"
+          echo "JWT_REFRESH_SECRET=$(openssl rand -hex 64)" >> "$GITHUB_ENV"
+          echo "JWT_ACCESS_EXPIRES_IN=15m" >> "$GITHUB_ENV"
+          echo "JWT_REFRESH_EXPIRES_IN=7d" >> "$GITHUB_ENV"
+          echo "NODE_ENV=test" >> "$GITHUB_ENV"
+          echo "CLIENT_URL=http://localhost:3000" >> "$GITHUB_ENV"
+
       - name: Install dependencies
         run: npm ci
 
