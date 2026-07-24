@@ -12,5 +12,11 @@
     "lint": "npm run lint --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present"
+  },
+  "overrides": {
+    "next": {
+      "postcss": "8.5.12",
+      "sharp": "0.35.3"
+    }
   }
 }
