@@ -30,24 +30,45 @@ function toSafeUser(user: {
   };
 }
 
-function generateTokenPair(userId: string, role: import("@prisma/client").Role): TokenPair {
-  const payload: JwtPayload = {
+function generateTokenPair(
+  userId: string,
+  role: import("@prisma/client").Role
+): TokenPair {
+  const accessPayload: JwtPayload = {
     sub: userId,
     role,
     jti: crypto.randomUUID(),
   };
 
-  const accessToken = jwt.sign(payload, JWT_CONFIG.accessSecret, {
-    expiresIn: JWT_CONFIG.accessExpiresIn as any,
-  });
-
-  const refreshToken = jwt.sign(
-    { sub: userId, jti: crypto.randomUUID() },
-    JWT_CONFIG.refreshSecret,
-    { expiresIn: JWT_CONFIG.refreshExpiresIn as any }
+  const accessToken = jwt.sign(
+    accessPayload,
+    JWT_CONFIG.accessSecret,
+    {
+      expiresIn: JWT_CONFIG.accessExpiresIn as any,
+      algorithm: JWT_CONFIG.algorithm,
+      issuer: JWT_CONFIG.issuer,
+      audience: JWT_CONFIG.audience,
+    }
   );
 
-  return { accessToken, refreshToken };
+  const refreshToken = jwt.sign(
+    {
+      sub: userId,
+      jti: crypto.randomUUID(),
+    },
+    JWT_CONFIG.refreshSecret,
+    {
+      expiresIn: JWT_CONFIG.refreshExpiresIn as any,
+      algorithm: JWT_CONFIG.algorithm,
+      issuer: JWT_CONFIG.issuer,
+      audience: JWT_CONFIG.audience,
+    }
+  );
+
+  return {
+    accessToken,
+    refreshToken,
+  };
 }
 
 async function storeRefreshToken(
@@ -194,10 +215,17 @@ export async function refresh(
   const genericError = new Error("Invalid or expired refresh token");
   (genericError as any).statusCode = 401;
 
-  // 1. Verify the token is a valid JWT
-  let payload: any;
+  // 1. Verify the refresh token signature and required JWT claims
   try {
-    payload = jwt.verify(incomingRefreshToken, JWT_CONFIG.refreshSecret);
+    jwt.verify(
+      incomingRefreshToken,
+      JWT_CONFIG.refreshSecret,
+      {
+        algorithms: [JWT_CONFIG.algorithm],
+        issuer: JWT_CONFIG.issuer,
+        audience: JWT_CONFIG.audience,
+      }
+    );
   } catch {
     throw genericError;
   }
