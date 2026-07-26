@@ -268,28 +268,53 @@ export async function refresh(
   }
 
   // 5. Rotate — revoke the old token, issue a new one in the same family
-  await prisma.refreshToken.update({
-    where: { tokenHash },
-    data: { revokedAt: new Date(), lastUsedAt: new Date() },
-  });
+  // Use transaction to ensure atomicity: if any step fails, all changes are rolled back
+  const newTokens = await prisma.$transaction(async (tx) => {
+    // Revoke the old token
+    await tx.refreshToken.update({
+      where: { tokenHash },
+      data: { revokedAt: new Date(), lastUsedAt: new Date() },
+    });
 
-  const user = await prisma.user.findUnique({
-    where: { id: storedToken.userId },
-  });
+    // Fetch user within transaction
+    const user = await tx.user.findUnique({
+      where: { id: storedToken.userId },
+    });
 
-  if (!user || !user.isActive) throw genericError;
+    if (!user || !user.isActive) throw genericError;
 
-  const newTokens = generateTokenPair(user.id, user.role);
-  await storeRefreshToken(user.id, newTokens.refreshToken, storedToken.family);
+    // Generate new tokens
+    const tokens = generateTokenPair(user.id, user.role);
 
-  await prisma.auditEvent.create({
-    data: {
-      userId: user.id,
-      action: "auth.token_refresh",
-      entityType: "User",
-      entityId: user.id,
-      ipAddress,
-    },
+    // Store new refresh token within transaction
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(tokens.refreshToken)
+      .digest("hex");
+
+    const expiresAt = new Date(Date.now() + JWT_CONFIG.refreshExpiryMs);
+
+    await tx.refreshToken.create({
+      data: {
+        tokenHash,
+        userId: user.id,
+        family: storedToken.family,
+        expiresAt,
+      },
+    });
+
+    // Create audit event within transaction
+    await tx.auditEvent.create({
+      data: {
+        userId: user.id,
+        action: "auth.token_refresh",
+        entityType: "User",
+        entityId: user.id,
+        ipAddress,
+      },
+    });
+
+    return tokens;
   });
 
   return newTokens;

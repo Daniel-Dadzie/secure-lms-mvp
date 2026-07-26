@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { request, createTestUser } from "../helpers/app.helper";
+import { prisma } from "../../src/config/prisma";
 
 describe("Auth — Register", () => {
   it("registers a new student and returns accessToken + user", async () => {
@@ -90,7 +91,7 @@ describe("Auth — Login", () => {
       email: "cookie@test.com",
       password: "Password123!",
     });
-    const cookies = res.headers["set-cookie"] as string[];
+    const cookies = res.headers["set-cookie"] as unknown as string[];
     expect(cookies.some((c: string) => c.includes("HttpOnly"))).toBe(true);
     expect(cookies.some((c: string) => c.includes("refreshToken"))).toBe(true);
   });
@@ -110,6 +111,38 @@ describe("Auth — Token refresh", () => {
     const res = await request.post("/api/auth/refresh");
     expect(res.status).toBe(401);
   });
+
+  it("refresh token rotation is atomic - transaction rollback on user inactivation", async () => {
+    // Create a user
+    const { cookie, userId } = await createTestUser({ email: "atomic@test.com" });
+
+    // Manually deactivate the user to simulate a failure condition during rotation
+    await prisma.user.update({
+      where: { id: userId },
+      data: { isActive: false },
+    });
+
+    // Attempt refresh - should fail and rollback any partial changes
+    const res = await request
+      .post("/api/auth/refresh")
+      .set("Cookie", cookie);
+
+    expect(res.status).toBe(401);
+
+    // Verify no new token was created (transaction rolled back)
+    const tokens = await prisma.refreshToken.findMany({
+      where: { userId },
+    });
+    // Should only have the original token, no new one created
+    const activeTokens = tokens.filter((t: { revokedAt: Date | null }) => !t.revokedAt);
+    expect(activeTokens.length).toBe(0); // Original should be revoked during failed attempt
+
+    // Clean up - reactivate user for other tests
+    await prisma.user.update({
+      where: { id: userId },
+      data: { isActive: true },
+    });
+  });
 });
 
 describe("Auth — Logout", () => {
@@ -119,7 +152,7 @@ describe("Auth — Logout", () => {
       .post("/api/auth/logout")
       .set("Cookie", cookie);
     expect(res.status).toBe(204);
-    const cookies = res.headers["set-cookie"] as string[];
+    const cookies = res.headers["set-cookie"] as unknown as string[];
     // Cookie should be cleared (maxAge=0 or expires in past)
     expect(cookies.some((c: string) => c.includes("refreshToken=;") || c.includes("refreshToken=,"))).toBe(true);
   });
@@ -129,13 +162,13 @@ describe("Auth — /me", () => {
   it("returns current user with valid token", async () => {
     // 1. Create the user
     await createTestUser({ email: "me@test.com", password: "Password123!" });
-    
+
     // 2. Explicitly log in to get a guaranteed valid token and cookie
     const loginRes = await request.post("/api/auth/login").send({
       email: "me@test.com",
       password: "Password123!",
     });
-    
+
     const validToken = loginRes.body.accessToken;
     const authCookie = loginRes.headers["set-cookie"];
 

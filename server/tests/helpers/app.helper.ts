@@ -38,7 +38,7 @@ export async function createTestUser(overrides?: {
   }
 
 const res = await request.post("/api/auth/register").send(payload);
-  
+
   // Fail loudly and print the exact reason if creation fails!
   if (res.status !== 201) {
     throw new Error(`createTestUser failed! Status: ${res.status}. Response: ${JSON.stringify(res.body)}`);
@@ -46,6 +46,7 @@ const res = await request.post("/api/auth/register").send(payload);
 
   return {
     user: res.body.user,
+    userId: res.body.user.id,
     accessToken: res.body.accessToken,
     cookie: res.headers["set-cookie"],
   };
