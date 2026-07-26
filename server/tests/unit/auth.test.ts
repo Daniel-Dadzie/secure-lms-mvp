@@ -156,6 +156,37 @@ describe("Auth — Logout", () => {
     // Cookie should be cleared (maxAge=0 or expires in past)
     expect(cookies.some((c: string) => c.includes("refreshToken=;") || c.includes("refreshToken=,"))).toBe(true);
   });
+
+  it("revokes all tokens in the same family on logout", async () => {
+    // Create a user and get their refresh token family
+    const { cookie, userId } = await createTestUser({ email: "family@test.com" });
+
+    // Get the initial token family from the database
+    const initialTokens = await prisma.refreshToken.findMany({
+      where: { userId },
+    });
+    expect(initialTokens.length).toBe(1);
+    const family = initialTokens[0].family;
+
+    // Perform refresh to create a second token in the same family
+    await request.post("/api/auth/refresh").set("Cookie", cookie);
+
+    // Verify we now have 2 tokens in the same family (1 revoked, 1 active)
+    const afterRefreshTokens = await prisma.refreshToken.findMany({
+      where: { userId, family },
+    });
+    expect(afterRefreshTokens.length).toBe(2);
+
+    // Logout using the original token
+    await request.post("/api/auth/logout").set("Cookie", cookie);
+
+    // Verify ALL tokens in the family are now revoked
+    const afterLogoutTokens = await prisma.refreshToken.findMany({
+      where: { userId, family },
+    });
+    const activeTokens = afterLogoutTokens.filter((t: { revokedAt: Date | null }) => !t.revokedAt);
+    expect(activeTokens.length).toBe(0);
+  });
 });
 
 describe("Auth — /me", () => {

@@ -329,10 +329,19 @@ export async function logout(
     .update(refreshToken)
     .digest("hex");
 
-  await prisma.refreshToken.updateMany({
+  // Get the token family to revoke all tokens in the same family
+  const storedToken = await prisma.refreshToken.findUnique({
     where: { tokenHash },
-    data: { revokedAt: new Date() },
+    select: { family: true },
   });
+
+  // Revoke all tokens in the same family for complete session invalidation
+  if (storedToken) {
+    await prisma.refreshToken.updateMany({
+      where: { family: storedToken.family },
+      data: { revokedAt: new Date() },
+    });
+  }
 
   await prisma.auditEvent.create({
     data: {
