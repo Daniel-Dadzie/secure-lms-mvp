@@ -287,7 +287,7 @@ export async function refresh(
     const tokens = generateTokenPair(user.id, user.role);
 
     // Store new refresh token within transaction
-    const tokenHash = crypto
+    const newTokenHash = crypto
       .createHash("sha256")
       .update(tokens.refreshToken)
       .digest("hex");
@@ -296,7 +296,7 @@ export async function refresh(
 
     await tx.refreshToken.create({
       data: {
-        tokenHash,
+        tokenHash: newTokenHash,
         userId: user.id,
         family: storedToken.family,
         expiresAt,

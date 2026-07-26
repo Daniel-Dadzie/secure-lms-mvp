@@ -2,8 +2,9 @@ import { z } from "zod";
 
 // ----------------------------------------------------------------------------
 // Register input — validated on every POST /auth/register request.
-// Role is restricted to STUDENT or INSTRUCTOR — clients can never
-// self-assign ADMIN. The security team's RBAC matrix explicitly requires this.
+// Role is restricted to STUDENT only for public registration — clients can never
+// self-assign ADMIN or INSTRUCTOR. The security team's RBAC matrix explicitly requires this.
+// Instructor role assignment requires admin approval via a separate admin endpoint.
 // ----------------------------------------------------------------------------
 export const registerSchema = z.object({
   email: z
@@ -20,9 +21,7 @@ export const registerSchema = z.object({
     .min(2, "Full name must be at least 2 characters")
     .max(100, "Full name must be at most 100 characters")
     .trim(),
-  role: z.enum(["STUDENT", "INSTRUCTOR"], {
-    message: "Role must be STUDENT or INSTRUCTOR",
-  }),
+  role: z.literal("STUDENT"),
 });
 
 // ----------------------------------------------------------------------------
