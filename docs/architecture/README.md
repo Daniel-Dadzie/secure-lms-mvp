@@ -55,4 +55,4 @@ The system is split into three trust zones:
 - Database schema: `server/prisma/schema.prisma`
 - Entity relationship diagram: see schema comments / ERD shared with team
 - API contract: `docs/api/openapi.yaml`
-- Security requirements: `docs/SECURITY.md` (cybersecurity team)
+- Security requirements: `docs/security/SECURITY.md` (cybersecurity team)

@@ -18,8 +18,8 @@ export async function createTestUser(overrides?: {
     role: overrides?.role || "STUDENT",
   };
 
-  // ADMIN can't self-register — create via Prisma directly
-  if (payload.role === "ADMIN") {
+  // ADMIN and INSTRUCTOR can't self-register — create via Prisma directly
+  if (payload.role === "ADMIN" || payload.role === "INSTRUCTOR") {
     const bcrypt = await import("bcryptjs");
     const { prisma } = await import("../../src/config/prisma");
     const user = await prisma.user.create({
@@ -27,7 +27,7 @@ export async function createTestUser(overrides?: {
         email: payload.email,
         passwordHash: await bcrypt.hash(payload.password, 12),
         fullName: payload.fullName,
-        role: "ADMIN",
+        role: payload.role,
       },
     });
     // Login to get tokens
@@ -37,11 +37,13 @@ export async function createTestUser(overrides?: {
     return { user, accessToken: res.body.accessToken, cookie: res.headers["set-cookie"] };
   }
 
-const res = await request.post("/api/auth/register").send(payload);
+  const res = await request.post("/api/auth/register").send(payload);
 
   // Fail loudly and print the exact reason if creation fails!
   if (res.status !== 201) {
-    throw new Error(`createTestUser failed! Status: ${res.status}. Response: ${JSON.stringify(res.body)}`);
+    throw new Error(
+      `createTestUser failed! Status: ${res.status}. Response: ${JSON.stringify(res.body)}`
+    );
   }
 
   return {

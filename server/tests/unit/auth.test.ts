@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import crypto from "crypto";
 import { request, createTestUser } from "../helpers/app.helper";
 import { prisma } from "../../src/config/prisma";
 
@@ -144,9 +145,9 @@ describe("Auth — Token refresh", () => {
     const tokens = await prisma.refreshToken.findMany({
       where: { userId },
     });
-    // Should only have the original token, no new one created
+    // Should only have the original token, and it should NOT be revoked (rolled back)
     const activeTokens = tokens.filter((t: { revokedAt: Date | null }) => !t.revokedAt);
-    expect(activeTokens.length).toBe(0); // Original should be revoked during failed attempt
+    expect(activeTokens.length).toBe(1);
 
     // Clean up - reactivate user for other tests
     await prisma.user.update({
@@ -234,5 +235,100 @@ describe("Auth — /me", () => {
       .get("/api/auth/me")
       .set("Authorization", "Bearer invalidtoken");
     expect(res.status).toBe(401);
+  });
+});
+
+describe("Auth — Token replay and malformed tokens", () => {
+  it("rejects replay of a revoked refresh token after rotation", async () => {
+    const { cookie } = await createTestUser({ email: "replay@test.com" });
+    const originalCookie = Array.isArray(cookie) ? cookie[0] : cookie;
+
+    const firstRefresh = await request
+      .post("/api/auth/refresh")
+      .set("Cookie", originalCookie);
+    expect(firstRefresh.status).toBe(200);
+
+    const replay = await request
+      .post("/api/auth/refresh")
+      .set("Cookie", originalCookie);
+    expect(replay.status).toBe(401);
+  });
+
+  it("rejects malformed refresh token in cookie", async () => {
+    const { generateMalformedToken } = await import("../helpers/security.helper");
+    const res = await request
+      .post("/api/auth/refresh")
+      .set("Cookie", `refreshToken=${generateMalformedToken()}; Path=/api/auth`);
+    expect(res.status).toBe(401);
+  });
+
+  it("rejects expired refresh token", async () => {
+    const { userId, cookie } = await createTestUser({ email: "expired-refresh@test.com" });
+    const { generateExpiredRefreshToken } = await import("../helpers/security.helper");
+    const expiredToken = generateExpiredRefreshToken(userId);
+
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(expiredToken)
+      .digest("hex");
+
+    await prisma.refreshToken.create({
+      data: {
+        tokenHash,
+        userId,
+        family: crypto.randomUUID(),
+        expiresAt: new Date(Date.now() - 1000),
+      },
+    });
+
+    const res = await request
+      .post("/api/auth/refresh")
+      .set("Cookie", `refreshToken=${expiredToken}; Path=/api/auth`);
+    expect(res.status).toBe(401);
+  });
+});
+
+describe("Auth — Concurrent sessions", () => {
+  it("creates independent token families for separate logins", async () => {
+    await createTestUser({ email: "concurrent@test.com", password: "Password123!" });
+
+    const login1 = await request.post("/api/auth/login").send({
+      email: "concurrent@test.com",
+      password: "Password123!",
+    });
+    const login2 = await request.post("/api/auth/login").send({
+      email: "concurrent@test.com",
+      password: "Password123!",
+    });
+
+    expect(login1.status).toBe(200);
+    expect(login2.status).toBe(200);
+
+    const user = await prisma.user.findUnique({ where: { email: "concurrent@test.com" } });
+    const tokens = await prisma.refreshToken.findMany({ where: { userId: user!.id } });
+    const families = new Set(tokens.map((t) => t.family));
+    expect(families.size).toBe(2);
+  });
+});
+
+describe("Auth — Audit events", () => {
+  it("writes audit event on logout", async () => {
+    const { cookie, userId } = await createTestUser({ email: "audit-logout@test.com" });
+    await request.post("/api/auth/logout").set("Cookie", cookie);
+
+    const events = await prisma.auditEvent.findMany({
+      where: { userId, action: "auth.logout" },
+    });
+    expect(events.length).toBe(1);
+  });
+
+  it("writes audit event on token refresh", async () => {
+    const { cookie, userId } = await createTestUser({ email: "audit-refresh@test.com" });
+    await request.post("/api/auth/refresh").set("Cookie", cookie);
+
+    const events = await prisma.auditEvent.findMany({
+      where: { userId, action: "auth.token_refresh" },
+    });
+    expect(events.length).toBe(1);
   });
 });
