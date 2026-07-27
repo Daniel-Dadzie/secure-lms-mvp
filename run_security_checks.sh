@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 #
 # Secure LMS — Local Security Check Runner
 #
@@ -18,91 +19,139 @@
 # Run this from the REPOSITORY ROOT (the folder that contains client/, server/,
 # packages/shared/, and the root package.json).
 
+
 set -uo pipefail
 
 TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
 LOG_DIR="security-logs"
 LOG_FILE="$LOG_DIR/security-check_$TIMESTAMP.log"
+
 mkdir -p "$LOG_DIR"
 
-PASS=1
+BLOCKING_FAILURE=0
+INCOMPLETE=0
 
-log() { echo "$1" | tee -a "$LOG_FILE"; }
+log() {
+  echo "$1" | tee -a "$LOG_FILE"
+}
 
-log "=================================================="
-log "Secure LMS — Security Check Run: $TIMESTAMP"
-log "=================================================="
-
-# ---------------------------------------------------------------
-# 1. Secret scanning (Gitleaks)
-# ---------------------------------------------------------------
-log ""
-log "---- 1. Secret Scan (Gitleaks) ----"
-if command -v gitleaks &> /dev/null; then
-  if gitleaks detect --source . --config .gitleaks.toml --redact -v 2>&1 | tee -a "$LOG_FILE"; then
-    log "RESULT: Gitleaks PASSED — no secrets found."
-  else
-    log "RESULT: Gitleaks FAILED — secret(s) detected. See details above."
-    PASS=0
-  fi
-else
-  log "SKIPPED — gitleaks is not installed."
-  log "  macOS:   brew install gitleaks"
-  log "  Linux:   see https://github.com/gitleaks/gitleaks#installing"
-fi
-
-# ---------------------------------------------------------------
-# 2. Dependency scanning (npm audit) — client, server, packages/shared
-#    workspaces, run from the repo root against the single root lockfile.
-# ---------------------------------------------------------------
-if [ ! -f "package-lock.json" ]; then
+section() {
   log ""
-  log "---- 2. Dependency Scan (npm audit) ----"
-  log "SKIPPED — no package-lock.json at repo root. Run this script from the repo root."
-else
-  for WORKSPACE in client server packages/shared; do
-    log ""
-    log "---- 2. Dependency Scan: $WORKSPACE (npm audit) ----"
-    if [ -d "$WORKSPACE" ]; then
-      npm audit --workspace="$WORKSPACE" --omit=dev --audit-level=high 2>&1 | tee -a "$LOG_FILE"
-      AUDIT_EXIT=${PIPESTATUS[0]}
-      if [ "$AUDIT_EXIT" -eq 0 ]; then
-        log "RESULT: $WORKSPACE npm audit PASSED."
-      else
-        log "RESULT: $WORKSPACE npm audit FAILED — high/critical vulnerability found."
-        PASS=0
-      fi
-    else
-      log "SKIPPED — $WORKSPACE/ folder not found at repo root."
+  log "=================================================="
+  log "$1"
+  log "=================================================="
+}
+
+require_repo_root() {
+  local missing=0
+
+  for path in package.json package-lock.json client server packages/shared; do
+    if [ ! -e "$path" ]; then
+      log "Missing required repository path: $path"
+      missing=1
     fi
   done
-fi
 
-# ---------------------------------------------------------------
-# 3. Static analysis (Semgrep) — non-blocking in Week 1-2, matches CI
-# ---------------------------------------------------------------
-log ""
-log "---- 3. Static Analysis (Semgrep) ----"
-if command -v semgrep &> /dev/null; then
-  semgrep --config p/owasp-top-ten --config p/javascript --config p/typescript \
-          --config p/expressjs --config p/react . 2>&1 | tee -a "$LOG_FILE"
-  log "RESULT: Semgrep findings logged above — non-blocking this cycle, review manually."
+  if [ "$missing" -ne 0 ]; then
+    log "Run this script from the Secure LMS repository root."
+    exit 2
+  fi
+}
+
+require_repo_root
+
+section "Secure LMS Security Check - $TIMESTAMP"
+
+section "1. Secret Scan - Gitleaks"
+
+if command -v gitleaks >/dev/null 2>&1; then
+  if gitleaks detect \
+      --source . \
+      --config .gitleaks.toml \
+      --redact \
+      --verbose \
+      2>&1 | tee -a "$LOG_FILE"; then
+
+    log "👍 RESULT: Gitleaks PASSED."
+  else
+    log "❌ RESULT: Gitleaks FAILED - potential secret detected."
+    BLOCKING_FAILURE=1
+  fi
 else
-  log "SKIPPED — semgrep is not installed."
-  log "  Install: pip install semgrep --break-system-packages   (or: brew install semgrep)"
+  log "❌ RESULT: INCOMPLETE - Gitleaks is not installed."
+  log "Install from the official Gitleaks releases or package manager."
+  INCOMPLETE=1
 fi
 
-# ---------------------------------------------------------------
-# Summary
-# ---------------------------------------------------------------
-log ""
-log "=================================================="
-if [ "$PASS" -eq 1 ]; then
-  log "OVERALL: PASS — no blocking findings."
+section "2. Dependency Scanning - npm audit"
+
+for WORKSPACE in client server packages/shared; do
+  log ""
+  log "Workspace: $WORKSPACE"
+
+  npm audit \
+    --workspace="$WORKSPACE" \
+    --omit=dev \
+    --audit-level=high \
+    --package-lock-only \
+    2>&1 | tee -a "$LOG_FILE"
+
+  AUDIT_EXIT=${PIPESTATUS[0]}
+
+  if [ "$AUDIT_EXIT" -eq 0 ]; then
+    log "👍 RESULT: $WORKSPACE audit PASSED."
+  else
+    log "❌ RESULT: $WORKSPACE audit FAILED."
+    BLOCKING_FAILURE=1
+  fi
+done
+
+section "3. Static Analysis - Semgrep"
+
+if command -v semgrep >/dev/null 2>&1; then
+  semgrep scan \
+    --config p/owasp-top-ten \
+    --config p/javascript \
+    --config p/typescript \
+    --config p/expressjs \
+    --config p/react \
+    --error \
+    . \
+    2>&1 | tee -a "$LOG_FILE"
+
+  SEMGREP_EXIT=${PIPESTATUS[0]}
+
+  if [ "$SEMGREP_EXIT" -eq 0 ]; then
+    log "👍 RESULT: Semgrep completed with no blocking result."
+  else
+    log "⚠️ RESULT: Semgrep findings detected."
+    log "Week 1-2 policy: findings are logged for review but remain non-blocking."
+  fi
 else
-  log "OVERALL: FAIL — one or more blocking checks failed. See log for details."
+  log "❌ RESULT: INCOMPLETE - Semgrep is not installed."
+  log "Install with an approved package manager or Python environment."
+  INCOMPLETE=1
 fi
-log "Full log saved to: $LOG_FILE"
-log "=================================================="
 
-exit $((1 - PASS))
+section "Final Result"
+
+if [ "$BLOCKING_FAILURE" -ne 0 ]; then
+  log "❌ OVERALL: FAIL"
+  log "One or more blocking security findings were detected."
+  log "Review the log, record findings and remediate before submission."
+  log "Log file: $LOG_FILE"
+  exit 1
+fi
+
+if [ "$INCOMPLETE" -ne 0 ]; then
+  log "⚠️ OVERALL: INCOMPLETE"
+  log "One or more required security checks did not run."
+  log "Install the missing tools and rerun the script."
+  log "Log file: $LOG_FILE"
+  exit 2
+fi
+
+log "✅ OVERALL: PASS"
+log "All mandatory checks completed without blocking findings."
+log "Log file: $LOG_FILE"
+exit 0

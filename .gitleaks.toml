@@ -7,15 +7,15 @@ title = "Secure LMS - Gitleaks Config"
 useDefault = true
 
 [allowlist]
-description = "Global allowlist. Known-safe paths and confirmed false positives only"
+description = "Confirmed generated paths and fake placeholder values only"
 
 paths = [
-  '''.*\.lock$''',
-  '''.*package-lock\.json$''',
-  '''.*/node_modules/.*''',
-  '''.*/dist/.*''',
-  '''.*/\.next/.*''',
-  '''.*\.test\.(ts|tsx|js)$''',
+  '''(^|/)node_modules/''',
+  '''(^|/)dist/''',
+  '''(^|/)build/''',
+  '''(^|/)\.next/''',
+  '''(^|/)coverage/''',
+  '''(^|/)security-logs/''',
 ]
 
 # Example placeholder values used in .env.example / seed scripts.

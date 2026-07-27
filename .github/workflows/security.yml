@@ -16,18 +16,31 @@ name: Security Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches:
+      - main
+      - develop
+
   pull_request:
-    branches: [main, develop]
+    branches:
+      - main
+      - develop
+
+  workflow_dispatch:
 
 permissions:
   contents: read
   pull-requests: read
 
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   secret-scan:
-    name: Secret Scanning (Gitleaks)
+    name: Secret Scanning - Gitleaks
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     steps:
       - name: Checkout (full history)
         uses: actions/checkout@v4
@@ -39,13 +52,13 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_CONFIG: .gitleaks.toml
-        # A detected secret fails this job (blocking merge).
-        # Do NOT add secrets to the allowlist to "fix" a failure —
-        # rotate the credential first, then remove it from history.
+          GITLEAKS_ENABLE_COMMENTS: "false"
 
   dependency-scan:
-    name: Dependency Scanning (npm audit)
+    name: Dependency Scanning - npm audit
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -57,72 +70,119 @@ jobs:
           cache: "npm"
           cache-dependency-path: package-lock.json
 
-      - name: Install workspace dependencies
-        # Single install at the repo root — npm workspaces resolves
-        # client, server and packages/shared together from the one lockfile.
-        run: npm ci
+      - name: Verify package lock
+        run: |
+          test -f package-lock.json || {
+            echo "package-lock.json was not found."
+            exit 1
+          }
 
       - name: Audit client workspace
         id: audit_client
         continue-on-error: true
-        # Fails this step on any high-or-higher vulnerability.
-        # Adjust --audit-level as the team agrees a tolerance in Week 2 triage.
-        run: npm audit --workspace=client --omit=dev --audit-level=high
+        run: >
+          npm audit
+          --workspace=client
+          --omit=dev
+          --audit-level=high
+          --package-lock-only
 
       - name: Audit server workspace
         id: audit_server
         continue-on-error: true
-        run: npm audit --workspace=server --omit=dev --audit-level=high
+        run: >
+          npm audit
+          --workspace=server
+          --omit=dev
+          --audit-level=high
+          --package-lock-only
 
-      - name: Audit packages/shared workspace
+      - name: Audit shared workspace
         id: audit_shared
         continue-on-error: true
-        run: npm audit --workspace=packages/shared --omit=dev --audit-level=high
+        run: >
+          npm audit
+          --workspace=packages/shared
+          --omit=dev
+          --audit-level=high
+          --package-lock-only
 
-      - name: Fail job if any workspace audit failed
-        if: >-
-          steps.audit_client.outcome == 'failure' ||
-          steps.audit_server.outcome == 'failure' ||
-          steps.audit_shared.outcome == 'failure'
+      - name: Enforce dependency security gate
+        if: always()
         run: |
-          echo "One or more workspace dependency audits failed — see the failed step(s) above for which workspace and package."
-          exit 1
+          CLIENT_RESULT="${{ steps.audit_client.outcome }}"
+          SERVER_RESULT="${{ steps.audit_server.outcome }}"
+          SHARED_RESULT="${{ steps.audit_shared.outcome }}"
+
+          echo "Client audit: $CLIENT_RESULT"
+          echo "Server audit: $SERVER_RESULT"
+          echo "Shared audit: $SHARED_RESULT"
+
+          if [ "$CLIENT_RESULT" != "success" ] ||
+             [ "$SERVER_RESULT" != "success" ] ||
+             [ "$SHARED_RESULT" != "success" ]; then
+            echo "One or more workspaces contain a blocking dependency finding."
+            exit 1
+          fi
 
   sast-scan:
-    name: Static Analysis (Semgrep)
+    name: Static Analysis - Semgrep
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    container:
+      image: semgrep/semgrep
+
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Run Semgrep
-        uses: semgrep/semgrep-action@v1
-        with:
-          config: >-
-            p/owasp-top-ten
-            p/javascript
-            p/typescript
-            p/expressjs
-            p/react
-        env:
-          # Week 1-2: findings are reported but do not block merges while the
-          # team tunes out false positives. Flip to a hard fail (remove this
-          # env var) from Week 3 onward per the Security Test Plan.
-          SEMGREP_SEND_METRICS: "off"
         continue-on-error: true
+        run: |
+          semgrep scan \
+            --config p/owasp-top-ten \
+            --config p/javascript \
+            --config p/typescript \
+            --config p/expressjs \
+            --config p/react \
+            --error \
+            .
+        env:
+          SEMGREP_SEND_METRICS: "off"
 
   summary:
     name: Security Pipeline Summary
     runs-on: ubuntu-latest
-    needs: [secret-scan, dependency-scan, sast-scan]
+    timeout-minutes: 5
+
+    needs:
+      - secret-scan
+      - dependency-scan
+      - sast-scan
+
     if: always()
+
     steps:
-      - name: Report status
+      - name: Report security status
         run: |
-          echo "Secret scan:      ${{ needs.secret-scan.result }}"
-          echo "Dependency scan:  ${{ needs.dependency-scan.result }}"
-          echo "SAST (Semgrep):   ${{ needs.sast-scan.result }}"
-          if [ "${{ needs.secret-scan.result }}" != "success" ] || [ "${{ needs.dependency-scan.result }}" != "success" ]; then
-            echo "Blocking security gate failed — see failed job(s) above."
+          SECRET_RESULT="${{ needs.secret-scan.result }}"
+          DEPENDENCY_RESULT="${{ needs.dependency-scan.result }}"
+          SAST_RESULT="${{ needs.sast-scan.result }}"
+
+          echo "Secret scan:     $SECRET_RESULT"
+          echo "Dependency scan: $DEPENDENCY_RESULT"
+          echo "SAST scan:       $SAST_RESULT"
+
+          if [ "$SECRET_RESULT" != "success" ]; then
+            echo "Secret scanning failed or did not complete."
             exit 1
           fi
+
+          if [ "$DEPENDENCY_RESULT" != "success" ]; then
+            echo "Dependency scanning failed or found a blocking issue."
+            exit 1
+          fi
+
+          echo "Blocking Week 1 security gates passed."
+          echo "Semgrep remains non-blocking during Weeks 1-2 while rules are tuned."

@@ -11,17 +11,24 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+      time: "08:00"
+      timezone: "Africa/Lagos"
+
     open-pull-requests-limit: 10
+
     labels:
       - "dependencies"
       - "security"
-    groups:
-      security-updates:
-        applies-to: security-updates
-        patterns:
-          - "*"
+
     commit-message:
-      prefix: "chore(deps)"
+      prefix: "deps"
+
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+
+      development-dependencies:
+        dependency-type: "development"
 
   # GitHub Actions workflow dependencies themselves
   - package-ecosystem: "github-actions"
@@ -29,9 +36,17 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+      time: "08:30"
+      timezone: "Africa/Lagos"
+
+    open-pull-requests-limit: 5
+
     labels:
-      - "ci"
+      - "dependencies"
       - "security"
+
+    commit-message:
+      prefix: "ci"
 
   # Docker base image used in server/Dockerfile
   - package-ecosystem: "docker"

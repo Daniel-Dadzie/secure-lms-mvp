@@ -4,13 +4,10 @@ import { JWT_CONFIG } from "../config/jwt";
 import type { JwtPayload } from "../modules/auth/auth.types";
 
 // ----------------------------------------------------------------------------
-// authenticate middleware
-// Verifies the Bearer token in the Authorization header.
-// On success, attaches the decoded payload to req.user so downstream
-// middleware and controllers can read userId and role without re-verifying.
-// On failure, returns 401 — never 403, since the client isn't authenticated
-// yet (403 is for authenticated-but-unauthorised).
+// Authentication middleware
+// Verifies the access token from the Authorization header.
 // ----------------------------------------------------------------------------
+
 export function authenticate(
   req: Request,
   res: Response,
@@ -19,21 +16,52 @@ export function authenticate(
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    res.status(401).json({ message: "Authentication required" });
+    res.status(401).json({
+      message: "Authentication required",
+    });
     return;
   }
 
-  const token = authHeader.split(" ")[1];
+  const token = authHeader.slice(7).trim();
+
+  if (!token) {
+    res.status(401).json({
+      message: "Authentication required",
+    });
+    return;
+  }
 
   try {
-    const payload = jwt.verify(token, JWT_CONFIG.accessSecret) as JwtPayload;
-    (req as any).user = payload;
+    const payload = jwt.verify(
+      token,
+      JWT_CONFIG.accessSecret,
+      {
+        algorithms: [JWT_CONFIG.algorithm],
+        issuer: JWT_CONFIG.issuer,
+        audience: JWT_CONFIG.audience,
+      }
+    ) as JwtPayload;
+
+    (
+      req as Request & {
+        user: JwtPayload;
+      }
+    ).user = payload;
+
     next();
-  } catch (error: any) {
-    if (error.name === "TokenExpiredError") {
-      res.status(401).json({ message: "Token expired" });
+  } catch (error: unknown) {
+    const errorName =
+      error instanceof Error ? error.name : "";
+
+    if (errorName === "TokenExpiredError") {
+      res.status(401).json({
+        message: "Token expired",
+      });
       return;
     }
-    res.status(401).json({ message: "Invalid token" });
+
+    res.status(401).json({
+      message: "Invalid token",
+    });
   }
 }
