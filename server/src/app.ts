@@ -2,11 +2,26 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
 import { prisma } from "./config/prisma";
 import authRouter from "./modules/auth/auth.routes";
 import usersRouter from "./modules/users/users.routes";
+import coursesRouter from "./modules/courses/courses.routes";
 
 export const app = express();
+
+// Security headers — must be first middleware
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" },
+  // crossOriginResourcePolicy relaxed slightly to allow Firebase Storage
+  // assets (thumbnails) to load cross-origin in the browser.
+  // All other Helmet defaults remain active:
+  // - Content-Security-Policy
+  // - X-Frame-Options: SAMEORIGIN
+  // - X-Content-Type-Options: nosniff
+  // - Strict-Transport-Security (HSTS)
+  // - Referrer-Policy
+}));
 
 app.use(cors({
   origin: process.env.CLIENT_URL || "http://localhost:3000",
@@ -15,14 +30,10 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-// ----------------------------------------------------------------------------
-// Routes
-// ----------------------------------------------------------------------------
 app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
-// ----------------------------------------------------------------------------
-// Health check
-// ----------------------------------------------------------------------------
+app.use("/api/courses", coursesRouter);
+
 app.get("/api/health", async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
@@ -40,11 +51,6 @@ app.get("/api/health", async (_req, res) => {
   }
 });
 
-// ----------------------------------------------------------------------------
-// Global error handler — must be last middleware registered.
-// Returns generic messages to client, logs detail server-side only.
-// Never expose stack traces to the client (security requirement).
-// ----------------------------------------------------------------------------
 app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err);
   res.status(err.statusCode || 500).json({
