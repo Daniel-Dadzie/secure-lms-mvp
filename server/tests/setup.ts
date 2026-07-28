@@ -51,6 +51,7 @@ afterEach(async () => {
   // Clean up test data after each test in reverse FK order
   await prisma.auditEvent.deleteMany();
   await prisma.refreshToken.deleteMany();
+  await prisma.certificate.deleteMany();
   await prisma.lessonProgress.deleteMany();
   await prisma.enrollment.deleteMany();
   await prisma.purchase.deleteMany();

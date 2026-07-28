@@ -24,6 +24,21 @@ export function requireRole(allowedRoles: Role[]) {
     }
 
     if (!allowedRoles.includes(user.role)) {
+      // Structured stdout security log for SIEM / observability, avoiding DB latency or DoS surface.
+      console.error(
+        JSON.stringify({
+          level: "warn",
+          event: "auth.permission_denied",
+          userId: user.sub,
+          role: user.role,
+          requiredRoles: allowedRoles,
+          method: req.method,
+          path: req.originalUrl || req.url,
+          ip: req.ip,
+          timestamp: new Date().toISOString(),
+        })
+      );
+
       res.status(403).json({ message: "Insufficient permissions" });
       return;
     }

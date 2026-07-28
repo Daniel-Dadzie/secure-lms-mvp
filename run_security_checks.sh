@@ -54,7 +54,7 @@ require_repo_root() {
 
   if [ "$missing" -ne 0 ]; then
     log "Run this script from the Secure LMS repository root."
-    exit 2
+    exit 1
   fi
 }
 
@@ -144,11 +144,11 @@ if [ "$BLOCKING_FAILURE" -ne 0 ]; then
 fi
 
 if [ "$INCOMPLETE" -ne 0 ]; then
-  log "⚠️ OVERALL: INCOMPLETE"
+  log "❌ OVERALL: FAIL — INCOMPLETE"
   log "One or more required security checks did not run."
-  log "Install the missing tools and rerun the script."
+  log "Install the missing tools and rerun the script before submitting."
   log "Log file: $LOG_FILE"
-  exit 2
+  exit 1
 fi
 
 log "✅ OVERALL: PASS"
