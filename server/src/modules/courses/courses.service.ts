@@ -46,7 +46,7 @@ async function generateUniqueSlug(title: string, excludeId?: string): Promise<st
 // Security: unpublished/archived courses never appear here regardless of ID
 // ----------------------------------------------------------------------------
 export async function getPublishedCourses(filters: CourseFilters): Promise<PaginatedCourses> {
-  const { search, categoryId, page, limit } = filters;
+  const { search, categoryId, page = 1, limit = 10 } = filters;
   const skip = (page - 1) * limit;
 
   const where = {

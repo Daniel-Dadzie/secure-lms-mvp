@@ -16,7 +16,7 @@ export async function getPublishedCourses(req: Request, res: Response, next: Nex
 
 export async function getPublishedCourseById(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const course = await coursesService.getPublishedCourseById(req.params.courseId);
+    const course = await coursesService.getPublishedCourseById(req.params.courseId as string);
     res.status(200).json({ course });
   } catch (error: any) {
     if (error.statusCode === 404) { res.status(404).json({ message: "Course not found" }); return; }
@@ -45,7 +45,7 @@ export async function updateCourse(req: Request, res: Response, next: NextFuncti
       return;
     }
     const userId = (req as any).user?.sub;
-    const course = await coursesService.updateCourse(req.params.courseId, parsed.data, userId);
+    const course = await coursesService.updateCourse(req.params.courseId as string,  parsed.data, userId);
     res.status(200).json({ course });
   } catch (error) { next(error); }
 }
@@ -53,7 +53,7 @@ export async function updateCourse(req: Request, res: Response, next: NextFuncti
 export async function publishCourse(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = (req as any).user?.sub;
-    const course = await coursesService.publishCourse(req.params.courseId, userId);
+    const course = await coursesService.publishCourse(req.params.courseId as string, userId);
     res.status(200).json({ course });
   } catch (error) { next(error); }
 }
@@ -61,7 +61,7 @@ export async function publishCourse(req: Request, res: Response, next: NextFunct
 export async function unpublishCourse(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = (req as any).user?.sub;
-    const course = await coursesService.unpublishCourse(req.params.courseId, userId);
+    const course = await coursesService.unpublishCourse(req.params.courseId as string, userId);
     res.status(200).json({ course });
   } catch (error) { next(error); }
 }
@@ -69,7 +69,7 @@ export async function unpublishCourse(req: Request, res: Response, next: NextFun
 export async function archiveCourse(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const adminId = (req as any).user?.sub;
-    await coursesService.archiveCourse(req.params.courseId, adminId);
+    await coursesService.archiveCourse(req.params.courseId as string, adminId);
     res.status(204).send();
   } catch (error) { next(error); }
 }
