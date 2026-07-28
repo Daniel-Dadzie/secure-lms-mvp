@@ -11,7 +11,7 @@ function LoginForm() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
-  
+
   // This hook is now safely inside a component that will be wrapped in Suspense
   const searchParams = useSearchParams();
   const justRegistered = searchParams.get("registered") === "true";
