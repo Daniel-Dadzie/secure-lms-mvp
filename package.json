@@ -7,14 +7,14 @@
     "server",
     "packages/*"
   ],
-  "overrides": {
-    "js-tokens": "^10.0.0"
-  },
   "scripts": {
     "dev": "npm run dev --workspace=server & npm run dev --workspace=client",
     "lint": "npm run lint --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present"
+  },
+  "dependencies": {
+    "@prisma/client": "^7.9.1"
   },
   "overrides": {
     "postcss": "^8.5.10",
