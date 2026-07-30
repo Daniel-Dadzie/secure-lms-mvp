@@ -1,0 +1,65 @@
+# Node.js Engine Compatibility Investigation
+
+## Capture Time
+2026-07-29T17:48:56+01:00
+
+## Runtime Versions
+Node.js:
+v20.20.2
+
+npm:
+10.8.2
+
+## Installed Package Tree
+secure-lms-mvp@1.0.0 /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp
+└─┬ secure-lms-server@1.0.0 -> ./server
+  └─┬ prisma@7.8.0
+    └─┬ @prisma/dev@0.24.3
+      └── @prisma/streams-local@0.1.2
+
+
+## Dependency Explanation
+@prisma/streams-local@0.1.2
+server/node_modules/@prisma/streams-local
+  @prisma/streams-local@"0.1.2" from @prisma/dev@0.24.3
+  server/node_modules/@prisma/dev
+    @prisma/dev@"0.24.3" from prisma@7.8.0
+    server/node_modules/prisma
+      peerOptional prisma@"*" from @prisma/client@7.8.0
+      server/node_modules/@prisma/client
+        @prisma/client@"7.8.0" from secure-lms-server@1.0.0
+        server
+          secure-lms-server@1.0.0
+          node_modules/secure-lms-server
+            workspace server from the root project
+      dev prisma@"7.8.0" from secure-lms-server@1.0.0
+      server
+        secure-lms-server@1.0.0
+        node_modules/secure-lms-server
+          workspace server from the root project
+
+## Package Metadata
+manifest path: server/node_modules/@prisma/streams-local/package.json
+name: @prisma/streams-local
+version: 0.1.2
+engines: {
+  "bun": ">=1.3.6",
+  "node": ">=22.0.0"
+}
+dependencies: {
+  "ajv": "^8.12.0",
+  "better-result": "^2.7.0",
+  "env-paths": "^3.0.0",
+  "proper-lockfile": "^4.1.2"
+}
+
+## Prisma Package Tree
+secure-lms-mvp@1.0.0 /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp
+├── @prisma/client@7.9.1
+└─┬ secure-lms-server@1.0.0 -> ./server
+  ├─┬ @prisma/client@7.8.0
+  │ └── prisma@7.8.0 deduped
+  └─┬ prisma@7.8.0
+    ├── @prisma/config@7.8.0
+    └─┬ @prisma/dev@0.24.3
+      └── @prisma/streams-local@0.1.2

@@ -1,0 +1,110 @@
+
+==================================================
+Secure LMS Security Check - 2026-07-30_06-05-41
+==================================================
+
+==================================================
+1. Secret Scan - Gitleaks
+==================================================
+
+    ○
+    │╲
+    │ ○
+    ○ ░
+    ░    gitleaks
+
+6:05AM INF 60 commits scanned.
+6:05AM INF scanned ~2230757 bytes (2.23 MB) in 746ms
+6:05AM INF no leaks found
+👍 RESULT: Gitleaks PASSED.
+
+==================================================
+2. Dependency Scanning - npm audit
+==================================================
+
+Workspace: client
+found 0 vulnerabilities
+👍 RESULT: client audit PASSED.
+
+Workspace: server
+# npm audit report
+
+@hono/node-server  <=2.0.4
+Severity: moderate
+@hono/node-server: Middleware bypass via repeated slashes in serveStatic - https://github.com/advisories/GHSA-92pp-h63x-v22m
+Node.js Adapter for Hono: Path traversal in `serve-static` on Windows via encoded backslash (`%5C`) - https://github.com/advisories/GHSA-frvp-7c67-39w9
+fix available via `npm audit fix --force`
+Will install prisma@7.9.1, which is outside the stated dependency range
+node_modules/@hono/node-server
+  @prisma/dev  <=0.24.16
+  Depends on vulnerable versions of @hono/node-server
+  Depends on vulnerable versions of valibot
+  server/node_modules/@prisma/dev
+    prisma  6.20.0-dev.1 - 7.9.0-dev.31
+    Depends on vulnerable versions of @prisma/dev
+    server/node_modules/prisma
+
+valibot  <=1.4.1
+Severity: moderate
+Valibot: record() issue paths can make flatten() throw for inherited Object property names - https://github.com/advisories/GHSA-5qjj-4xww-7phc
+fix available via `npm audit fix --force`
+Will install prisma@7.9.1, which is outside the stated dependency range
+node_modules/valibot
+
+4 moderate severity vulnerabilities
+
+To address all issues, run:
+  npm audit fix --force
+👍 RESULT: server audit PASSED.
+
+Workspace: packages/shared
+found 0 vulnerabilities
+👍 RESULT: packages/shared audit PASSED.
+
+==================================================
+3. Static Analysis - Semgrep
+==================================================
+
+
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+  Scanning 197 files tracked by git with 565 Code rules:
+
+  Language      Rules   Files          Origin      Rules
+ ─────────────────────────────        ───────────────────
+  <multilang>       6     197          Community     565
+  ts               76      49
+  json              3       9
+  yaml             25       5
+  js               70       4
+  dockerfile        4       1
+  bash              1       1
+
+
+
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 115
+ • Targets scanned: 197
+ • Parsed lines: ~99.9%
+ • Scan skipped:
+   ◦ Files matching .semgrepignore patterns: 11
+ • Scan was limited to files tracked by git
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 115 rules on 197 files: 0 findings.
+(need more rules? `semgrep login` for additional free Semgrep Registry rules)
+
+If Semgrep missed a finding, please send us feedback to let us know!
+See https://semgrep.dev/docs/reporting-false-negatives/
+👍 RESULT: Semgrep completed with no blocking result.
+
+==================================================
+Final Result
+==================================================
+✅ OVERALL: PASS
+All mandatory checks completed without blocking findings.
+Log file: security-logs/security-check_2026-07-30_06-05-41.log

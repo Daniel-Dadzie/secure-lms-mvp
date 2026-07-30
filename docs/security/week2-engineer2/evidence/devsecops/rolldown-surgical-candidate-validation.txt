@@ -1,0 +1,41 @@
+# Surgical Rolldown Lockfile Candidate
+
+## Lockfile Versions
+Current: 3
+Candidate: 3
+
+## Added Entries
+node_modules/@oxc-project/types
+node_modules/@rolldown/binding-android-arm64
+node_modules/@rolldown/binding-darwin-arm64
+node_modules/@rolldown/binding-darwin-x64
+node_modules/@rolldown/binding-freebsd-x64
+node_modules/@rolldown/binding-linux-arm-gnueabihf
+node_modules/@rolldown/binding-linux-arm64-gnu
+node_modules/@rolldown/binding-linux-arm64-musl
+node_modules/@rolldown/binding-linux-ppc64-gnu
+node_modules/@rolldown/binding-linux-s390x-gnu
+node_modules/@rolldown/binding-linux-x64-gnu
+node_modules/@rolldown/binding-linux-x64-musl
+node_modules/@rolldown/binding-openharmony-arm64
+node_modules/@rolldown/binding-wasm32-wasi
+node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/core
+node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/runtime
+node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/wasi-threads
+node_modules/@rolldown/binding-win32-arm64-msvc
+node_modules/@rolldown/binding-win32-x64-msvc
+node_modules/@rolldown/pluginutils
+
+## Modified Entries
+node_modules/rolldown
+
+## Removed Entries
+
+## Core Validation
+Rolldown version: 1.1.5
+Pluginutils dependency: ^1.0.0
+OXC dependency: =0.139.0
+Pluginutils package: 1.0.1
+OXC package: 0.139.0
+
+Unrelated changed package entries: 0

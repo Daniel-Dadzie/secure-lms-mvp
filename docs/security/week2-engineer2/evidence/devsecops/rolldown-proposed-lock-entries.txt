@@ -1,0 +1,7 @@
+# Proposed Repaired Lockfile Entries
+
+## node_modules/rolldown
+NOT RECORDED
+
+## node_modules/@rolldown/pluginutils
+NOT RECORDED

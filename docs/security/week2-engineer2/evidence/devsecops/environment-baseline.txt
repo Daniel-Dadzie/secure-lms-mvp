@@ -1,0 +1,201 @@
+# Secure LMS MVP — Week 2 Environment Baseline Evidence
+
+## Capture Date
+2026-07-29T15:52:20+01:00
+
+## Current Working Directory
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp
+
+## Operating System
+Linux Amuzie-Ebeyi 6.18.33.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026 x86_64 x86_64 x86_64 GNU/Linux
+
+PRETTY_NAME="Ubuntu 24.04.4 LTS"
+NAME="Ubuntu"
+VERSION_ID="24.04"
+VERSION="24.04.4 LTS (Noble Numbat)"
+VERSION_CODENAME=noble
+ID=ubuntu
+ID_LIKE=debian
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+UBUNTU_CODENAME=noble
+LOGO=ubuntu-logo
+
+## Development Tools
+Node.js:
+v20.20.2
+
+npm:
+10.8.2
+
+Git:
+git version 2.43.0
+
+Docker:
+
+The command 'docker' could not be found in this WSL 2 distro.
+We recommend to activate the WSL integration in Docker Desktop settings.
+
+For details about using Docker Desktop with WSL 2, visit:
+
+https://docs.docker.com/go/wsl2/
+
+Docker CLI unavailable
+
+Docker Compose:
+
+The command 'docker' could not be found in this WSL 2 distro.
+We recommend to activate the WSL integration in Docker Desktop settings.
+
+For details about using Docker Desktop with WSL 2, visit:
+
+https://docs.docker.com/go/wsl2/
+
+Docker Compose unavailable
+
+## Repository Information
+Active branch:
+security/week2-engineer2-validation
+
+Current commit:
+3c65f2df18a2516f656f7203dee1ac8d1c2beb0b
+
+Recent commits:
+3c65f2d Merge pull request #37 from Daniel-Dadzie/security/week2-refactor
+df4191c fix: fixed ci.yml failed check
+549a548 refactor: restructure environment configuration and cleanup dependencies
+09b8832 Merge pull request #31 from Daniel-Dadzie/security/week2-cybersecurity-deliverables
+6dc7155 fix: fixing git pull errors
+1ee9f89 fix(courses): resolve type mismatches and add default pagination
+b9356d6 feat(server): implement courses module and add security middleware
+691e0f4 security: complete Week 2 cybersecurity deliverables
+167237b security: Pin GitHub Actions to full commit SHAs (SEC-013)
+ecc8cfa security: Add Helmet security headers and body size limit (SEC-008)
+
+Repository status:
+?? docs/security/week2-engineer2/
+
+Configured remotes:
+origin	git@github.com:Daniel-Dadzie/secure-lms-mvp.git (fetch)
+origin	git@github.com:Daniel-Dadzie/secure-lms-mvp.git (push)
+
+## Repository Structure
+Root contents:
+total 500
+drwxr-xr-x  11 amuzie amuzie   4096 Jul 28 22:49 .
+drwxr-xr-x   4 amuzie amuzie   4096 Jul 20 08:21 ..
+drwxr-xr-x   2 amuzie amuzie   4096 Jul 20 08:21 .dist
+-rw-r--r--   1 amuzie amuzie    219 Jul 20 08:21 .editorconfig
+-rw-r--r--   1 amuzie amuzie    323 Jul 22 11:17 .env.example
+drwxr-xr-x   8 amuzie amuzie   4096 Jul 29 15:52 .git
+drwxr-xr-x   3 amuzie amuzie   4096 Jul 28 22:49 .github
+-rw-r--r--   1 amuzie amuzie    295 Jul 24 23:53 .gitignore
+-rw-r--r--   1 amuzie amuzie   1193 Jul 28 22:49 .gitleaks.toml
+-rw-r--r--   1 amuzie amuzie    111 Jul 20 08:21 .prettierignore
+-rw-r--r--   1 amuzie amuzie    200 Jul 20 08:21 .prettierrc.json
+-rw-r--r--   1 amuzie amuzie   2674 Jul 20 08:21 CONTRIBUTING.md
+-rw-r--r--   1 amuzie amuzie   1167 Jul 20 08:21 Makefile
+-rw-r--r--   1 amuzie amuzie      0 Jul 20 08:21 README.md
+drwxr-xr-x   6 amuzie amuzie   4096 Jul 28 22:49 client
+-rw-r--r--   1 amuzie amuzie    644 Jul 20 08:21 docker-compose.yml
+drwxr-xr-x   6 amuzie amuzie   4096 Jul 28 22:49 docs
+drwxr-xr-x 529 amuzie amuzie  20480 Jul 25 00:36 node_modules
+-rw-r--r--   1 amuzie amuzie 399198 Jul 28 22:49 package-lock.json
+-rw-r--r--   1 amuzie amuzie    528 Jul 28 22:49 package.json
+drwxr-xr-x   3 amuzie amuzie   4096 Jul 20 08:21 packages
+-rwxr-xr-x   1 amuzie amuzie   3953 Jul 28 22:49 run_security_checks.sh
+drwxr-xr-x   2 amuzie amuzie   4096 Jul 25 03:55 security-logs
+drwxr-xr-x   7 amuzie amuzie   4096 Jul 28 22:49 server
+
+GitHub workflow files:
+.github/dependabot.yml
+.github/workflows/ci.yml
+.github/workflows/security.yml
+
+Server source and configuration files:
+server/Dockerfile
+server/dist/app.js
+server/dist/server.js
+server/eslint.config.mjs
+server/package.json
+server/prisma.config.ts
+server/prisma/schema.prisma
+server/prisma/seed.ts
+server/src/app.ts
+server/src/env.ts
+server/src/server.ts
+server/tests/setup.ts
+server/tsconfig.json
+server/vitest.config.ts
+
+## Workspace Configuration
+Root workspaces:
+[
+  "client",
+  "server",
+  "packages/*"
+]
+
+## Declared Security-Relevant Dependencies
+
+### package.json
+@prisma/client: ^7.9.1
+prisma: not declared
+vitest: not declared
+jsonwebtoken: not declared
+bcrypt: not declared
+bcryptjs: not declared
+helmet: not declared
+express-rate-limit: not declared
+semgrep: not declared
+
+### server/package.json
+@prisma/client: 7.8.0
+prisma: 7.8.0
+vitest: ^4.1.10
+jsonwebtoken: ^9.0.3
+bcrypt: ^6.0.0
+bcryptjs: ^3.0.3
+helmet: ^8.3.0
+express-rate-limit: ^8.6.1
+semgrep: not declared
+
+### client/package.json
+@prisma/client: not declared
+prisma: not declared
+vitest: not declared
+jsonwebtoken: not declared
+bcrypt: not declared
+bcryptjs: not declared
+helmet: not declared
+express-rate-limit: not declared
+semgrep: not declared
+
+## Installed Dependency Status
+secure-lms-mvp@1.0.0 /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp
+└─┬ secure-lms-server@1.0.0 -> ./server
+  ├── @prisma/client@7.8.0
+  ├── bcryptjs@3.0.3
+  ├── express-rate-limit@8.6.0 invalid: "^8.6.1" from server
+  ├── jsonwebtoken@9.0.3
+  ├── prisma@7.8.0
+  └── vitest@4.1.10
+
+npm error code ELSPROBLEMS
+npm error invalid: express-rate-limit@8.6.0 /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/express-rate-limit
+npm error A complete log of this run can be found in: /home/amuzie/.npm/_logs/2026-07-29T14_52_21_525Z-debug-0.log
+
+## Prisma CLI Status
+prisma               : 7.8.0
+@prisma/client       : ^7.9.1
+Operating System     : linux
+Architecture         : x64
+Node.js              : v20.20.2
+TypeScript           : 5.9.3
+Query Compiler       : enabled
+PSL                  : @prisma/prisma-schema-wasm 7.8.0-6.3c6e192761c0362d496ed980de936e2f3cebcd3a
+Schema Engine        : schema-engine-cli 3c6e192761c0362d496ed980de936e2f3cebcd3a (at server/node_modules/@prisma/engines/schema-engine-debian-openssl-3.0.x)
+Default Engines Hash : 3c6e192761c0362d496ed980de936e2f3cebcd3a
+Studio               : 0.27.3

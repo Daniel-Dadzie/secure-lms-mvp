@@ -1,0 +1,21 @@
+# Test Database State After Automated Tests
+
+## Capture Time
+2026-07-30T02:51:09+01:00
+
+   table_name    | row_count
+-----------------+-----------
+ audit_events    |         0
+ cart_items      |         0
+ carts           |         0
+ categories      |         0
+ certificates    |         0
+ courses         |         0
+ enrollments     |         0
+ lesson_progress |         0
+ lessons         |         0
+ modules         |         0
+ purchases       |         0
+ refresh_tokens  |         0
+ users           |         0
+(13 rows)

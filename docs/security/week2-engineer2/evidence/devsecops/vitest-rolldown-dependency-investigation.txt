@@ -1,0 +1,73 @@
+# Vitest and Rolldown Startup Failure Investigation
+
+## Capture Time
+2026-07-30T02:56:57+01:00
+
+## Runtime Versions
+Node.js: v20.20.2
+npm: 10.8.2
+
+## Relevant Installed Dependency Tree
+secure-lms-mvp@1.0.0 /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp
+└─┬ secure-lms-server@1.0.0 -> ./server
+  └─┬ vitest@4.1.10
+    ├─┬ @vitest/mocker@4.1.10
+    │ └── vite@8.1.5 deduped
+    └─┬ vite@8.1.5
+      └── rolldown@1.1.5
+
+
+## Explain Vitest
+vitest@4.1.10 dev
+node_modules/vitest
+  dev vitest@"^4.1.10" from secure-lms-server@1.0.0
+  server
+    secure-lms-server@1.0.0
+    node_modules/secure-lms-server
+      workspace server from the root project
+
+## Explain Vite
+vite@8.1.5 dev
+node_modules/vite
+  vite@"^6.0.0 || ^7.0.0 || ^8.0.0" from vitest@4.1.10
+  node_modules/vitest
+    dev vitest@"^4.1.10" from secure-lms-server@1.0.0
+    server
+      secure-lms-server@1.0.0
+      node_modules/secure-lms-server
+        workspace server from the root project
+  peerOptional vite@"^6.0.0 || ^7.0.0 || ^8.0.0" from @vitest/mocker@4.1.10
+  node_modules/@vitest/mocker
+    @vitest/mocker@"4.1.10" from vitest@4.1.10
+    node_modules/vitest
+      dev vitest@"^4.1.10" from secure-lms-server@1.0.0
+      server
+        secure-lms-server@1.0.0
+        node_modules/secure-lms-server
+          workspace server from the root project
+
+## Explain Rolldown
+rolldown@1.1.5 dev
+node_modules/rolldown
+  rolldown@"~1.1.5" from vite@8.1.5
+  node_modules/vite
+    vite@"^6.0.0 || ^7.0.0 || ^8.0.0" from vitest@4.1.10
+    node_modules/vitest
+      dev vitest@"^4.1.10" from secure-lms-server@1.0.0
+      server
+        secure-lms-server@1.0.0
+        node_modules/secure-lms-server
+          workspace server from the root project
+    peerOptional vite@"^6.0.0 || ^7.0.0 || ^8.0.0" from @vitest/mocker@4.1.10
+    node_modules/@vitest/mocker
+      @vitest/mocker@"4.1.10" from vitest@4.1.10
+      node_modules/vitest
+        dev vitest@"^4.1.10" from secure-lms-server@1.0.0
+        server
+          secure-lms-server@1.0.0
+          node_modules/secure-lms-server
+            workspace server from the root project
+
+## Explain Rolldown Pluginutils
+npm error No dependencies found matching @rolldown/pluginutils
+npm error A complete log of this run can be found in: /home/amuzie/.npm/_logs/2026-07-30T01_57_08_265Z-debug-0.log

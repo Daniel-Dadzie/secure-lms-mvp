@@ -1,0 +1,39 @@
+# Test Database Verification
+
+## Verification Time
+2026-07-30T02:41:07+01:00
+
+## Database Connection
+ current_database | current_user
+------------------+--------------
+ secure_lms_test  | postgres
+(1 row)
+
+
+## Test Database Tables
+     tablename
+--------------------
+ _prisma_migrations
+ audit_events
+ cart_items
+ carts
+ categories
+ certificates
+ courses
+ enrollments
+ lesson_progress
+ lessons
+ modules
+ purchases
+ refresh_tokens
+ users
+(14 rows)
+
+
+## Applied Test Database Migrations
+              migration_name               | completed | rolled_back_at
+-------------------------------------------+-----------+----------------
+ 20260716124801_init_schema                | t         |
+ 20260721084936_add_refresh_tokens         | t         |
+ 20260727085446_add_certificates_and_carts | t         |
+(3 rows)

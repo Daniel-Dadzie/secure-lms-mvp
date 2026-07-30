@@ -290,7 +290,16 @@ describe("Auth — Token replay and malformed tokens", () => {
 
 describe("Auth — Concurrent sessions", () => {
   it("creates independent token families for separate logins", async () => {
-    await createTestUser({ email: "concurrent@test.com", password: "Password123!" });
+    const createdUser = await createTestUser({
+      email: "concurrent@test.com",
+      password: "Password123!",
+    });
+
+    // Registration already creates one refresh-token family. Remove that
+    // setup token so this test measures only the two explicit logins below.
+    await prisma.refreshToken.deleteMany({
+      where: { userId: createdUser.userId },
+    });
 
     const login1 = await request.post("/api/auth/login").send({
       email: "concurrent@test.com",

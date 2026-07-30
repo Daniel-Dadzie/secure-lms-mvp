@@ -1,0 +1,31 @@
+# Surgical Lockfile Difference Summary
+
+## Capture Time
+2026-07-30T03:46:58+01:00
+
+## Diff Line Count
+379 docs/security/week2-engineer2/evidence/devsecops/rolldown-surgical-lock-repair.diff
+
+## Changed Package Entries
+-    "node_modules/rolldown": {
++    "node_modules/@oxc-project/types": {
++    "node_modules/@rolldown/binding-android-arm64": {
++    "node_modules/@rolldown/binding-darwin-arm64": {
++    "node_modules/@rolldown/binding-darwin-x64": {
++    "node_modules/@rolldown/binding-freebsd-x64": {
++    "node_modules/@rolldown/binding-linux-arm-gnueabihf": {
++    "node_modules/@rolldown/binding-linux-arm64-gnu": {
++    "node_modules/@rolldown/binding-linux-arm64-musl": {
++    "node_modules/@rolldown/binding-linux-ppc64-gnu": {
++    "node_modules/@rolldown/binding-linux-s390x-gnu": {
++    "node_modules/@rolldown/binding-linux-x64-gnu": {
++    "node_modules/@rolldown/binding-linux-x64-musl": {
++    "node_modules/@rolldown/binding-openharmony-arm64": {
++    "node_modules/@rolldown/binding-wasm32-wasi": {
++    "node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/core": {
++    "node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/runtime": {
++    "node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/wasi-threads": {
++    "node_modules/@rolldown/binding-win32-arm64-msvc": {
++    "node_modules/@rolldown/binding-win32-x64-msvc": {
++    "node_modules/@rolldown/pluginutils": {
++    "node_modules/rolldown": {

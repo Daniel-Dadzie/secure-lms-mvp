@@ -1,0 +1,67 @@
+# Generated Prisma Client Runtime Verification
+
+## Verification Time
+2026-07-30T04:13:04+01:00
+
+## Generated Client Files
+server/node_modules/.prisma/client/client.d.ts
+server/node_modules/.prisma/client/client.js
+server/node_modules/.prisma/client/default.d.ts
+server/node_modules/.prisma/client/default.js
+server/node_modules/.prisma/client/edge.d.ts
+server/node_modules/.prisma/client/edge.js
+server/node_modules/.prisma/client/index-browser.js
+server/node_modules/.prisma/client/index.d.ts
+server/node_modules/.prisma/client/index.js
+server/node_modules/.prisma/client/package.json
+server/node_modules/.prisma/client/query_compiler_fast_bg.js
+server/node_modules/.prisma/client/query_compiler_fast_bg.wasm
+server/node_modules/.prisma/client/query_compiler_fast_bg.wasm-base64.js
+server/node_modules/.prisma/client/schema.prisma
+server/node_modules/.prisma/client/wasm-edge-light-loader.mjs
+server/node_modules/.prisma/client/wasm-worker-loader.mjs
+
+## Required Runtime File
+Prisma default runtime: PASS
+
+## Prisma Client Import
+Prisma Client import: FAIL
+PrismaClientInitializationError: `PrismaClient` needs to be constructed with a non-empty, valid `PrismaClientOptions`:
+
+```
+new PrismaClient({
+  ...
+})
+```
+
+or
+
+```
+constructor() {
+  super({ ... });
+}
+```
+
+    at new t (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/node_modules/@prisma/client/runtime/client.js:70:1527)
+    at [eval]:4:24
+    at runScriptInThisContext (node:internal/vm:209:10)
+    at node:internal/process/execution:118:14
+    at [eval]-wrapper:6:24
+    at runScript (node:internal/process/execution:101:62)
+    at evalScript (node:internal/process/execution:133:3)
+    at node:internal/main/eval_string:51:3 {
+  clientVersion: '7.8.0',
+  errorCode: undefined,
+  retryable: undefined
+}
+
+## Validation Clarification
+
+The plain PrismaClient constructor check was not valid for this repository because
+the application uses @prisma/adapter-pg and constructs PrismaClient with a
+PrismaPg adapter.
+
+The generated runtime file verification remains valid and passed. The definitive
+runtime result is recorded in:
+
+prisma-application-runtime-verification.txt

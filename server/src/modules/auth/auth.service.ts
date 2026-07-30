@@ -332,7 +332,7 @@ export async function logout(
   // Get the token family to revoke all tokens in the same family
   const storedToken = await prisma.refreshToken.findUnique({
     where: { tokenHash },
-    select: { family: true },
+    select: { family: true, userId: true },
   });
 
   // Revoke all tokens in the same family for complete session invalidation
@@ -343,12 +343,14 @@ export async function logout(
     });
   }
 
+  const auditUserId = userId ?? storedToken?.userId;
+
   await prisma.auditEvent.create({
     data: {
-      userId,
+      userId: auditUserId,
       action: "auth.logout",
       entityType: "User",
-      entityId: userId,
+      entityId: auditUserId,
     },
   });
 }
