@@ -103,6 +103,7 @@ model User {
   auditEvents      AuditEvent[]
   certificates     Certificate[]
   cart             Cart?
+  reviews          Review[]
 
   @@index([role])
   @@map("users")
@@ -139,6 +140,19 @@ model Category {
   @@map("categories")
 }
 
+model RatingAggregate {
+  id          String   @id @default(uuid())
+  courseId    String   @unique
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  oneStar     Int      @default(0)
+  twoStar     Int      @default(0)
+  threeStar   Int      @default(0)
+  fourStar    Int      @default(0)
+  fiveStar    Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  @@map("rating_aggregates")
+}
 model Course {
   id           String       @id @default(uuid())
   title        String
@@ -148,6 +162,9 @@ model Course {
   priceCents   Int          @default(0) // stored in cents; see header note
   status       CourseStatus @default(DRAFT)
   isActive     Boolean      @default(true) // soft delete flag
+  averageRating  Float    @default(0)
+  reviewCount    Int      @default(0)
+
 
   instructorId String
   instructor   User   @relation("InstructorCourses", fields: [instructorId], references: [id], onDelete: Restrict)
@@ -156,7 +173,7 @@ model Course {
 
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  
+  ratingAggregate RatingAggregate?
   cartItems CartItem[]
   
   createdAt DateTime @default(now())
@@ -166,6 +183,7 @@ model Course {
   purchases   Purchase[]
   enrollments Enrollment[]
   certificates Certificate[]
+  reviews      Review[]
 
   @@index([instructorId])
   @@index([status])
@@ -320,6 +338,33 @@ model Certificate {
   @@unique([userId, courseId])
   @@index([userId])
   @@map("certificates")
+}
+
+model Review {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  courseId     String
+  course       Course   @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  // Restrict on both sides: reviews are permanent records of student feedback.
+  // A deleted/archived course or deactivated user must not silently erase reviews.
+  rating       Int
+  // Rating stored as integer 1-5. Enforced at application layer via Zod (min 1, max 5).
+  // DB-level check constraint added in migration for extra safety.
+  comment      String?
+  // Comment is optional — a student can leave a star rating without written feedback.
+  isVisible    Boolean  @default(true)
+  // Soft hide: admin can hide inappropriate reviews without deleting them.
+  // Audit trail preserved.
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // A student can only review a course once — enforced at DB level.
+  // Must be enrolled to review (enforced at application layer).
+  @@unique([userId, courseId])
+  @@index([courseId])
+  @@index([userId])
+  @@map("reviews")
 }
 
 // ----------------------------------------------------------------------------
