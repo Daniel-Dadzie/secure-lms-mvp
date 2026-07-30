@@ -1,0 +1,21 @@
+◇ injected env (8) from ../.env // tip: ⌘ enable debugging { debug: true }
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+Datasource "db": PostgreSQL database "secure_lms_dev", schema "public" at "localhost:5432"
+
+3 migrations found in prisma/migrations
+
+┌─────────────────────────────────────────────────────────┐
+│  Update available 7.8.0 -> 7.9.1                        │
+│  Run the following to update                            │
+│    npm i --save-dev prisma@latest                       │
+│    npm i @prisma/client@latest                          │
+└─────────────────────────────────────────────────────────┘
+Database schema is up to date!
+
+## Post-Deployment Migration Status Exit Code
+0
+
+## Verification Time
+2026-07-29T20:53:23+01:00

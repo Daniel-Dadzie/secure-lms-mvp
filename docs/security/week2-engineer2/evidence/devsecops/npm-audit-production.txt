@@ -1,0 +1,34 @@
+# npm audit report
+
+@hono/node-server  <=2.0.4
+Severity: moderate
+@hono/node-server: Middleware bypass via repeated slashes in serveStatic - https://github.com/advisories/GHSA-92pp-h63x-v22m
+Node.js Adapter for Hono: Path traversal in `serve-static` on Windows via encoded backslash (`%5C`) - https://github.com/advisories/GHSA-frvp-7c67-39w9
+fix available via `npm audit fix --force`
+Will install prisma@7.9.1, which is outside the stated dependency range
+node_modules/@hono/node-server
+  @prisma/dev  <=0.24.16
+  Depends on vulnerable versions of @hono/node-server
+  Depends on vulnerable versions of valibot
+  server/node_modules/@prisma/dev
+    prisma  6.20.0-dev.1 - 7.9.0-dev.31
+    Depends on vulnerable versions of @prisma/dev
+    server/node_modules/prisma
+
+valibot  <=1.4.1
+Severity: moderate
+Valibot: record() issue paths can make flatten() throw for inherited Object property names - https://github.com/advisories/GHSA-5qjj-4xww-7phc
+fix available via `npm audit fix --force`
+Will install prisma@7.9.1, which is outside the stated dependency range
+node_modules/valibot
+
+4 moderate severity vulnerabilities
+
+To address all issues, run:
+  npm audit fix --force
+
+## Production Audit Exit Code
+1
+
+## Capture Time
+2026-07-29T17:59:41+01:00

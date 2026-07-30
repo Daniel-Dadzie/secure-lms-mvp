@@ -1,0 +1,9 @@
+# Environment File Tracking Check
+
+## Tracked Sensitive Environment Files
+PASS: No sensitive .env files are tracked.
+
+## Local .env Ignore Status
+.gitignore:12:.env*	.env
+.gitignore:12:.env*	server/.env
+.gitignore:12:.env*	client/.env

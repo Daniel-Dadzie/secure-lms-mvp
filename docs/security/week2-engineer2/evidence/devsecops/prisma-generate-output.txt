@@ -1,0 +1,8 @@
+◇ injected env (0) from ../.env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+Failed to load config file "/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server" as a TypeScript/JavaScript module. Error: PrismaConfigEnvError: Cannot resolve environment variable: DATABASE_URL.
+
+## Prisma Generate Exit Code
+1
+
+## Completion Time
+2026-07-29T18:13:09+01:00

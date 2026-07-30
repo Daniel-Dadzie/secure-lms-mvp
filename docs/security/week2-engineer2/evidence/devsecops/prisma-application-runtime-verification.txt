@@ -1,0 +1,2 @@
+Application Prisma import: PASS
+Connected database: secure_lms_test

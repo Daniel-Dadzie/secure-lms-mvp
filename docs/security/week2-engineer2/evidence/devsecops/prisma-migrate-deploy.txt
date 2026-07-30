@@ -1,0 +1,29 @@
+◇ injected env (8) from ../.env // tip: ◈ encrypted .env [www.dotenvx.com]
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+Datasource "db": PostgreSQL database "secure_lms_dev", schema "public" at "localhost:5432"
+
+3 migrations found in prisma/migrations
+
+Applying migration `20260716124801_init_schema`
+Applying migration `20260721084936_add_refresh_tokens`
+Applying migration `20260727085446_add_certificates_and_carts`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260716124801_init_schema/
+    └─ migration.sql
+  └─ 20260721084936_add_refresh_tokens/
+    └─ migration.sql
+  └─ 20260727085446_add_certificates_and_carts/
+    └─ migration.sql
+
+All migrations have been successfully applied.
+
+## Prisma Migrate Deploy Exit Code
+0
+
+## Completion Time
+2026-07-29T20:51:32+01:00

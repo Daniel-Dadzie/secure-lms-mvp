@@ -1,0 +1,106 @@
+
+> secure-lms-mvp@1.0.0 test
+> npm run test --workspaces --if-present
+
+
+> secure-lms-server@1.0.0 test
+> vitest run --fileParallelism=false
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server[39m
+
+ [32m✓[39m tests/unit/idor.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 40753[2mms[22m[39m
+       [33m[2m✓[22m[39m allows a student to read their own lesson progress [33m 4412[2mms[22m[39m
+       [33m[2m✓[22m[39m denies student B from reading student A's lesson progress (returns 404) [33m 3424[2mms[22m[39m
+       [33m[2m✓[22m[39m allows Admin to bypass and access student A's lesson progress [33m 3468[2mms[22m[39m
+       [33m[2m✓[22m[39m denies unauthenticated requests [33m 3577[2mms[22m[39m
+       [33m[2m✓[22m[39m allows instructor A to read module of course A (which they teach) [33m 3457[2mms[22m[39m
+       [33m[2m✓[22m[39m denies instructor B from reading module A (returns 404) [33m 3426[2mms[22m[39m
+       [33m[2m✓[22m[39m denies student A from reading module A via instructor ownership middleware (returns 404) [33m 3546[2mms[22m[39m
+       [33m[2m✓[22m[39m allows Admin to bypass and access module A [33m 3425[2mms[22m[39m
+       [33m[2m✓[22m[39m allows student A to read their own certificate [33m 3301[2mms[22m[39m
+       [33m[2m✓[22m[39m denies student B from reading student A's certificate (returns 404) [33m 3607[2mms[22m[39m
+       [33m[2m✓[22m[39m allows Admin to bypass and access student A's certificate [33m 4858[2mms[22m[39m
+ [32m✓[39m tests/unit/auth.test.ts [2m([22m[2m23 tests[22m[2m)[22m[33m 12430[2mms[22m[39m
+     [33m[2m✓[22m[39m registers a new student and returns accessToken + user [33m 920[2mms[22m[39m
+     [33m[2m✓[22m[39m returns 409 on duplicate email without revealing which condition failed [33m 600[2mms[22m[39m
+     [33m[2m✓[22m[39m logs in with correct credentials and returns accessToken [33m 1155[2mms[22m[39m
+     [33m[2m✓[22m[39m returns 401 on wrong password with generic message [33m 1098[2mms[22m[39m
+     [33m[2m✓[22m[39m sets httpOnly cookie on login [33m 1042[2mms[22m[39m
+     [33m[2m✓[22m[39m issues a new accessToken using the refresh cookie [33m 605[2mms[22m[39m
+     [33m[2m✓[22m[39m refresh token rotation is atomic - transaction rollback on user inactivation [33m 633[2mms[22m[39m
+     [33m[2m✓[22m[39m clears the refresh cookie on logout [33m 532[2mms[22m[39m
+     [33m[2m✓[22m[39m revokes all tokens in the same family on logout [33m 636[2mms[22m[39m
+     [33m[2m✓[22m[39m returns current user with valid token [33m 993[2mms[22m[39m
+     [33m[2m✓[22m[39m rejects replay of a revoked refresh token after rotation [33m 614[2mms[22m[39m
+     [33m[2m✓[22m[39m rejects expired refresh token [33m 479[2mms[22m[39m
+     [33m[2m✓[22m[39m creates independent token families for separate logins [33m 1553[2mms[22m[39m
+     [33m[2m✓[22m[39m writes audit event on logout [33m 551[2mms[22m[39m
+     [33m[2m✓[22m[39m writes audit event on token refresh [33m 601[2mms[22m[39m
+[90mstderr[2m | tests/unit/rbac.test.ts[2m > [22m[2mRBAC — Role enforcement[2m > [22m[2mdenies student access to admin user list
+[22m[39m{"level":"warn","event":"auth.permission_denied","userId":"a95ad4c1-5d38-409a-8c0e-c93b1e1cf306","role":"STUDENT","requiredRoles":["ADMIN"],"method":"GET","path":"/api/users/admin/users","ip":"::ffff:127.0.0.1","timestamp":"2026-07-30T04:11:17.390Z"}
+
+[90mstderr[2m | tests/unit/rbac.test.ts[2m > [22m[2mRBAC — Role enforcement[2m > [22m[2mdenies instructor access to admin user list
+[22m[39m{"level":"warn","event":"auth.permission_denied","userId":"2614f5d9-4ceb-465c-8d6b-83381c994c92","role":"INSTRUCTOR","requiredRoles":["ADMIN"],"method":"GET","path":"/api/users/admin/users","ip":"::ffff:127.0.0.1","timestamp":"2026-07-30T04:11:18.671Z"}
+
+[90mstderr[2m | tests/unit/rbac.test.ts[2m > [22m[2mRBAC — Role enforcement[2m > [22m[2mdenies student from deactivating a user
+[22m[39m{"level":"warn","event":"auth.permission_denied","userId":"1a451a85-4050-4a97-a5cc-411908477f3d","role":"STUDENT","requiredRoles":["ADMIN"],"method":"POST","path":"/api/users/admin/users/some-user-id/deactivate","ip":"::ffff:127.0.0.1","timestamp":"2026-07-30T04:11:20.590Z"}
+
+[90mstderr[2m | tests/unit/rbac.test.ts[2m > [22m[2mRBAC — Deny by default[2m > [22m[2mnever returns 200 on admin route for non-admin roles
+[22m[39m{"level":"warn","event":"auth.permission_denied","userId":"e34bd64c-f9cc-44bb-8857-114070d0d871","role":"STUDENT","requiredRoles":["ADMIN"],"method":"GET","path":"/api/users/admin/users","ip":"::ffff:127.0.0.1","timestamp":"2026-07-30T04:11:20.970Z"}
+
+[90mstderr[2m | tests/unit/rbac.test.ts[2m > [22m[2mRBAC — Deny by default[2m > [22m[2mnever returns 200 on admin route for non-admin roles
+[22m[39m{"level":"warn","event":"auth.permission_denied","userId":"e0296d27-e67a-4c5a-ae68-dd6f62317d17","role":"INSTRUCTOR","requiredRoles":["ADMIN"],"method":"GET","path":"/api/users/admin/users","ip":"::ffff:127.0.0.1","timestamp":"2026-07-30T04:11:21.910Z"}
+
+[90mstderr[2m | tests/unit/rbac.test.ts[2m > [22m[2mRBAC — Role Escalation Restrictions[2m > [22m[2mprevents student from accessing instructor routes (conceptually, or any admin routes)
+[22m[39m{"level":"warn","event":"auth.permission_denied","userId":"a7014219-86e5-4bf6-8c67-87736f718916","role":"STUDENT","requiredRoles":["ADMIN"],"method":"GET","path":"/api/users/admin/users","ip":"::ffff:127.0.0.1","timestamp":"2026-07-30T04:11:23.556Z"}
+
+ [32m✓[39m tests/unit/rbac.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 8181[2mms[22m[39m
+     [33m[2m✓[22m[39m denies student access to admin user list [33m 996[2mms[22m[39m
+     [33m[2m✓[22m[39m denies instructor access to admin user list [33m 1211[2mms[22m[39m
+     [33m[2m✓[22m[39m allows admin access to admin user list [33m 1235[2mms[22m[39m
+     [33m[2m✓[22m[39m denies student from deactivating a user [33m 646[2mms[22m[39m
+     [33m[2m✓[22m[39m never returns 200 on admin route for non-admin roles [33m 1507[2mms[22m[39m
+     [33m[2m✓[22m[39m denies access with expired bearer token [33m 482[2mms[22m[39m
+     [33m[2m✓[22m[39m denies access with token signed with wrong secret [33m 534[2mms[22m[39m
+     [33m[2m✓[22m[39m prevents student from accessing instructor routes (conceptually, or any admin routes) [33m 576[2mms[22m[39m
+     [33m[2m✓[22m[39m emits a structured stdout JSON log on 403, but does NOT write to AuditEvent table [33m 521[2mms[22m[39m
+ [32m✓[39m tests/unit/db.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 3171[2mms[22m[39m
+     [33m[2m✓[22m[39m prevents duplicate email registration at DB level [33m 710[2mms[22m[39m
+     [33m[2m✓[22m[39m prevents duplicate enrollment at DB level [33m 521[2mms[22m[39m
+     [33m[2m✓[22m[39m passwordHash is never returned in API responses [33m 440[2mms[22m[39m
+     [33m[2m✓[22m[39m audit events are written on register [33m 454[2mms[22m[39m
+     [33m[2m✓[22m[39m audit events are written on login [33m 868[2mms[22m[39m
+[90mstderr[2m | tests/integration/security.test.ts[2m > [22m[2mSecurity — HTTP hardening[2m > [22m[2mrejects oversized JSON payloads with 413
+[22m[39mPayloadTooLargeError: request entity too large
+    at readStream (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mraw-body[24m/index.js:163:17)
+    at getRawBody (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mraw-body[24m/index.js:116:12)
+    at read (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mbody-parser[24m/lib/read.js:79:3)
+    at jsonParser (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mbody-parser[24m/lib/types/json.js:142:5)
+    at Layer.handle [as handle_request] (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mexpress[24m/lib/router/layer.js:95:5)
+    at trim_prefix (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mexpress[24m/lib/router/index.js:328:13)
+    at /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mexpress[24m/lib/router/index.js:286:9
+    at Function.process_params (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mexpress[24m/lib/router/index.js:346:12)
+    at next (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mexpress[24m/lib/router/index.js:280:10)
+    at cors (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mcors[24m/lib/index.js:188:7) {
+  expected: [33m11275[39m,
+  length: [33m11275[39m,
+  limit: [33m10240[39m,
+  type: [32m'entity.too.large'[39m
+}
+
+ [32m✓[39m tests/integration/security.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 2354[2mms[22m[39m
+     [33m[2m✓[22m[39m does not expose audit event modification endpoints [33m 598[2mms[22m[39m
+     [33m[2m✓[22m[39m creates audit events for admin activation and deactivation [33m 1424[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m5 passed[39m[22m[90m (5)[39m
+[2m      Tests [22m [1m[32m57 passed[39m[22m[90m (57)[39m
+[2m   Start at [22m 05:10:20
+[2m   Duration [22m 71.94s[2m (transform 488ms, setup 938ms, import 2.71s, tests 66.89s, environment 1ms)[22m
+
+
+## Remediated Full Test Suite Exit Code
+0
+
+## Completion Time
+2026-07-30T05:11:31+01:00

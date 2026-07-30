@@ -1,0 +1,23 @@
+# Official npm Registry Metadata
+
+## Capture Time
+2026-07-30T03:20:07+01:00
+
+## rolldown 1.1.5
+{
+  "version": "1.1.5",
+  "dependencies": {
+    "@oxc-project/types": "=0.139.0",
+    "@rolldown/pluginutils": "^1.0.0"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "dist.integrity": "sha512-t9z29cJjXf/vxQ8dyhCSpt6H6aSwHTk8cT5I3iy6SMXuFpk5mB6PL6XfC8PCwrPTx93udwKUm9HRteAlTGBLiA=="
+}
+
+## @rolldown/pluginutils 1.0.1
+{
+  "version": "1.0.1",
+  "dist.integrity": "sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw=="
+}

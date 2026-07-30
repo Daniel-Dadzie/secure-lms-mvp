@@ -1,0 +1,20 @@
+◇ injected env (8) from ../.env // tip: ⌘ override existing { override: true }
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+Datasource "db": PostgreSQL database "secure_lms_dev", schema "public" at "localhost:5432"
+
+3 migrations found in prisma/migrations
+Following migrations have not yet been applied:
+20260716124801_init_schema
+20260721084936_add_refresh_tokens
+20260727085446_add_certificates_and_carts
+
+To apply migrations in development run prisma migrate dev.
+To apply migrations in production run prisma migrate deploy.
+
+## Prisma Migrate Status Exit Code
+1
+
+## Completion Time
+2026-07-29T20:25:17+01:00

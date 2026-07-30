@@ -1,0 +1,30 @@
+# PostgreSQL Database State Before Migration Validation
+
+## Capture Time
+2026-07-29T20:23:39+01:00
+
+## Connection Information
+ database_name  | database_user | active_schema
+----------------+---------------+---------------
+ secure_lms_dev | postgres      | public
+(1 row)
+
+
+## PostgreSQL Version
+                                         version
+------------------------------------------------------------------------------------------
+ PostgreSQL 16.14 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+(1 row)
+
+
+## Application Tables
+ schemaname | tablename
+------------+-----------
+(0 rows)
+
+
+## Recorded Prisma Migrations
+ERROR:  relation "_prisma_migrations" does not exist
+LINE 7:       FROM "_prisma_migrations"
+                   ^
+The _prisma_migrations table is not currently available.

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import express from "express";
 import supertest from "supertest";
 import { prisma } from "../../src/config/prisma";
@@ -56,7 +56,11 @@ describe("IDOR Prevention — requireOwnership", () => {
 
     request = supertest(app);
 
-    // 2. Seed database test data
+  });
+
+  beforeEach(async () => {
+    // Recreate database fixtures because the global setup removes test data
+    // after every individual test.
     studentA = await createTestUser({ email: "studenta-idor@test.com", role: "STUDENT" });
     studentB = await createTestUser({ email: "studentb-idor@test.com", role: "STUDENT" });
     instructorA = await createTestUser({ email: "instructora-idor@test.com", role: "INSTRUCTOR" });

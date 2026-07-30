@@ -1,0 +1,22 @@
+# Installed Rolldown Dependency Verification
+
+## Verification Time
+2026-07-30T04:04:58+01:00
+
+## Dependency Tree
+secure-lms-mvp@1.0.0 /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp
+└─┬ secure-lms-server@1.0.0 -> ./server
+  └─┬ vitest@4.1.10
+    ├─┬ @vitest/mocker@4.1.10
+    │ └── vite@8.1.5 deduped
+    └─┬ vite@8.1.5
+      └─┬ rolldown@1.1.5
+        ├── @oxc-project/types@0.139.0
+        └── @rolldown/pluginutils@1.0.1
+
+
+## Pluginutils Resolution
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/@rolldown/pluginutils/package.json
+
+## Rolldown Import
+Rolldown import: PASS

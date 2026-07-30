@@ -1,0 +1,23 @@
+◇ injected env (6) from ../.env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+Datasource "db": PostgreSQL database "secure_lms_test", schema "public" at "localhost:5432"
+
+3 migrations found in prisma/migrations
+
+Applying migration `20260727085446_add_certificates_and_carts`
+
+The following migration(s) have been applied:
+
+migrations/
+  └─ 20260727085446_add_certificates_and_carts/
+    └─ migration.sql
+
+All migrations have been successfully applied.
+
+## Test Database Migration Exit Code
+0
+
+## Completion Time
+2026-07-30T02:40:29+01:00

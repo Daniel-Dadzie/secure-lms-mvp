@@ -1,0 +1,38 @@
+# PostgreSQL State After Prisma Migration Deployment
+
+## Capture Time
+2026-07-29T20:56:08+01:00
+
+## Application Tables
+ schemaname |     tablename
+------------+--------------------
+ public     | _prisma_migrations
+ public     | audit_events
+ public     | cart_items
+ public     | carts
+ public     | categories
+ public     | certificates
+ public     | courses
+ public     | enrollments
+ public     | lesson_progress
+ public     | lessons
+ public     | modules
+ public     | purchases
+ public     | refresh_tokens
+ public     | users
+(14 rows)
+
+
+## Applied Prisma Migrations
+              migration_name               | completed | rolled_back_at
+-------------------------------------------+-----------+----------------
+ 20260716124801_init_schema                | t         |
+ 20260721084936_add_refresh_tokens         | t         |
+ 20260727085446_add_certificates_and_carts | t         |
+(3 rows)
+
+
+## Failed or Rolled-Back Migrations
+ migration_name | finished_at | rolled_back_at | logs
+----------------+-------------+----------------+------
+(0 rows)

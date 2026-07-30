@@ -1,0 +1,52 @@
+# Docker and PostgreSQL Availability Verification
+
+## Verification Time
+2026-07-29T17:44:53+01:00
+
+## Docker Version
+Client:
+ Version:           29.6.1
+ API version:       1.55
+ Go version:        go1.26.4
+ Git commit:        8900f1d
+ Built:             Fri Jun 26 11:39:39 2026
+ OS/Arch:           linux/amd64
+ Context:           default
+
+Server: Docker Desktop 4.80.0 (232116)
+ Engine:
+  Version:          29.6.1
+  API version:      1.55 (minimum version 1.40)
+  Go version:       go1.26.4
+  Git commit:       8ec5ab3
+  Built:            Fri Jun 26 11:41:04 2026
+  OS/Arch:          linux/amd64
+  Experimental:     false
+ containerd:
+  Version:          v2.2.5
+  GitCommit:        e53c7c1516c3b2bff98eb76f1f4117477e6f4e66
+ runc:
+  Version:          1.3.6
+  GitCommit:        v1.3.6-0-g491b69ba
+ docker-init:
+  Version:          0.19.0
+  GitCommit:        de40ad0
+
+## Docker Compose Version
+Docker Compose version v5.1.4
+
+## Running Containers
+CONTAINER ID   IMAGE                COMMAND                  CREATED      STATUS                 PORTS                                         NAMES
+7f8755614ce2   postgres:16-alpine   "docker-entrypoint.s…"   5 days ago   Up 2 hours (healthy)   0.0.0.0:5432->5432/tcp, [::]:5432->5432/tcp   secure-lms-postgres
+
+## PostgreSQL Container State
+Status=running Health=healthy
+
+## PostgreSQL Readiness
+/var/run/postgresql:5432 - accepting connections
+
+## Local Port 5432 Connectivity
+PASS: localhost:5432 is reachable
+
+## Docker Compose Configuration
+docker compose config exit code: 0

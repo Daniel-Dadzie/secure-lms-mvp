@@ -1,0 +1,38 @@
+
+> secure-lms-mvp@1.0.0 test
+> npm run test --workspaces --if-present
+
+
+> secure-lms-server@1.0.0 test
+> vitest run --fileParallelism=false
+
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Startup Error [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯⎯[39m
+Error [ERR_MODULE_NOT_FOUND]: Cannot find package '@rolldown/pluginutils' imported from /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/rolldown/dist/shared/bindingify-input-options-XPJLJOD0.mjs
+    at packageResolve (node:internal/modules/esm/resolve:873:9)
+    at moduleResolve (node:internal/modules/esm/resolve:946:18)
+    at defaultResolve (node:internal/modules/esm/resolve:1188:11)
+    at ModuleLoader.defaultResolve (node:internal/modules/esm/loader:708:12)
+    at #cachedDefaultResolve (node:internal/modules/esm/loader:657:25)
+    at ModuleLoader.resolve (node:internal/modules/esm/loader:640:38)
+    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:264:38)
+    at ModuleJob._link (node:internal/modules/esm/module_job:168:49) {
+  code: 'ERR_MODULE_NOT_FOUND'
+}
+
+
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server
+npm error workspace secure-lms-server@1.0.0
+npm error location /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server
+npm error command failed
+npm error command sh -c vitest run --fileParallelism=false
+
+
+## Complete Test Suite Exit Code
+1
+
+## Completion Time
+2026-07-30T02:49:57+01:00

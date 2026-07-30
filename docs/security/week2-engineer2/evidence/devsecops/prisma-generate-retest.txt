@@ -1,0 +1,20 @@
+
+> secure-lms-server@1.0.0 prisma:generate
+> prisma generate
+
+◇ injected env (8) from ../.env // tip: ◈ encrypted .env [www.dotenvx.com]
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+
+✔ Generated Prisma Client (v7.8.0) to ./node_modules/@prisma/client in 833ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+
+## Prisma Generate Retest Exit Code
+
+
+## Completion Time
+2026-07-29T18:52:58+01:00

@@ -1,0 +1,20 @@
+# Prisma Client State After Clean npm ci
+
+## Capture Time
+2026-07-30T04:11:55+01:00
+
+## Installed Prisma Dependency Tree
+secure-lms-mvp@1.0.0 /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp
+├── @prisma/client@7.9.1
+└─┬ secure-lms-server@1.0.0 -> ./server
+  ├─┬ @prisma/client@7.8.0
+  │ └── prisma@7.8.0 deduped
+  └── prisma@7.8.0
+
+
+## Prisma Client Package Locations
+node_modules/@prisma/client/package.json
+server/node_modules/@prisma/client/package.json
+
+## Expected Generated Client
+MISSING: server/node_modules/.prisma/client/default.js

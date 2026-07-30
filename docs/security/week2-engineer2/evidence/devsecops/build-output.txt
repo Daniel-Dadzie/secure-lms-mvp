@@ -1,0 +1,47 @@
+
+> secure-lms-mvp@1.0.0 build
+> npm run build --workspaces --if-present
+
+
+> client@0.1.0 build
+> next build
+
+▲ Next.js 16.2.11 (Turbopack)
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 13.1s
+  Running TypeScript ...
+  Finished TypeScript in 6.9s ...
+  Collecting page data using 3 workers ...
+  Generating static pages using 3 workers (0/11) ...
+  Generating static pages using 3 workers (2/11)
+  Generating static pages using 3 workers (5/11)
+  Generating static pages using 3 workers (8/11)
+✓ Generating static pages using 3 workers (11/11) in 523ms
+  Finalizing page optimization ...
+
+Route (app)
+┌ ○ /
+├ ○ /_not-found
+├ ○ /admin
+├ ○ /forgot-password
+├ ○ /health
+├ ○ /instructor
+├ ○ /login
+├ ○ /register
+├ ○ /student
+└ ○ /unauthorized
+
+
+○  (Static)  prerendered as static content
+
+
+> secure-lms-server@1.0.0 build
+> tsc
+
+
+## Repository Build Exit Code
+0
+
+## Completion Time
+2026-07-30T02:25:35+01:00
