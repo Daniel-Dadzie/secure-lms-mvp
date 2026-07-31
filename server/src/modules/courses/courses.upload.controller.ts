@@ -2,6 +2,9 @@ import type { Request, Response, NextFunction } from "express";
 import { uploadThumbnail, generateVideoUploadUrl } from "../../services/upload.service";
 import { prisma } from "../../config/prisma";
 
+interface MulterRequest extends Request {
+  file?: Express.Multer.File;
+}
 export async function uploadThumbnailHandler(
   req: Request,
   res: Response,

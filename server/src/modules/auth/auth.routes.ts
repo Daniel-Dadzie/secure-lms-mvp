@@ -2,6 +2,8 @@ import { Router } from "express";
 import rateLimit from "express-rate-limit";
 import * as authController from "./auth.controller";
 import { authenticate } from "../../middleware/authenticate";
+import { sendVerification, verifyEmail } from "./email-verification.service";
+
 
 const router = Router();
 
@@ -43,5 +45,44 @@ router.post("/login", authRateLimit, authController.login);
 router.post("/logout", authController.logout);
 router.post("/refresh", refreshRateLimit, authController.refreshToken);
 router.get("/me", authenticate, authController.me);
+// POST /api/auth/send-verification — resend verification email
+router.post(
+  "/send-verification",
+  authenticate,
+  async (req, res, next) => {
+    try {
+      const userId = (req as any).user?.sub;
+      await sendVerification(userId);
+      res.status(200).json({ message: "Verification email sent" });
+    } catch (error: any) {
+      if (error.message === "Email already verified") {
+        res.status(400).json({ message: "Email already verified" });
+        return;
+      }
+      next(error);
+    }
+  }
+);
+
+// GET /api/auth/verify-email?token=xxx — verify the token from email link
+router.get(
+  "/verify-email",
+  async (req, res, next) => {
+    try {
+      const token = req.query.token as string;
+      if (!token) {
+        res.status(400).json({ message: "Token is required" });
+        return;
+      }
+      await verifyEmail(token);
+      res.redirect(`${process.env.CLIENT_URL}/verify-email/success`);
+    } catch (error: any) {
+      res.redirect(
+        `${process.env.CLIENT_URL}/verify-email/error?message=${encodeURIComponent(error.message)}`
+      );
+    }
+  }
+);
+
 
 export default router;
