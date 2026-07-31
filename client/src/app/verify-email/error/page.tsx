@@ -1,7 +1,9 @@
 "use client";
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function VerifyEmailError() {
+// 1. Inner component that safely consumes useSearchParams
+function VerifyEmailErrorContent() {
   const searchParams = useSearchParams();
   const message = searchParams.get("message") || "Verification failed";
 
@@ -13,5 +15,20 @@ export default function VerifyEmailError() {
         Back to Login
       </a>
     </main>
+  );
+}
+
+// 2. Default export wrapped in a Suspense boundary
+export default function VerifyEmailError() {
+  return (
+    <Suspense
+      fallback={
+        <main className="flex flex-col items-center justify-center min-h-screen gap-4 p-8">
+          <p className="text-gray-500">Loading...</p>
+        </main>
+      }
+    >
+      <VerifyEmailErrorContent />
+    </Suspense>
   );
 }
