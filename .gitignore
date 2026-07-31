@@ -11,6 +11,7 @@ coverage/
 # Environment files
 .env*
 !.env.example
+.env.test
 
 # Logs and local security output
 *.log
@@ -28,3 +29,4 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.swp
+serviceAccountKey.json

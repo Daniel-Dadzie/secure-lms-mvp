@@ -1,71 +1,111 @@
 import { Router } from "express";
 import { authenticate, requireRole, requireOwnership } from "../../middleware";
-import * as coursesController from "./courses.controller";
+import * as modulesController from "./modules.controller";
+import * as lessonsController from "./lessons.controller";
+import { thumbnailUpload } from "../../middleware/upload";
+import reviewsRouter from "../reviews/reviews.routes";
+import { uploadThumbnailHandler, generateVideoUploadUrlHandler } from "./courses.upload.controller";
 
 const router = Router();
-
-// ----------------------------------------------------------------------------
-// Public routes — no auth required
-// ----------------------------------------------------------------------------
-router.get("/", coursesController.getPublishedCourses);
-router.get("/:courseId", coursesController.getPublishedCourseById);
-
-// ----------------------------------------------------------------------------
-// Instructor routes
-// ----------------------------------------------------------------------------
-router.get(
-  "/instructor/my-courses",
+// Thumbnail upload — multipart/form-data
+router.post(
+  "/:courseId/thumbnail",
   authenticate,
   requireRole(["INSTRUCTOR", "ADMIN"]),
-  coursesController.getInstructorCourses
+  requireOwnership("course"),
+  thumbnailUpload.single("thumbnail"),
+  uploadThumbnailHandler
+);
+
+// Request signed URL for video upload
+router.post(
+  "/:courseId/lessons/:lessonId/video-upload-url",
+  authenticate,
+  requireRole(["INSTRUCTOR", "ADMIN"]),
+  requireOwnership("course"),
+  generateVideoUploadUrlHandler
+);
+
+// ----------------------------------------------------------------------------
+// Module routes
+// ----------------------------------------------------------------------------
+router.get(
+  "/:courseId/modules",
+  modulesController.getModulesByCourse
 );
 
 router.post(
-  "/",
+  "/:courseId/modules",
   authenticate,
-  requireRole(["INSTRUCTOR"]),
-  coursesController.createCourse
+  requireRole(["INSTRUCTOR", "ADMIN"]),
+  requireOwnership("course"),
+  modulesController.createModule
 );
 
 router.patch(
-  "/:courseId",
+  "/:courseId/modules/reorder",
   authenticate,
   requireRole(["INSTRUCTOR", "ADMIN"]),
   requireOwnership("course"),
-  coursesController.updateCourse
+  modulesController.reorderModules
 );
 
-router.post(
-  "/:courseId/publish",
+router.patch(
+  "/:courseId/modules/:moduleId",
   authenticate,
   requireRole(["INSTRUCTOR", "ADMIN"]),
   requireOwnership("course"),
-  coursesController.publishCourse
-);
-
-router.post(
-  "/:courseId/unpublish",
-  authenticate,
-  requireRole(["INSTRUCTOR", "ADMIN"]),
-  requireOwnership("course"),
-  coursesController.unpublishCourse
-);
-
-// ----------------------------------------------------------------------------
-// Admin routes
-// ----------------------------------------------------------------------------
-router.get(
-  "/admin/all",
-  authenticate,
-  requireRole(["ADMIN"]),
-  coursesController.getAllCourses
+  modulesController.updateModule
 );
 
 router.delete(
-  "/:courseId",
+  "/:courseId/modules/:moduleId",
   authenticate,
-  requireRole(["ADMIN"]),
-  coursesController.archiveCourse
+  requireRole(["INSTRUCTOR", "ADMIN"]),
+  requireOwnership("course"),
+  modulesController.deleteModule
 );
 
-export default router;
+// ----------------------------------------------------------------------------
+// Lesson routes
+// ----------------------------------------------------------------------------
+router.get(
+  "/:courseId/modules/:moduleId/lessons/:lessonId",
+  authenticate,
+  lessonsController.getLessonById
+);
+
+router.post(
+  "/:courseId/modules/:moduleId/lessons",
+  authenticate,
+  requireRole(["INSTRUCTOR", "ADMIN"]),
+  requireOwnership("course"),
+  lessonsController.createLesson
+);
+
+router.patch(
+  "/:courseId/modules/:moduleId/lessons/reorder",
+  authenticate,
+  requireRole(["INSTRUCTOR", "ADMIN"]),
+  requireOwnership("course"),
+  lessonsController.reorderLessons
+);
+
+router.patch(
+  "/:courseId/modules/:moduleId/lessons/:lessonId",
+  authenticate,
+  requireRole(["INSTRUCTOR", "ADMIN"]),
+  requireOwnership("course"),
+  lessonsController.updateLesson
+);
+
+router.delete(
+  "/:courseId/modules/:moduleId/lessons/:lessonId",
+  authenticate,
+  requireRole(["INSTRUCTOR", "ADMIN"]),
+  requireOwnership("course"),
+  lessonsController.deleteLesson
+);
+
+// Mount reviews as nested resource under courses
+router.use("/:courseId/reviews", reviewsRouter);
