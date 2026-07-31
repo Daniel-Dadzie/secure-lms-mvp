@@ -1,15 +1,18 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { getDashboardPath } from "@/lib/redirects";
 
-export default function LoginPage() {
+// 1. Extract the logic that uses searchParams into an inner component
+function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
+  
+  // This hook is now safely inside a component that will be wrapped in Suspense
   const searchParams = useSearchParams();
   const justRegistered = searchParams.get("registered") === "true";
 
@@ -33,7 +36,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen gap-4 p-8">
+    <>
       <h1 className="text-2xl font-bold">Login</h1>
 
       {justRegistered && (
@@ -68,6 +71,17 @@ export default function LoginPage() {
       <a href="/register" className="text-sm text-blue-600 underline">
         Don't have an account? Register
       </a>
+    </>
+  );
+}
+
+// 2. Wrap the inner component with Suspense in the main page export
+export default function LoginPage() {
+  return (
+    <main className="flex flex-col items-center justify-center min-h-screen gap-4 p-8">
+      <Suspense fallback={<p className="text-sm text-gray-500">Loading form...</p>}>
+        <LoginForm />
+      </Suspense>
     </main>
   );
 }
