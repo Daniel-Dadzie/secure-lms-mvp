@@ -1,13 +1,10 @@
-import multer from "multer";
+import multer, { FileFilterCallback } from "multer";
+import { Request } from "express";
 
-// ----------------------------------------------------------------------------
-// Multer configured for memory storage — file buffer passed to Cloudinary.
-// File size limit: 5MB for images (videos go directly to Firebase, bypassing this)
-// ----------------------------------------------------------------------------
 export const thumbnailUpload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
-  fileFilter: (_req, file, cb) => {
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
     const allowed = ["image/jpeg", "image/png", "image/webp"];
     if (allowed.includes(file.mimetype)) {
       cb(null, true);

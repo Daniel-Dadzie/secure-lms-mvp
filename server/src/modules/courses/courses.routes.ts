@@ -109,3 +109,5 @@ router.delete(
 
 // Mount reviews as nested resource under courses
 router.use("/:courseId/reviews", reviewsRouter);
+
+export default router;

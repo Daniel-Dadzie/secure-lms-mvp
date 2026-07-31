@@ -1,22 +1,27 @@
-import admin from "firebase-admin";
+import { App, initializeApp, getApps, cert } from "firebase-admin/app";
 import { getStorage } from "firebase-admin/storage";
 import { getMessaging } from "firebase-admin/messaging";
 
-// 1. Initialize the Firebase Admin App if not already initialized
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
+// ----------------------------------------------------------------------------
+// Firebase Admin SDK initialization.
+// Credentials come from environment variables — never from a committed file.
+// The private key contains literal \n in the env var;
+// replace with real newlines before passing to the SDK.
+// ----------------------------------------------------------------------------
+let app: App;
+
+if (!getApps().length) {
+  app = initializeApp({
+    credential: cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      // Replace literal \n characters if stored as a single-line env variable
       privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
     }),
     storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
   });
+} else {
+  app = getApps()[0];
 }
 
-// 2. Export your initialized services using the explicit modular getters
-export const firebaseStorage = getStorage();
-export const firebaseMessaging = getMessaging();
-
-export default admin;
+export const firebaseStorage = getStorage(app);
+export const firebaseMessaging = getMessaging(app);
