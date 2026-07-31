@@ -1,0 +1,56 @@
+
+> secure-lms-mvp@1.0.0 test
+> npm run test --workspaces --if-present
+
+
+> secure-lms-server@1.0.0 test
+> vitest run --fileParallelism=false
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server[39m
+
+ [31m❯[39m tests/integration/security.test.ts [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m tests/unit/auth.test.ts [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m tests/unit/db.test.ts [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m tests/unit/idor.test.ts [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m tests/unit/rbac.test.ts [2m([22m[2m0 test[22m[2m)[22m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Suites 5 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/integration/security.test.ts[2m [ tests/integration/security.test.ts ][22m
+[41m[1m FAIL [22m[49m tests/unit/auth.test.ts[2m [ tests/unit/auth.test.ts ][22m
+[41m[1m FAIL [22m[49m tests/unit/db.test.ts[2m [ tests/unit/db.test.ts ][22m
+[41m[1m FAIL [22m[49m tests/unit/idor.test.ts[2m [ tests/unit/idor.test.ts ][22m
+[41m[1m FAIL [22m[49m tests/unit/rbac.test.ts[2m [ tests/unit/rbac.test.ts ][22m
+[31m[1mError[22m: JWT_ACCESS_SECRET must be configured and contain at least 32 characters[39m
+[36m [2m❯[22m requireSecret src/config/jwt.ts:[2m5:11[22m[39m
+    [90m  3|[39m
+    [90m  4|[39m   [35mif[39m ([33m![39mvalue [33m||[39m value[33m.[39mlength [33m<[39m [34m32[39m) {
+    [90m  5|[39m     [35mthrow[39m [35mnew[39m [33mError[39m(
+    [90m   |[39m           [31m^[39m
+    [90m  6|[39m       [32m`[39m[36m${[39mname[36m}[39m[32m must be configured and contain at least 32 characters`[39m
+    [90m  7|[39m     )[33m;[39m
+[90m [2m❯[22m src/config/jwt.ts:[2m14:17[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/5]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m5 failed[39m[22m[90m (5)[39m
+[2m      Tests [22m [2mno tests[22m
+[2m   Start at [22m 04:19:13
+[2m   Duration [22m 6.05s[2m (transform 383ms, setup 1.24s, import 0ms, tests 0ms, environment 1ms)[22m
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server
+npm error workspace secure-lms-server@1.0.0
+npm error location /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server
+npm error command failed
+npm error command sh -c vitest run --fileParallelism=false
+
+
+## Test Suite Exit Code After Prisma Generation
+1
+
+## Completion Time
+2026-07-30T04:19:18+01:00

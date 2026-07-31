@@ -1,0 +1,93 @@
+# Secure LMS MVP — Pre-install Dependency State
+
+## Capture Date
+2026-07-29T16:38:25+01:00
+
+## Branch
+security/week2-engineer2-validation
+
+## Commit
+3c65f2df18a2516f656f7203dee1ac8d1c2beb0b
+
+## Git Status Before npm ci
+?? docs/security/week2-engineer2/
+
+## Package File Checksums
+8b99649868f6f50655c6b5044ceecda7c86b4b27b99ca60150f746b2dfa9fb3c  package.json
+b8b30198a8af7c990002855d5037919b7568a902fd05890e4c6ef0a8ea9e023d  package-lock.json
+1193e5c1e242f413d507e30797bb674b079af7c1284441868d5e4801f79d048b  server/package.json
+7448c76dffdf6f05e7f08a43be2732826be02626cdc6a8654363b442f0146fe5  client/package.json
+720ef031af72b0f6ddbd0dd4919d75f24f22b5c24dc8a0c2afae85566f4c690d  packages/shared/package.json
+
+## Lockfile Metadata
+lockfileVersion: 3
+requires: true
+root package name: secure-lms-mvp
+root package version: 1.0.0
+
+## Package Manifest Versions
+
+### package.json
+name: secure-lms-mvp
+version: 1.0.0
+@prisma/client: ^7.9.1
+prisma: not declared
+express-rate-limit: not declared
+vitest: not declared
+jsonwebtoken: not declared
+bcrypt: not declared
+bcryptjs: not declared
+helmet: not declared
+
+### server/package.json
+name: secure-lms-server
+version: 1.0.0
+@prisma/client: 7.8.0
+prisma: 7.8.0
+express-rate-limit: ^8.6.1
+vitest: ^4.1.10
+jsonwebtoken: ^9.0.3
+bcrypt: ^6.0.0
+bcryptjs: ^3.0.3
+helmet: ^8.3.0
+
+### client/package.json
+name: client
+version: 0.1.0
+@prisma/client: not declared
+prisma: not declared
+express-rate-limit: not declared
+vitest: not declared
+jsonwebtoken: not declared
+bcrypt: not declared
+bcryptjs: not declared
+helmet: not declared
+
+### packages/shared/package.json
+name: @lms/shared
+version: 1.0.0
+@prisma/client: not declared
+prisma: not declared
+express-rate-limit: not declared
+vitest: not declared
+jsonwebtoken: not declared
+bcrypt: not declared
+bcryptjs: not declared
+helmet: not declared
+
+## Current Installed Dependency Tree
+secure-lms-mvp@1.0.0 /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp
+└─┬ secure-lms-server@1.0.0 -> ./server
+  ├── @prisma/client@7.8.0
+  ├── bcrypt@6.0.0
+  ├── bcryptjs@3.0.3
+  ├── express-rate-limit@8.6.0 invalid: "^8.6.1" from server
+  ├── jsonwebtoken@9.0.3
+  ├── prisma@7.8.0
+  └── vitest@4.1.10
+
+npm error code ELSPROBLEMS
+npm error invalid: express-rate-limit@8.6.0 /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/express-rate-limit
+npm error A complete log of this run can be found in: /home/amuzie/.npm/_logs/2026-07-29T15_38_26_273Z-debug-0.log
+
+## Tracked Package File Modifications

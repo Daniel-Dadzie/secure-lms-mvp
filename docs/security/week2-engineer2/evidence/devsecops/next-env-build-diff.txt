@@ -1,0 +1,29 @@
+# Next.js Generated File Modification Review
+
+## Capture Time
+2026-07-30T02:30:11+01:00
+
+## File Status
+ M client/next-env.d.ts
+
+## File Difference
+diff --git a/client/next-env.d.ts b/client/next-env.d.ts
+index c4b7818..9edff1c 100644
+--- a/client/next-env.d.ts
++++ b/client/next-env.d.ts
+@@ -1,6 +1,6 @@
+ /// <reference types="next" />
+ /// <reference types="next/image-types/global" />
+-import "./.next/dev/types/routes.d.ts";
++import "./.next/types/routes.d.ts";
+
+ // NOTE: This file should not be edited
+ // see https://nextjs.org/docs/app/api-reference/config/typescript for more information.
+
+## Current File Contents
+/// <reference types="next" />
+/// <reference types="next/image-types/global" />
+import "./.next/types/routes.d.ts";
+
+// NOTE: This file should not be edited
+// see https://nextjs.org/docs/app/api-reference/config/typescript for more information.

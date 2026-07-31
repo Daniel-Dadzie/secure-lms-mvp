@@ -1,0 +1,240 @@
+# Failed Security Test Root-Cause Evidence
+
+## Capture Time
+2026-07-30T04:40:18+01:00
+
+## Student Test-User Creation
+     9	  email?: string;
+    10	  password?: string;
+    11	  fullName?: string;
+    12	  role?: "STUDENT" | "INSTRUCTOR" | "ADMIN";
+    13	}) {
+    14	  const payload = {
+    15	    email: overrides?.email || "test@example.com",
+    16	    password: overrides?.password || "Password123!",
+    17	    fullName: overrides?.fullName || "Test User",
+    18	    role: overrides?.role || "STUDENT",
+    19	  };
+    20
+    21	  // ADMIN and INSTRUCTOR can't self-register — create via Prisma directly
+    22	  if (payload.role === "ADMIN" || payload.role === "INSTRUCTOR") {
+    23	    const bcrypt = await import("bcryptjs");
+    24	    const { prisma } = await import("../../src/config/prisma");
+    25	    const user = await prisma.user.create({
+    26	      data: {
+    27	        email: payload.email,
+    28	        passwordHash: await bcrypt.hash(payload.password, 12),
+    29	        fullName: payload.fullName,
+    30	        role: payload.role,
+    31	      },
+    32	    });
+    33	    // Login to get tokens
+    34	    const res = await request
+    35	      .post("/api/auth/login")
+    36	      .send({ email: payload.email, password: payload.password });
+    37	    return { user, accessToken: res.body.accessToken, cookie: res.headers["set-cookie"] };
+    38	  }
+    39
+    40	  const res = await request.post("/api/auth/register").send(payload);
+    41
+    42	  // Fail loudly and print the exact reason if creation fails!
+    43	  if (res.status !== 201) {
+    44	    throw new Error(
+    45	      `createTestUser failed! Status: ${res.status}. Response: ${JSON.stringify(res.body)}`
+    46	    );
+    47	  }
+    48
+    49	  return {
+    50	    user: res.body.user,
+    51	    userId: res.body.user.id,
+    52	    accessToken: res.body.accessToken,
+    53	    cookie: res.headers["set-cookie"],
+    54	  };
+    55	}
+
+## Registration Token-Family Creation
+   128	  const tokens = generateTokenPair(user.id, user.role);
+   129	  await storeRefreshToken(user.id, tokens.refreshToken, family);
+   130
+   131	  // 5. Write audit event
+   132	  await prisma.auditEvent.create({
+   133	    data: {
+   134	      userId: user.id,
+   135	      action: "auth.register",
+   136	      entityType: "User",
+   137	      entityId: user.id,
+   138	      metadata: { role: user.role },
+   139	    },
+   140	  });
+   141
+   142	  return { tokens, user: toSafeUser(user) };
+   143	}
+   144
+   145	export async function login(
+
+## Concurrent-Session Test
+   293	    await createTestUser({ email: "concurrent@test.com", password: "Password123!" });
+   294
+   295	    const login1 = await request.post("/api/auth/login").send({
+   296	      email: "concurrent@test.com",
+   297	      password: "Password123!",
+   298	    });
+   299	    const login2 = await request.post("/api/auth/login").send({
+   300	      email: "concurrent@test.com",
+   301	      password: "Password123!",
+   302	    });
+   303
+   304	    expect(login1.status).toBe(200);
+   305	    expect(login2.status).toBe(200);
+   306
+   307	    const user = await prisma.user.findUnique({ where: { email: "concurrent@test.com" } });
+   308	    const tokens = await prisma.refreshToken.findMany({ where: { userId: user!.id } });
+   309	    const families = new Set(tokens.map((t) => t.family));
+   310	    expect(families.size).toBe(2);
+   311	  });
+   312	});
+
+## Logout Controller
+   111	export async function logout(
+   112	  req: Request,
+   113	  res: Response,
+   114	  next: NextFunction
+   115	): Promise<void> {
+   116	  try {
+   117	    const refreshToken = req.cookies?.refreshToken;
+   118
+   119	    if (refreshToken) {
+   120	      // req.user may be set by authenticate middleware if token is still valid
+   121	      const userId = (req as any).user?.sub;
+   122	      await authService.logout(refreshToken, userId);
+   123	    }
+   124
+   125	    clearRefreshCookie(res);
+   126	    res.status(204).send();
+   127	  } catch (error) {
+   128	    next(error);
+   129	  }
+   130	}
+   131
+   132	// ----------------------------------------------------------------------------
+
+## Logout Service
+   325	  userId?: string
+   326	): Promise<void> {
+   327	  const tokenHash = crypto
+   328	    .createHash("sha256")
+   329	    .update(refreshToken)
+   330	    .digest("hex");
+   331
+   332	  // Get the token family to revoke all tokens in the same family
+   333	  const storedToken = await prisma.refreshToken.findUnique({
+   334	    where: { tokenHash },
+   335	    select: { family: true },
+   336	  });
+   337
+   338	  // Revoke all tokens in the same family for complete session invalidation
+   339	  if (storedToken) {
+   340	    await prisma.refreshToken.updateMany({
+   341	      where: { family: storedToken.family },
+   342	      data: { revokedAt: new Date() },
+   343	    });
+   344	  }
+   345
+   346	  await prisma.auditEvent.create({
+   347	    data: {
+   348	      userId,
+   349	      action: "auth.logout",
+   350	      entityType: "User",
+   351	      entityId: userId,
+   352	    },
+   353	  });
+   354	}
+   355
+   356	export async function getCurrentUser(userId: string): Promise<SafeUser> {
+   357	  const user = await prisma.user.findUnique({
+   358	    where: { id: userId },
+   359	  });
+
+## Global Test Cleanup
+    47	  await prisma.$queryRaw`SELECT 1`;
+    48	});
+    49
+    50	afterEach(async () => {
+    51	  // Clean up test data after each test in reverse FK order
+    52	  await prisma.auditEvent.deleteMany();
+    53	  await prisma.refreshToken.deleteMany();
+    54	  await prisma.certificate.deleteMany();
+    55	  await prisma.lessonProgress.deleteMany();
+    56	  await prisma.enrollment.deleteMany();
+    57	  await prisma.purchase.deleteMany();
+    58	  await prisma.lesson.deleteMany();
+    59	  await prisma.module.deleteMany();
+    60	  await prisma.course.deleteMany();
+    61	  await prisma.category.deleteMany();
+    62	  await prisma.user.deleteMany();
+    63	});
+    64
+    65	afterAll(async () => {
+    66	  await prisma.$disconnect();
+    67	});
+
+## IDOR Fixture Lifecycle
+    12	  let request: supertest.Agent;
+    13
+    14	  // DB entities IDs
+    15	  let studentA: any, studentB: any;
+    16	  let instructorA: any, instructorB: any;
+    17	  let admin: any;
+    18
+    19	  let courseA: any, courseB: any;
+    20	  let moduleA: any, moduleB: any;
+    21	  let lessonA: any, lessonB: any;
+    22	  let progressA: any, progressB: any;
+    23	  let certA: any, certB: any;
+    24
+    25	  beforeAll(async () => {
+    26	    // 1. Create a dummy Express app to mount our ownership middlewares for isolation testing
+    27	    app = express();
+    28	    app.use(express.json());
+    29
+    30	    app.get(
+    31	      "/test/lessons/:lessonProgressId",
+    32	      authenticate,
+    33	      requireOwnership("lesson"),
+    34	      (req, res) => {
+    35	        res.status(200).json({ status: "success" });
+    36	      }
+    37	    );
+    38
+    39	    app.get(
+    40	      "/test/modules/:moduleId",
+    41	      authenticate,
+    42	      requireOwnership("module"),
+    43	      (req, res) => {
+    44	        res.status(200).json({ status: "success" });
+    45	      }
+    46	    );
+    47
+    48	    app.get(
+    49	      "/test/certificates/:certificateId",
+    50	      authenticate,
+    51	      requireOwnership("certificate"),
+    52	      (req, res) => {
+    53	        res.status(200).json({ status: "success" });
+    54	      }
+    55	    );
+    56
+    57	    request = supertest(app);
+    58
+    59	    // 2. Seed database test data
+    60	    studentA = await createTestUser({ email: "studenta-idor@test.com", role: "STUDENT" });
+    61	    studentB = await createTestUser({ email: "studentb-idor@test.com", role: "STUDENT" });
+    62	    instructorA = await createTestUser({ email: "instructora-idor@test.com", role: "INSTRUCTOR" });
+    63	    instructorB = await createTestUser({ email: "instructorb-idor@test.com", role: "INSTRUCTOR" });
+    64	    admin = await createTestUser({ email: "admin-idor@test.com", role: "ADMIN" });
+    65
+    66	    // Create courses
+    67	    courseA = await prisma.course.create({
+    68	      data: {
+    69	        title: "Course A",
+    70	        slug: "course-a",

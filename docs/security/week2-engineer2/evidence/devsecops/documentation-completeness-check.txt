@@ -1,0 +1,11 @@
+PASS: docs/security/week2-engineer2/01-validation-scope.md
+PASS: docs/security/week2-engineer2/02-environment-baseline.md
+PASS: docs/security/week2-engineer2/03-authentication-test-results.md
+PASS: docs/security/week2-engineer2/04-rbac-test-results.md
+PASS: docs/security/week2-engineer2/05-idor-test-results.md
+PASS: docs/security/week2-engineer2/06-audit-log-validation.md
+PASS: docs/security/week2-engineer2/07-api-security-results.md
+PASS: docs/security/week2-engineer2/08-devsecops-validation.md
+PASS: docs/security/week2-engineer2/09-vulnerability-retest.md
+PASS: docs/security/week2-engineer2/10-week2-security-signoff.md
+PASS: docs/security/week2-engineer2/11-known-limitations.md

@@ -1,0 +1,43 @@
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server[39m
+
+ [32m✓[39m tests/unit/auth.test.ts [2m([22m[2m23 tests[22m[2m)[22m[33m 11528[2mms[22m[39m
+     [33m[2m✓[22m[39m registers a new student and returns accessToken + user [33m 770[2mms[22m[39m
+     [33m[2m✓[22m[39m returns 409 on duplicate email without revealing which condition failed [33m 481[2mms[22m[39m
+     [33m[2m✓[22m[39m logs in with correct credentials and returns accessToken [33m 854[2mms[22m[39m
+     [33m[2m✓[22m[39m returns 401 on wrong password with generic message [33m 878[2mms[22m[39m
+     [33m[2m✓[22m[39m sets httpOnly cookie on login [33m 866[2mms[22m[39m
+     [33m[2m✓[22m[39m issues a new accessToken using the refresh cookie [33m 477[2mms[22m[39m
+     [33m[2m✓[22m[39m refresh token rotation is atomic - transaction rollback on user inactivation [33m 507[2mms[22m[39m
+     [33m[2m✓[22m[39m clears the refresh cookie on logout [33m 489[2mms[22m[39m
+     [33m[2m✓[22m[39m revokes all tokens in the same family on logout [33m 496[2mms[22m[39m
+     [33m[2m✓[22m[39m returns current user with valid token [33m 881[2mms[22m[39m
+     [33m[2m✓[22m[39m rejects replay of a revoked refresh token after rotation [33m 539[2mms[22m[39m
+     [33m[2m✓[22m[39m rejects expired refresh token [33m 539[2mms[22m[39m
+     [33m[2m✓[22m[39m creates independent token families for separate logins [33m 1692[2mms[22m[39m
+     [33m[2m✓[22m[39m writes audit event on logout [33m 701[2mms[22m[39m
+     [33m[2m✓[22m[39m writes audit event on token refresh [33m 766[2mms[22m[39m
+ [32m✓[39m tests/unit/idor.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 45577[2mms[22m[39m
+       [33m[2m✓[22m[39m allows a student to read their own lesson progress [33m 3773[2mms[22m[39m
+       [33m[2m✓[22m[39m denies student B from reading student A's lesson progress (returns 404) [33m 3926[2mms[22m[39m
+       [33m[2m✓[22m[39m allows Admin to bypass and access student A's lesson progress [33m 5427[2mms[22m[39m
+       [33m[2m✓[22m[39m denies unauthenticated requests [33m 5455[2mms[22m[39m
+       [33m[2m✓[22m[39m allows instructor A to read module of course A (which they teach) [33m 4492[2mms[22m[39m
+       [33m[2m✓[22m[39m denies instructor B from reading module A (returns 404) [33m 4344[2mms[22m[39m
+       [33m[2m✓[22m[39m denies student A from reading module A via instructor ownership middleware (returns 404) [33m 4095[2mms[22m[39m
+       [33m[2m✓[22m[39m allows Admin to bypass and access module A [33m 3407[2mms[22m[39m
+       [33m[2m✓[22m[39m allows student A to read their own certificate [33m 3454[2mms[22m[39m
+       [33m[2m✓[22m[39m denies student B from reading student A's certificate (returns 404) [33m 3483[2mms[22m[39m
+       [33m[2m✓[22m[39m allows Admin to bypass and access student A's certificate [33m 3541[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+[2m      Tests [22m [1m[32m34 passed[39m[22m[90m (34)[39m
+[2m   Start at [22m 05:06:41
+[2m   Duration [22m 59.81s[2m (transform 451ms, setup 506ms, import 1.53s, tests 57.11s, environment 0ms)[22m
+
+
+## Targeted Test Exit Code
+0
+
+## Completion Time
+2026-07-30T05:07:39+01:00

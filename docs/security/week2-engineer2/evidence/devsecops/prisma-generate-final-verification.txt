@@ -1,0 +1,26 @@
+
+> secure-lms-server@1.0.0 prisma:generate
+> prisma generate
+
+◇ injected env (8) from ../.env // tip: ⌘ custom filepath { path: '/custom/path/.env' }
+Loaded Prisma config from prisma.config.ts.
+
+Prisma schema loaded from prisma/schema.prisma.
+┌─────────────────────────────────────────────────────────┐
+│  Update available 7.8.0 -> 7.9.1                        │
+│  Run the following to update                            │
+│    npm i --save-dev prisma@latest                       │
+│    npm i @prisma/client@latest                          │
+└─────────────────────────────────────────────────────────┘
+
+✔ Generated Prisma Client (v7.8.0) to ./node_modules/@prisma/client in 540ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+
+
+## Prisma Generate Final Exit Code
+0
+
+## Completion Time
+2026-07-29T19:26:39+01:00

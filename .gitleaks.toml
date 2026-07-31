@@ -10,7 +10,6 @@ useDefault = true
 description = "Confirmed generated paths and fake placeholder values only"
 
 paths = [
-  '''(^|/)node_modules/''',
   '''(^|/)dist/''',
   '''(^|/)build/''',
   '''(^|/)\.next/''',

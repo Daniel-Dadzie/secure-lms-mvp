@@ -1,0 +1,19 @@
+# Node.js Package Resolution Verification
+
+## Capture Time
+2026-07-30T02:59:20+01:00
+
+## Resolve Vitest
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/vitest/package.json
+
+## Resolve Vite
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/vite/package.json
+
+## Resolve Rolldown
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/rolldown/package.json
+
+## Resolve @rolldown/pluginutils
+MODULE_NOT_FOUND
+Cannot find module '@rolldown/pluginutils/package.json'
+Require stack:
+- /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/[eval]

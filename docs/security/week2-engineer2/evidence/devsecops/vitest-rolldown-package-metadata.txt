@@ -1,0 +1,123 @@
+# Vitest and Rolldown Package Metadata
+
+## node_modules/vitest/package.json
+Status: FOUND
+Name: vitest
+Version: 4.1.10
+Engines: {
+  "node": "^20.0.0 || ^22.0.0 || >=24.0.0"
+}
+Dependencies: {
+  "es-module-lexer": "^2.0.0",
+  "expect-type": "^1.3.0",
+  "magic-string": "^0.30.21",
+  "obug": "^2.1.1",
+  "pathe": "^2.0.3",
+  "picomatch": "^4.0.3",
+  "std-env": "^4.0.0-rc.1",
+  "tinybench": "^2.9.0",
+  "tinyexec": "^1.0.2",
+  "tinyglobby": "^0.2.15",
+  "tinyrainbow": "^3.1.0",
+  "vite": "^6.0.0 || ^7.0.0 || ^8.0.0",
+  "why-is-node-running": "^2.3.0",
+  "@vitest/expect": "4.1.10",
+  "@vitest/mocker": "4.1.10",
+  "@vitest/pretty-format": "4.1.10",
+  "@vitest/runner": "4.1.10",
+  "@vitest/spy": "4.1.10",
+  "@vitest/snapshot": "4.1.10",
+  "@vitest/utils": "4.1.10"
+}
+Optional dependencies: {}
+Peer dependencies: {
+  "@edge-runtime/vm": "*",
+  "@opentelemetry/api": "^1.9.0",
+  "@types/node": "^20.0.0 || ^22.0.0 || >=24.0.0",
+  "happy-dom": "*",
+  "jsdom": "*",
+  "vite": "^6.0.0 || ^7.0.0 || ^8.0.0",
+  "@vitest/browser-preview": "4.1.10",
+  "@vitest/coverage-istanbul": "4.1.10",
+  "@vitest/browser-playwright": "4.1.10",
+  "@vitest/browser-webdriverio": "4.1.10",
+  "@vitest/coverage-v8": "4.1.10",
+  "@vitest/ui": "4.1.10"
+}
+
+## node_modules/vite/package.json
+Status: FOUND
+Name: vite
+Version: 8.1.5
+Engines: {
+  "node": "^20.19.0 || >=22.12.0"
+}
+Dependencies: {
+  "lightningcss": "^1.32.0",
+  "picomatch": "^4.0.5",
+  "postcss": "^8.5.17",
+  "rolldown": "~1.1.5",
+  "tinyglobby": "^0.2.17"
+}
+Optional dependencies: {
+  "fsevents": "~2.3.3"
+}
+Peer dependencies: {
+  "@types/node": "^20.19.0 || >=22.12.0",
+  "@vitejs/devtools": "^0.3.0",
+  "esbuild": "^0.27.0 || ^0.28.0",
+  "jiti": ">=1.21.0",
+  "less": "^4.0.0",
+  "sass": "^1.70.0",
+  "sass-embedded": "^1.70.0",
+  "stylus": ">=0.54.8",
+  "sugarss": "^5.0.0",
+  "terser": "^5.16.0",
+  "tsx": "^4.8.1",
+  "yaml": "^2.4.2"
+}
+
+## node_modules/rolldown/package.json
+Status: FOUND
+Name: rolldown
+Version: 1.1.5
+Engines: {
+  "node": "^20.19.0 || >=22.12.0"
+}
+Dependencies: {
+  "@oxc-project/types": "=0.139.0",
+  "@rolldown/pluginutils": "^1.0.0"
+}
+Optional dependencies: {
+  "@rolldown/binding-darwin-x64": "1.1.5",
+  "@rolldown/binding-win32-x64-msvc": "1.1.5",
+  "@rolldown/binding-linux-x64-gnu": "1.1.5",
+  "@rolldown/binding-linux-x64-musl": "1.1.5",
+  "@rolldown/binding-freebsd-x64": "1.1.5",
+  "@rolldown/binding-linux-arm-gnueabihf": "1.1.5",
+  "@rolldown/binding-linux-arm64-gnu": "1.1.5",
+  "@rolldown/binding-darwin-arm64": "1.1.5",
+  "@rolldown/binding-linux-arm64-musl": "1.1.5",
+  "@rolldown/binding-openharmony-arm64": "1.1.5",
+  "@rolldown/binding-win32-arm64-msvc": "1.1.5",
+  "@rolldown/binding-android-arm64": "1.1.5",
+  "@rolldown/binding-wasm32-wasi": "1.1.5",
+  "@rolldown/binding-linux-s390x-gnu": "1.1.5",
+  "@rolldown/binding-linux-ppc64-gnu": "1.1.5"
+}
+Peer dependencies: {}
+
+## node_modules/@rolldown/pluginutils/package.json
+Status: NOT FOUND
+
+## server/node_modules/vitest/package.json
+Status: NOT FOUND
+
+## server/node_modules/vite/package.json
+Status: NOT FOUND
+
+## server/node_modules/rolldown/package.json
+Status: NOT FOUND
+
+## server/node_modules/@rolldown/pluginutils/package.json
+Status: NOT FOUND

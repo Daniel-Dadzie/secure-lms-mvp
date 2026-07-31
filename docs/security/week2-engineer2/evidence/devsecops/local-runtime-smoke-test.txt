@@ -1,0 +1,25 @@
+# Local Application Runtime Smoke Test
+
+## Validation Time
+2026-07-30T06:56:37+01:00
+
+## Browser Validation
+PASS: Frontend rendered successfully in Chrome Incognito.
+PASS: No hydration mismatch or development error displayed.
+
+## Listening Ports
+LISTEN 0      511                *:4000            *:*
+LISTEN 0      4096               *:5432            *:*
+LISTEN 0      511                *:3000            *:*
+
+## Backend and Database Health
+{"status":"ok","timestamp":"2026-07-30T05:56:38.256Z","database":"connected"}
+
+## Public Courses Endpoint
+{"data":[],"total":0,"page":1,"limit":20,"totalPages":0}
+
+## Frontend HTTP Status
+HTTP 200
+
+## Overall Runtime Result
+PASS

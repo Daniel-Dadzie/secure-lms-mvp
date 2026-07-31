@@ -14,6 +14,12 @@ updates:
       time: "08:00"
       timezone: "Africa/Lagos"
 
+    # Cooldown: wait 7 days after a new version is published before opening
+    # a PR. This allows the community to surface supply-chain issues or
+    # regressions in new releases before we automatically pull them in.
+    cooldown:
+      default-days: 7
+
     open-pull-requests-limit: 10
 
     labels:
@@ -39,6 +45,11 @@ updates:
       time: "08:30"
       timezone: "Africa/Lagos"
 
+    # Cooldown: same 7-day hold — action updates can introduce malicious
+    # code; community vetting time is valuable here especially.
+    cooldown:
+      default-days: 7
+
     open-pull-requests-limit: 5
 
     labels:
@@ -54,6 +65,11 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+
+    # Cooldown: 7-day hold for Docker base images as well.
+    cooldown:
+      default-days: 7
+
     labels:
       - "docker"
       - "security"

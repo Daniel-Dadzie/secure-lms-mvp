@@ -1,0 +1,105 @@
+
+> secure-lms-mvp@1.0.0 lint
+> npm run lint --workspaces --if-present
+
+
+> client@0.1.0 lint
+> eslint
+
+
+> secure-lms-server@1.0.0 lint
+> eslint .
+
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/app.ts
+  49:12  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  58:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/middleware/requireOwnership.ts
+  39:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/middleware/requireRole.ts
+  17:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/auth/auth.controller.ts
+   55:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   99:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  121:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  156:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  175:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  184:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/auth/auth.service.ts
+   47:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   61:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  109:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  216:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  363:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/courses/courses.controller.ts
+  21:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  34:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  47:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  55:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  63:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  71:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  79:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/courses/courses.service.ts
+  101:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/users/users.controller.ts
+   11:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   14:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   29:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   66:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   77:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   92:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  118:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  139:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/users/users.service.ts
+   36:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   94:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  139:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  175:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/tests/helpers/security.helper.ts
+   19:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   97:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  116:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  136:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/tests/unit/auth.test.ts
+  266:21  warning  'cookie' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/tests/unit/idor.test.ts
+   8:10  warning  'generateAccessToken' is defined but never used  @typescript-eslint/no-unused-vars
+  15:17  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  15:32  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  16:20  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  16:38  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  17:14  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  19:16  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  19:30  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  20:16  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  20:30  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  21:16  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  21:30  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  22:18  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  22:23  warning  'progressB' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  22:34  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  23:14  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  23:19  warning  'certB' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  23:26  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+
+✖ 60 problems (0 errors, 60 warnings)
+
+
+## Repository Lint Exit Code
+0
+
+## Completion Time
+2026-07-29T21:32:09+01:00

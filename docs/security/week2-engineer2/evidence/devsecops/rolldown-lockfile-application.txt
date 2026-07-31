@@ -1,0 +1,38 @@
+# Rolldown Lockfile Repair Application
+
+## Application Time
+2026-07-30T04:00:50+01:00
+
+## Original Lockfile Checksum
+b8b30198a8af7c990002855d5037919b7568a902fd05890e4c6ef0a8ea9e023d  package-lock.json
+
+## Repaired Lockfile Checksum
+d089a25be8b45ebffe6acc82eaa1f9787ea1c0ec6683073dd97fd866a90ffe6b  package-lock.json
+
+## Git Difference Statistics
+ package-lock.json | 363 ++++++++++++++++++++++++++++++++++++++++++++++++++----
+ 1 file changed, 342 insertions(+), 21 deletions(-)
+
+## Changed Package Entries
+-    "node_modules/rolldown": {
++    "node_modules/@oxc-project/types": {
++    "node_modules/@rolldown/binding-android-arm64": {
++    "node_modules/@rolldown/binding-darwin-arm64": {
++    "node_modules/@rolldown/binding-darwin-x64": {
++    "node_modules/@rolldown/binding-freebsd-x64": {
++    "node_modules/@rolldown/binding-linux-arm-gnueabihf": {
++    "node_modules/@rolldown/binding-linux-arm64-gnu": {
++    "node_modules/@rolldown/binding-linux-arm64-musl": {
++    "node_modules/@rolldown/binding-linux-ppc64-gnu": {
++    "node_modules/@rolldown/binding-linux-s390x-gnu": {
++    "node_modules/@rolldown/binding-linux-x64-gnu": {
++    "node_modules/@rolldown/binding-linux-x64-musl": {
++    "node_modules/@rolldown/binding-openharmony-arm64": {
++    "node_modules/@rolldown/binding-wasm32-wasi": {
++    "node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/core": {
++    "node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/runtime": {
++    "node_modules/@rolldown/binding-wasm32-wasi/node_modules/@emnapi/wasi-threads": {
++    "node_modules/@rolldown/binding-win32-arm64-msvc": {
++    "node_modules/@rolldown/binding-win32-x64-msvc": {
++    "node_modules/@rolldown/pluginutils": {
++    "node_modules/rolldown": {

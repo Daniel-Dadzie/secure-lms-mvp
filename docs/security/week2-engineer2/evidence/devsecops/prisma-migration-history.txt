@@ -1,0 +1,23 @@
+# Prisma Migration History Baseline
+
+## Capture Time
+2026-07-29T20:22:57+01:00
+
+## Prisma Directory Structure
+server/prisma/migrations/.gitkeep
+server/prisma/migrations/20260716124801_init_schema/migration.sql
+server/prisma/migrations/20260721084936_add_refresh_tokens/migration.sql
+server/prisma/migrations/20260727085446_add_certificates_and_carts/migration.sql
+server/prisma/migrations/migration_lock.toml
+server/prisma/schema.prisma
+server/prisma/seed.ts
+
+## Migration Directories
+20260716124801_init_schema
+20260721084936_add_refresh_tokens
+20260727085446_add_certificates_and_carts
+
+## Migration File Checksums
+db4af5104ddc6a19438bcafe9286cb1a8bb29af2069784591d0731baca0b1f6b  server/prisma/migrations/20260716124801_init_schema/migration.sql
+a7fdf226fa33e29b2d63128b3588cd67ee632b790c7b29c541c271f7ca7b7ae8  server/prisma/migrations/20260721084936_add_refresh_tokens/migration.sql
+4d05f96ec8acb84ad6c053830f3eb426aafca700d2eda918ae725bc172b848c0  server/prisma/migrations/20260727085446_add_certificates_and_carts/migration.sql

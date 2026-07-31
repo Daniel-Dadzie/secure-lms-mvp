@@ -5,7 +5,7 @@ import { prisma } from "../config/prisma";
 // Supported resource types for ownership checks.
 // Add new resources here as modules are built (courses, lessons, etc.)
 // ----------------------------------------------------------------------------
-type OwnershipResource = "course" | "enrollment" | "purchase";
+type OwnershipResource = "course" | "enrollment" | "purchase" | "lesson" | "module" | "certificate";
 
 // ----------------------------------------------------------------------------
 // requireOwnership middleware factory
@@ -127,6 +127,94 @@ export function requireOwnership(resource: OwnershipResource) {
 
           if (purchase.userId !== user.sub) {
             res.status(404).json({ message: "Purchase not found" });
+            return;
+          }
+
+          break;
+        }
+
+        case "lesson": {
+          // Ownership of a LessonProgress record — the student who has this progress.
+          // Uses lessonProgressId param; IDOR test: student A cannot read student B's progress.
+          const rawProgressId = req.params.lessonProgressId;
+          const progressId = Array.isArray(rawProgressId) ? rawProgressId[0] : rawProgressId;
+
+          if (!progressId) {
+            res.status(400).json({ message: "Lesson progress ID required" });
+            return;
+          }
+
+          const progress = await prisma.lessonProgress.findUnique({
+            where: { id: progressId },
+            select: { userId: true },
+          });
+
+          if (!progress) {
+            res.status(404).json({ message: "Lesson progress not found" });
+            return;
+          }
+
+          // 404 not 403 — avoids confirming the resource exists to an unauthorised requester
+          if (progress.userId !== user.sub) {
+            res.status(404).json({ message: "Lesson progress not found" });
+            return;
+          }
+
+          break;
+        }
+
+        case "module": {
+          // Ownership check for a Module — must be the instructor of the parent course.
+          // Uses moduleId param.
+          const rawModuleId = req.params.moduleId;
+          const moduleId = Array.isArray(rawModuleId) ? rawModuleId[0] : rawModuleId;
+
+          if (!moduleId) {
+            res.status(400).json({ message: "Module ID required" });
+            return;
+          }
+
+          const module = await prisma.module.findUnique({
+            where: { id: moduleId },
+            select: { course: { select: { instructorId: true, isActive: true } } },
+          });
+
+          if (!module || !module.course.isActive) {
+            res.status(404).json({ message: "Module not found" });
+            return;
+          }
+
+          if (module.course.instructorId !== user.sub) {
+            res.status(404).json({ message: "Module not found" });
+            return;
+          }
+
+          break;
+        }
+
+        case "certificate": {
+          // Ownership check for a Certificate — must belong to the requesting user.
+          // Uses certificateId param.
+          const rawCertId = req.params.certificateId;
+          const certId = Array.isArray(rawCertId) ? rawCertId[0] : rawCertId;
+
+          if (!certId) {
+            res.status(400).json({ message: "Certificate ID required" });
+            return;
+          }
+
+          const certificate = await prisma.certificate.findUnique({
+            where: { id: certId },
+            select: { userId: true },
+          });
+
+          if (!certificate) {
+            res.status(404).json({ message: "Certificate not found" });
+            return;
+          }
+
+          if (certificate.userId !== user.sub) {
+            res.status(404).json({ message: "Certificate not found" });
             return;
           }
 

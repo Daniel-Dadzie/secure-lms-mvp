@@ -1,0 +1,9 @@
+# Fresh Lockfile Validation
+
+Rolldown recorded: true
+Rolldown version: 1.1.5
+Rolldown pluginutils dependency: ^1.0.0
+Rolldown OXC dependency: =0.139.0
+@rolldown/pluginutils recorded: true
+@rolldown/pluginutils version: 1.0.1
+@oxc-project/types recorded: true
