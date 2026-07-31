@@ -28,7 +28,9 @@
     "express-rate-limit": "^8.6.1",
     "firebase-admin": "^14.2.0",
     "jsonwebtoken": "^9.0.3",
+    "multer": "^2.2.0",
     "pg": "^8.22.0",
+    "uuid": "^9.0.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -36,7 +38,9 @@
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
+    "@types/multer": "^2.2.0",
     "@types/pg": "^8.20.0",
+    "@types/uuid": "^10.0.0",
     "dotenv": "^17.4.2",
     "eslint": "^10.7.0",
     "prisma": "7.8.0",
