@@ -50,7 +50,7 @@ if (!enrollment || enrollment.status === "CANCELLED") {
     update: {
       status,
       progressSeconds,
-      ...(status === "COMPLETED" && { completedAt: new Date() }),
+      completedAt: status === "COMPLETED" ? new Date() : null,
     },
     create: {
       userId,
@@ -58,7 +58,7 @@ if (!enrollment || enrollment.status === "CANCELLED") {
       enrollmentId: enrollment.id,
       status,
       progressSeconds,
-      ...(status === "COMPLETED" && { completedAt: new Date() }),
+      completedAt: status === "COMPLETED" ? new Date() : null,
     },
   });
 
