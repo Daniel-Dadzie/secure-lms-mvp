@@ -71,7 +71,81 @@ async function main() {
     },
   });
 
-  console.log({ admin: admin.email, instructor: instructor.email, student: student.email, course: course.title });
+  // Paid course — for testing checkout price/coupon logic
+  const paidCourse = await prisma.course.upsert({
+    where: { slug: "advanced-typescript" },
+    update: {},
+    create: {
+      title: "Advanced TypeScript",
+      slug: "advanced-typescript",
+      description: "A seeded paid course for testing checkout and coupon logic.",
+      priceCents: 4999, // GHS 49.99
+      status: "PUBLISHED",
+      instructorId: instructor.id,
+      categoryId: category.id,
+    },
+  });
+
+  // Modules + lessons for the free course — needed to test progress/completion/certificates
+  const module1 = await prisma.module.upsert({
+    where: { id: "00000000-0000-0000-0000-000000000001" },
+    update: {},
+    create: {
+      id: "00000000-0000-0000-0000-000000000001",
+      courseId: course.id,
+      title: "Getting Started",
+      order: 1,
+    },
+  });
+
+  const lesson1 = await prisma.lesson.upsert({
+    where: { id: "00000000-0000-0000-0000-000000000011" },
+    update: {},
+    create: {
+      id: "00000000-0000-0000-0000-000000000011",
+      moduleId: module1.id,
+      title: "Welcome to the course",
+      durationSeconds: 300,
+      order: 1,
+    },
+  });
+
+  const lesson2 = await prisma.lesson.upsert({
+    where: { id: "00000000-0000-0000-0000-000000000012" },
+    update: {},
+    create: {
+      id: "00000000-0000-0000-0000-000000000012",
+      moduleId: module1.id,
+      title: "Setting up your environment",
+      durationSeconds: 600,
+      order: 2,
+    },
+  });
+
+  // Coupon — 20% off, for testing the discount path in checkout()
+  const coupon = await prisma.coupon.upsert({
+    where: { code: "TEST20" },
+    update: {},
+    create: {
+      code: "TEST20",
+      discountType: "PERCENTAGE",
+      discountValue: 20,
+      maxUses: 100,
+      isActive: true,
+    },
+  });
+
+console.log({
+    admin: admin.email,
+    instructor: instructor.email,
+    student: student.email,
+    freeCourse: course.title,
+    freeCourseId: course.id,
+    lessonIds: [lesson1.id, lesson2.id],
+    paidCourse: paidCourse.title,
+    paidCourseId: paidCourse.id,
+    coupon: coupon.code,
+  });
   console.log("Seeding complete.");
 }
 

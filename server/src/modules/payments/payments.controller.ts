@@ -1,0 +1,70 @@
+import type { Request, Response, NextFunction } from "express";
+import * as paymentsService from "./payments.service";
+import { z } from "zod";
+
+const checkoutSchema = z.object({
+  courseId: z.string().uuid("Invalid course ID"),
+  couponCode: z.string().trim().min(1).optional(),
+});
+
+export async function checkout(
+  req: Request, res: Response, next: NextFunction
+): Promise<void> {
+  try {
+    const parsed = checkoutSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ message: "Validation failed", errors: parsed.error.flatten().fieldErrors });
+      return;
+    }
+    const userId = (req as any).user?.sub;
+    const result = await paymentsService.checkout(
+      userId,
+      parsed.data.courseId,
+      parsed.data.couponCode
+    );
+    res.status(200).json(result);
+  } catch (error: any) {
+    if (error.statusCode === 404) { res.status(404).json({ message: error.message }); return; }
+    if (error.statusCode === 409) { res.status(409).json({ message: error.message }); return; }
+    if (error.statusCode === 400) { res.status(400).json({ message: error.message }); return; }
+    next(error);
+  }
+}
+
+export async function checkoutCart(
+  req: Request, res: Response, next: NextFunction
+): Promise<void> {
+  try {
+    const userId = (req as any).user?.sub;
+    const result = await paymentsService.checkoutCart(userId);
+    res.status(200).json(result);
+  } catch (error: any) {
+    if (error.statusCode === 400) { res.status(400).json({ message: error.message }); return; }
+    next(error);
+  }
+}
+
+export async function getPurchaseHistory(
+  req: Request, res: Response, next: NextFunction
+): Promise<void> {
+  try {
+    const userId = (req as any).user?.sub;
+    const purchases = await paymentsService.getPurchaseHistory(userId);
+    res.status(200).json({ purchases });
+  } catch (error) { next(error); }
+}
+
+export async function getPurchaseById(
+  req: Request, res: Response, next: NextFunction
+): Promise<void> {
+  try {
+    const userId = (req as any).user?.sub;
+    const purchase = await paymentsService.getPurchaseById(
+      req.params.purchaseId as string, userId
+    );
+    res.status(200).json({ purchase });
+  } catch (error: any) {
+    if (error.statusCode === 404) { res.status(404).json({ message: "Purchase not found" }); return; }
+    next(error);
+  }
+}

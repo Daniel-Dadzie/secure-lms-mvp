@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { authenticate, requireRole, requireOwnership } from "../../middleware";
+import * as coursesController from "./courses.controller";
 import * as modulesController from "./modules.controller";
 import * as lessonsController from "./lessons.controller";
 import { thumbnailUpload } from "../../middleware/upload";
@@ -7,6 +8,77 @@ import reviewsRouter from "../reviews/reviews.routes";
 import { uploadThumbnailHandler, generateVideoUploadUrlHandler } from "./courses.upload.controller";
 
 const router = Router();
+
+// ----------------------------------------------------------------------------
+// Public catalogue routes
+// Must be registered before any "/:courseId/..." pattern-based routes below
+// that could otherwise shadow specific paths like "/instructor/mine".
+// ----------------------------------------------------------------------------
+router.get("/", coursesController.getPublishedCourses);
+
+// ----------------------------------------------------------------------------
+// Instructor: manage own courses
+// ----------------------------------------------------------------------------
+router.get(
+  "/instructor/mine",
+  authenticate,
+  requireRole(["INSTRUCTOR", "ADMIN"]),
+  coursesController.getInstructorCourses
+);
+
+router.post(
+  "/",
+  authenticate,
+  requireRole(["INSTRUCTOR", "ADMIN"]),
+  coursesController.createCourse
+);
+
+// ----------------------------------------------------------------------------
+// Admin: manage all courses
+// ----------------------------------------------------------------------------
+router.get(
+  "/admin/all",
+  authenticate,
+  requireRole(["ADMIN"]),
+  coursesController.getAllCourses
+);
+
+// ----------------------------------------------------------------------------
+// Single course detail (public) — registered after the specific paths above
+// ----------------------------------------------------------------------------
+router.get("/:courseId", coursesController.getPublishedCourseById);
+
+router.patch(
+  "/:courseId",
+  authenticate,
+  requireRole(["INSTRUCTOR", "ADMIN"]),
+  requireOwnership("course"),
+  coursesController.updateCourse
+);
+
+router.patch(
+  "/:courseId/publish",
+  authenticate,
+  requireRole(["INSTRUCTOR", "ADMIN"]),
+  requireOwnership("course"),
+  coursesController.publishCourse
+);
+
+router.patch(
+  "/:courseId/unpublish",
+  authenticate,
+  requireRole(["INSTRUCTOR", "ADMIN"]),
+  requireOwnership("course"),
+  coursesController.unpublishCourse
+);
+
+router.delete(
+  "/:courseId",
+  authenticate,
+  requireRole(["ADMIN"]),
+  coursesController.archiveCourse
+);
+
 // Thumbnail upload — multipart/form-data
 router.post(
   "/:courseId/thumbnail",
