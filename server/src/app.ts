@@ -1,26 +1,29 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import helmet from "helmet";
 import cookieParser from "cookie-parser";
+import helmet from "helmet";
 import { prisma } from "./config/prisma";
+
+// Routers
 import authRouter from "./modules/auth/auth.routes";
 import usersRouter from "./modules/users/users.routes";
 import coursesRouter from "./modules/courses/courses.routes";
+import categoriesRouter from "./modules/categories/categories.routes";
+import cartRouter from "./modules/cart/cart.routes";
+import paymentsRouter from "./modules/payments/payments.routes";
+import enrolmentsRouter from "./modules/enrolments/enrolments.routes";
+import progressRouter from "./modules/progress/progress.routes";
+import supportRouter from "./modules/support/support.routes";
+import adminRouter from "./modules/admin/admin.routes";
 
 export const app = express();
 
-// Security headers — must be first middleware
+// ----------------------------------------------------------------------------
+// Security middleware — must be first
+// ----------------------------------------------------------------------------
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
-  // crossOriginResourcePolicy relaxed slightly to allow Firebase Storage
-  // assets (thumbnails) to load cross-origin in the browser.
-  // All other Helmet defaults remain active:
-  // - Content-Security-Policy
-  // - X-Frame-Options: SAMEORIGIN
-  // - X-Content-Type-Options: nosniff
-  // - Strict-Transport-Security (HSTS)
-  // - Referrer-Policy
 }));
 
 app.use(cors({
@@ -28,16 +31,26 @@ app.use(cors({
   credentials: true,
 }));
 
-// Enforce a 10 KB body size l
-// Enforce a 10 KB body size limit to prevent large-payload DoS attacks.
-// Any request body exceeding this limit will be rejected with 413.
-app.use(express.json({ limit: "10kb" }));
+app.use(express.json());
 app.use(cookieParser());
 
+// ----------------------------------------------------------------------------
+// Routes
+// ----------------------------------------------------------------------------
 app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/courses", coursesRouter);
+app.use("/api/categories", categoriesRouter);
+app.use("/api/cart", cartRouter);
+app.use("/api/payments", paymentsRouter);
+app.use("/api/enrolments", enrolmentsRouter);
+app.use("/api/progress", progressRouter);
+app.use("/api/support", supportRouter);
+app.use("/api/admin", adminRouter);
 
+// ----------------------------------------------------------------------------
+// Health check
+// ----------------------------------------------------------------------------
 app.get("/api/health", async (_req, res) => {
   try {
     await prisma.$queryRaw`SELECT 1`;
@@ -55,7 +68,15 @@ app.get("/api/health", async (_req, res) => {
   }
 });
 
-app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
+// ----------------------------------------------------------------------------
+// Global error handler — last middleware, never exposes stack traces to client
+// ----------------------------------------------------------------------------
+app.use((
+  err: any,
+  _req: express.Request,
+  res: express.Response,
+  _next: express.NextFunction
+) => {
   console.error(err);
   res.status(err.statusCode || 500).json({
     message: err.message || "Internal server error",

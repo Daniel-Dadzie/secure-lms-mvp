@@ -1,11 +1,11 @@
-import { transporter } from "../config/email";
+import { resend } from "../config/email";
 
-const FROM = process.env.SMTP_FROM || "Mech Spec LMS <noreply@mechspec.com>";
+const FROM = process.env.SMTP_FROM || "Mech Spec LMS <onboarding@resend.dev>";
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
 
 // ----------------------------------------------------------------------------
 // Email templates — inline HTML for simplicity.
-// For production, swap with a template engine (MJML, React Email etc.)
+// For production, swap with a template engine (MJML, React Email, etc.)
 // ----------------------------------------------------------------------------
 
 export async function sendVerificationEmail(
@@ -15,7 +15,7 @@ export async function sendVerificationEmail(
 ): Promise<void> {
   const verifyUrl = `${CLIENT_URL}/verify-email?token=${token}`;
 
-  await transporter.sendMail({
+  await resend.emails.send({
     from: FROM,
     to: email,
     subject: "Verify your Mech Spec LMS account",
@@ -23,7 +23,7 @@ export async function sendVerificationEmail(
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #1a1a2e;">Welcome to Mech Spec LMS, ${fullName}!</h2>
         <p>Please verify your email address to activate your account.</p>
-        
+        <a
           href="${verifyUrl}"
           style="
             display: inline-block;
@@ -55,7 +55,7 @@ export async function sendPasswordResetEmail(
   fullName: string,
   tempPassword: string
 ): Promise<void> {
-  await transporter.sendMail({
+  await resend.emails.send({
     from: FROM,
     to: email,
     subject: "Your Mech Spec LMS password has been reset",
@@ -77,7 +77,7 @@ export async function sendPasswordResetEmail(
           ${tempPassword}
         </div>
         <p>Please log in and change your password immediately.</p>
-        
+        <a
           href="${CLIENT_URL}/login"
           style="
             display: inline-block;
@@ -106,7 +106,7 @@ export async function sendEnrollmentConfirmationEmail(
 ): Promise<void> {
   const courseUrl = `${CLIENT_URL}/courses/${courseId}`;
 
-  await transporter.sendMail({
+  await resend.emails.send({
     from: FROM,
     to: email,
     subject: `You're enrolled in ${courseTitle}`,
@@ -115,7 +115,7 @@ export async function sendEnrollmentConfirmationEmail(
         <h2 style="color: #1a1a2e;">Enrollment Confirmed!</h2>
         <p>Hi ${fullName},</p>
         <p>You have successfully enrolled in <strong>${courseTitle}</strong>.</p>
-        
+        <a
           href="${courseUrl}"
           style="
             display: inline-block;
@@ -145,7 +145,7 @@ export async function sendCertificateEmail(
 ): Promise<void> {
   const certificateUrl = `${CLIENT_URL}/certificates/${certificateNumber}`;
 
-  await transporter.sendMail({
+  await resend.emails.send({
     from: FROM,
     to: email,
     subject: `Congratulations! You completed ${courseTitle}`,
@@ -160,7 +160,7 @@ export async function sendCertificateEmail(
         <p style="font-size: 14px; color: #666;">
           Certificate Number: <strong>${certificateNumber}</strong>
         </p>
-        
+        <a
           href="${certificateUrl}"
           style="
             display: inline-block;
