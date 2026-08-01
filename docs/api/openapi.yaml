@@ -297,6 +297,75 @@ paths:
         "200": { description: Lesson detail }
         "403": { description: Not enrolled in this course }
 
+  # course reviews
+  /courses/{courseId}/reviews:
+    get:
+      tags: [Courses]
+      summary: Get reviews for a course
+      parameters:
+        - { name: courseId, in: path, required: true, schema: { type: string } }
+        - name: page
+          in: query
+          schema: { type: integer, default: 1 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 10 }
+      responses:
+        "200":
+          description: Paginated reviews with average rating
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reviews:
+                    type: array
+                    items: { $ref: "#/components/schemas/Review" }
+                  averageRating: { type: number }
+                  totalReviews: { type: integer }
+                  page: { type: integer }
+    post:
+      tags: [Courses]
+      summary: Submit a review (enrolled students only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - { name: courseId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rating]
+              properties:
+                rating: { type: integer, minimum: 1, maximum: 5 }
+                comment: { type: string, maxLength: 2000 }
+      responses:
+        "201": { description: Review submitted }
+        "403": { description: Not enrolled in this course }
+        "409": { description: Already reviewed this course }
+
+  /reviews/{reviewId}:
+    patch:
+      tags: [Courses]
+      summary: Update own review
+      security:
+        - bearerAuth: []
+      parameters:
+        - { name: reviewId, in: path, required: true, schema: { type: string } }
+      responses:
+        "200": { description: Review updated }
+    delete:
+      tags: [Courses]
+      summary: Hide a review (admin only)
+      security:
+        - bearerAuth: []
+      parameters:
+        - { name: reviewId, in: path, required: true, schema: { type: string } }
+      responses:
+        "204": { description: Review hidden }
+
   # ---------------------------------------------------------------------
   # Enrolments
   # ---------------------------------------------------------------------
@@ -464,6 +533,22 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+
+  Review:
+      type: object
+      properties:
+        id: { type: string }
+        userId: { type: string }
+        courseId: { type: string }
+        rating: { type: integer, minimum: 1, maximum: 5 }
+        comment: { type: string, nullable: true }
+        isVisible: { type: boolean }
+        user:
+          type: object
+          properties:
+            id: { type: string }
+            fullName: { type: string }
+        createdAt: { type: string, format: date-time }
 
   schemas:
     UserPublic:

@@ -5,6 +5,7 @@ import { prisma } from "../../config/prisma";
 import { JWT_CONFIG } from "../../config/jwt";
 import type { RegisterInput, LoginInput } from "./auth.schemas";
 import type { AuthResult, JwtPayload, SafeUser, TokenPair } from "./auth.types";
+import { sendVerification } from "./email-verification.service";
 
 // ----------------------------------------------------------------------------
 // Helpers
@@ -122,6 +123,12 @@ export async function register(input: RegisterInput): Promise<AuthResult> {
       role: input.role,
     },
   });
+
+  // Send verification email after registration
+// Fire and forget — don't block the registration response
+sendVerification(user.id).catch((err) =>
+  console.error("Failed to send verification email:", err)
+);
 
   // 4. Generate tokens
   const family = crypto.randomUUID();
