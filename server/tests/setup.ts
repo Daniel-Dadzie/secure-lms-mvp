@@ -1,6 +1,20 @@
 import { beforeAll, afterAll, afterEach, vi } from "vitest";
 import { prisma } from "../src/config/prisma";
 
+// Prevent tests from requiring a real Resend API key or sending email.
+vi.mock("resend", () => {
+  class MockResend {
+    emails = {
+      send: vi.fn().mockResolvedValue({
+        data: { id: "test-email-id" },
+        error: null,
+      }),
+    };
+  }
+
+  return { Resend: MockResend };
+});
+
 // ----------------------------------------------------------------------------
 // Conditional Email & External Service Mocks (Tests Only!)
 // Only mocks Nodemailer when no real SMTP_HOST is provided in the test env.
@@ -22,6 +36,23 @@ vi.mock("nodemailer", async () => {
       sendMail: vi.fn().mockResolvedValue({ messageId: "test-email-id" }),
       verify: vi.fn().mockResolvedValue(true),
     }),
+  };
+});
+
+// Prevent Firebase Admin from parsing real credentials during tests.
+vi.mock("firebase-admin/app", () => {
+  const testApp = {
+    name: "[DEFAULT]",
+    options: {
+      projectId: "test-project-id",
+      storageBucket: "test-bucket.appspot.com",
+    },
+  };
+
+  return {
+    cert: vi.fn().mockReturnValue({}),
+    getApps: vi.fn().mockReturnValue([]),
+    initializeApp: vi.fn().mockReturnValue(testApp),
   };
 });
 

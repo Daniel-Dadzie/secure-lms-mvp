@@ -41,17 +41,29 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: "24"
+          node-version-file: .node-version
           cache: "npm"
 
       - name: Configure test environment
+        shell: bash
         run: |
-          echo "JWT_ACCESS_SECRET=$(openssl rand -hex 64)" >> "$GITHUB_ENV"
-          echo "JWT_REFRESH_SECRET=$(openssl rand -hex 64)" >> "$GITHUB_ENV"
-          echo "JWT_ACCESS_EXPIRES_IN=15m" >> "$GITHUB_ENV"
-          echo "JWT_REFRESH_EXPIRES_IN=7d" >> "$GITHUB_ENV"
-          echo "NODE_ENV=test" >> "$GITHUB_ENV"
-          echo "CLIENT_URL=http://localhost:3000" >> "$GITHUB_ENV"
+          set -euo pipefail
+
+          ACCESS_SECRET="$(openssl rand -hex 64)"
+          REFRESH_SECRET="$(openssl rand -hex 64)"
+
+          echo "::add-mask::$ACCESS_SECRET"
+          echo "::add-mask::$REFRESH_SECRET"
+          echo "::add-mask::$DATABASE_URL"
+
+          {
+            echo "JWT_ACCESS_SECRET=$ACCESS_SECRET"
+            echo "JWT_REFRESH_SECRET=$REFRESH_SECRET"
+            echo "JWT_ACCESS_EXPIRES_IN=15m"
+            echo "JWT_REFRESH_EXPIRES_IN=7d"
+            echo "NODE_ENV=test"
+            echo "CLIENT_URL=http://localhost:3000"
+          } >> "$GITHUB_ENV"
 
       - name: Install dependencies
         run: npm ci
