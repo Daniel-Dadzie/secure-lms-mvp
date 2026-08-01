@@ -28,3 +28,6 @@ Thumbs.db
 # Temporary files
 *.tmp
 *.swp
+
+# Generated PR validation evidence
+.ci-evidence/
