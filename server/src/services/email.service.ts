@@ -1,6 +1,6 @@
-import { resend } from "../config/email";
+import { transporter } from "../config/email";
 
-const FROM = process.env.SMTP_FROM || "Mech Spec LMS <onboarding@resend.dev>";
+const FROM = process.env.SMTP_FROM || `Mech Spec LMS <${process.env.GMAIL_USER}>`;
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
 
 // ----------------------------------------------------------------------------
@@ -15,7 +15,7 @@ export async function sendVerificationEmail(
 ): Promise<void> {
   const verifyUrl = `${CLIENT_URL}/verify-email?token=${token}`;
 
-  await resend.emails.send({
+  await transporter.sendMail({
     from: FROM,
     to: email,
     subject: "Verify your Mech Spec LMS account",
@@ -23,7 +23,7 @@ export async function sendVerificationEmail(
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #1a1a2e;">Welcome to Mech Spec LMS, ${fullName}!</h2>
         <p>Please verify your email address to activate your account.</p>
-        <a
+        
           href="${verifyUrl}"
           style="
             display: inline-block;
@@ -50,12 +50,65 @@ export async function sendVerificationEmail(
   });
 }
 
+export async function sendForgotPasswordEmail(
+  email: string,
+  fullName: string,
+  token: string,
+  expiresAt: Date
+): Promise<void> {
+  const resetUrl = `${CLIENT_URL}/reset-password?token=${token}`;
+
+  // Human-readable expiry, shown for clarity only — the actual enforcement
+  // happens server-side in resetPassword() against the DB-stored expiresAt,
+  // never trusting anything from the URL or client.
+  const expiryText = expiresAt.toLocaleString("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+
+  await transporter.sendMail({
+    from: FROM,
+    to: email,
+    subject: "Reset your Mech Spec LMS password",
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1a1a2e;">Password Reset Request</h2>
+        <p>Hi ${fullName},</p>
+        <p>We received a request to reset your password. Click the button below to choose a new one:</p>
+        
+          href="${resetUrl}"
+          style="
+            display: inline-block;
+            background: #6B3FA0;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            text-decoration: none;
+            margin: 16px 0;
+          "
+        >
+          Reset Password
+        </a>
+        <p style="color: #666; font-size: 14px;">
+          This link expires at <strong>${expiryText}</strong>. If you did not request a password reset,
+          you can safely ignore this email — your password will not be changed.
+        </p>
+        <p style="color: #666; font-size: 14px;">
+          Or copy this link into your browser:<br/>
+          <a href="${resetUrl}" style="color: #6B3FA0;">${resetUrl}</a>
+        </p>
+      </div>
+    `,
+  });
+}
+
+
 export async function sendPasswordResetEmail(
   email: string,
   fullName: string,
   tempPassword: string
 ): Promise<void> {
-  await resend.emails.send({
+  await transporter.sendMail({
     from: FROM,
     to: email,
     subject: "Your Mech Spec LMS password has been reset",
@@ -77,7 +130,7 @@ export async function sendPasswordResetEmail(
           ${tempPassword}
         </div>
         <p>Please log in and change your password immediately.</p>
-        <a
+        
           href="${CLIENT_URL}/login"
           style="
             display: inline-block;
@@ -106,7 +159,7 @@ export async function sendEnrollmentConfirmationEmail(
 ): Promise<void> {
   const courseUrl = `${CLIENT_URL}/courses/${courseId}`;
 
-  await resend.emails.send({
+  await transporter.sendMail({
     from: FROM,
     to: email,
     subject: `You're enrolled in ${courseTitle}`,
@@ -115,7 +168,7 @@ export async function sendEnrollmentConfirmationEmail(
         <h2 style="color: #1a1a2e;">Enrollment Confirmed!</h2>
         <p>Hi ${fullName},</p>
         <p>You have successfully enrolled in <strong>${courseTitle}</strong>.</p>
-        <a
+        
           href="${courseUrl}"
           style="
             display: inline-block;
@@ -145,7 +198,7 @@ export async function sendCertificateEmail(
 ): Promise<void> {
   const certificateUrl = `${CLIENT_URL}/certificates/${certificateNumber}`;
 
-  await resend.emails.send({
+  await transporter.sendMail({
     from: FROM,
     to: email,
     subject: `Congratulations! You completed ${courseTitle}`,
@@ -160,7 +213,7 @@ export async function sendCertificateEmail(
         <p style="font-size: 14px; color: #666;">
           Certificate Number: <strong>${certificateNumber}</strong>
         </p>
-        <a
+        
           href="${certificateUrl}"
           style="
             display: inline-block;

@@ -45,6 +45,9 @@ router.post("/login", authRateLimit, authController.login);
 router.post("/logout", authController.logout);
 router.post("/refresh", refreshRateLimit, authController.refreshToken);
 router.get("/me", authenticate, authController.me);
+router.post("/forgot-password", authRateLimit, authController.forgotPassword);
+router.post("/reset-password", authRateLimit, authController.resetPassword);
+
 // POST /api/auth/send-verification — resend verification email
 router.post(
   "/send-verification",

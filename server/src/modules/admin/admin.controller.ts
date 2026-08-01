@@ -57,5 +57,8 @@ export async function verifyUserEmail(
     const adminId = (req as any).user?.sub;
     await adminService.verifyUserEmail(req.params.userId as string, adminId);
     res.status(200).json({ message: "Email verified successfully" });
-  } catch (error) { next(error); }
+  } catch (error: any) {
+    if (error.statusCode === 404) { res.status(404).json({ message: error.message }); return; }
+    next(error);
+  }
 }

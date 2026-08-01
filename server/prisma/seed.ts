@@ -1,6 +1,8 @@
+import { v4 as uuidv4 } from "uuid";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
+
 
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
@@ -31,6 +33,18 @@ async function main() {
       email: "instructor@mechlms.test",
       passwordHash,
       fullName: "Instructor User",
+      role: "INSTRUCTOR",
+      isEmailVerified: true,
+    },
+  });
+
+  const instructor2 = await prisma.user.upsert({
+    where: { email: "instructor2@mechlms.test" },
+    update: {},
+    create: {
+      email: "instructor2@mechlms.test",
+      passwordHash,
+      fullName: "Instructor Two",
       role: "INSTRUCTOR",
       isEmailVerified: true,
     },
@@ -81,28 +95,35 @@ async function main() {
       description: "A seeded paid course for testing checkout and coupon logic.",
       priceCents: 4999, // GHS 49.99
       status: "PUBLISHED",
-      instructorId: instructor.id,
+      instructorId: instructor2.id,
       categoryId: category.id,
     },
   });
 
-  // Modules + lessons for the free course — needed to test progress/completion/certificates
-  const module1 = await prisma.module.upsert({
-    where: { id: "00000000-0000-0000-0000-000000000001" },
-    update: {},
-    create: {
-      id: "00000000-0000-0000-0000-000000000001",
+  // ----------------------------------------------------------------------------
+  // Modules + lessons for the free course.
+  // Cleaned up and recreated on every seed run for idempotency — deleting the
+  // module cascades to its lessons, which cascades to any lessonProgress rows
+  // (see schema onDelete: Cascade), so re-running this script never leaves
+  // orphaned test data behind. Real v4 UUIDs generated via uuidv4() so they
+  // pass Zod's .uuid() validation in the API layer (unlike the earlier
+  // hardcoded "00000000-..." placeholders, which were valid as DB values but
+  // not RFC 4122-compliant UUIDs).
+  // ----------------------------------------------------------------------------
+  await prisma.module.deleteMany({ where: { courseId: course.id } });
+
+  const module1 = await prisma.module.create({
+    data: {
+      id: uuidv4(),
       courseId: course.id,
       title: "Getting Started",
       order: 1,
     },
   });
 
-  const lesson1 = await prisma.lesson.upsert({
-    where: { id: "00000000-0000-0000-0000-000000000011" },
-    update: {},
-    create: {
-      id: "00000000-0000-0000-0000-000000000011",
+  const lesson1 = await prisma.lesson.create({
+    data: {
+      id: uuidv4(),
       moduleId: module1.id,
       title: "Welcome to the course",
       durationSeconds: 300,
@@ -110,11 +131,9 @@ async function main() {
     },
   });
 
-  const lesson2 = await prisma.lesson.upsert({
-    where: { id: "00000000-0000-0000-0000-000000000012" },
-    update: {},
-    create: {
-      id: "00000000-0000-0000-0000-000000000012",
+  const lesson2 = await prisma.lesson.create({
+    data: {
+      id: uuidv4(),
       moduleId: module1.id,
       title: "Setting up your environment",
       durationSeconds: 600,
@@ -135,12 +154,13 @@ async function main() {
     },
   });
 
-console.log({
+  console.log({
     admin: admin.email,
     instructor: instructor.email,
     student: student.email,
     freeCourse: course.title,
     freeCourseId: course.id,
+    moduleId: module1.id,
     lessonIds: [lesson1.id, lesson2.id],
     paidCourse: paidCourse.title,
     paidCourseId: paidCourse.id,

@@ -5,7 +5,7 @@ import { prisma } from "../config/prisma";
 // Supported resource types for ownership checks.
 // Add new resources here as modules are built (courses, lessons, etc.)
 // ----------------------------------------------------------------------------
-type OwnershipResource = "course" | "enrollment" | "purchase" | "lesson" | "module" | "certificate";
+type OwnershipResource = "course" | "enrollment" | "purchase" | "lesson" | "module" | "certificate" | "quiz";
 
 // ----------------------------------------------------------------------------
 // requireOwnership middleware factory
@@ -186,6 +186,35 @@ export function requireOwnership(resource: OwnershipResource) {
 
           if (module.course.instructorId !== user.sub) {
             res.status(404).json({ message: "Module not found" });
+            return;
+          }
+
+          break;
+        }
+
+        case "quiz": {
+          // Ownership check for a Quiz — must be the instructor of the parent course.
+          // Uses quizId param.
+          const rawQuizId = req.params.quizId;
+          const quizId = Array.isArray(rawQuizId) ? rawQuizId[0] : rawQuizId;
+
+          if (!quizId) {
+            res.status(400).json({ message: "Quiz ID required" });
+            return;
+          }
+
+          const quiz = await prisma.quiz.findUnique({
+            where: { id: quizId },
+            select: { course: { select: { instructorId: true, isActive: true } } },
+          });
+
+          if (!quiz || !quiz.course.isActive) {
+            res.status(404).json({ message: "Quiz not found" });
+            return;
+          }
+
+          if (quiz.course.instructorId !== user.sub) {
+            res.status(404).json({ message: "Quiz not found" });
             return;
           }
 

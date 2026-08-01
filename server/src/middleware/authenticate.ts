@@ -1,18 +1,25 @@
 import type { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { JWT_CONFIG } from "../config/jwt";
+import { prisma } from "../config/prisma";
 import type { JwtPayload } from "../modules/auth/auth.types";
 
 // ----------------------------------------------------------------------------
 // Authentication middleware
-// Verifies the access token from the Authorization header.
+// Verifies the access token from the Authorization header, then confirms the
+// user is still active in the database. This closes a real exposure window:
+// without the DB check, a deactivated user's still-valid JWT would continue
+// to work on every route until natural token expiry (up to 15 min), since
+// suspension only revokes refresh tokens, not tokens already issued.
+// Adds one indexed lookup per authenticated request — an accepted tradeoff
+// for a platform where account suspension needs to take effect immediately.
 // ----------------------------------------------------------------------------
 
-export function authenticate(
+export async function authenticate(
   req: Request,
   res: Response,
   next: NextFunction
-): void {
+): Promise<void> {
   const authHeader = req.headers.authorization;
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -41,6 +48,18 @@ export function authenticate(
         audience: JWT_CONFIG.audience,
       }
     ) as JwtPayload;
+
+    const user = await prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { isActive: true },
+    });
+
+    if (!user || !user.isActive) {
+      res.status(401).json({
+        message: "Account is deactivated",
+      });
+      return;
+    }
 
     (
       req as Request & {

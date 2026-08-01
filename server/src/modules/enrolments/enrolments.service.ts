@@ -38,7 +38,7 @@ const enrollmentSelect = {
 // ----------------------------------------------------------------------------
 export async function getStudentEnrollments(userId: string) {
   const enrollments = await prisma.enrollment.findMany({
-    where: { userId, status: "ACTIVE" },
+    where: { userId, status: { not: "CANCELLED" } },
     select: enrollmentSelect,
     orderBy: { enrolledAt: "desc" },
   });

@@ -3,6 +3,7 @@ import { authenticate, requireRole, requireOwnership } from "../../middleware";
 import * as coursesController from "./courses.controller";
 import * as modulesController from "./modules.controller";
 import * as lessonsController from "./lessons.controller";
+import * as quizzesController from "../quizzes/quizzes.controller";
 import { thumbnailUpload } from "../../middleware/upload";
 import reviewsRouter from "../reviews/reviews.routes";
 import { uploadThumbnailHandler, generateVideoUploadUrlHandler } from "./courses.upload.controller";
@@ -178,6 +179,23 @@ router.delete(
   requireOwnership("course"),
   lessonsController.deleteLesson
 );
+
+
+// ----------------------------------------------------------------------------
+// Quiz routes
+// ---------------------------------------------------------------------------- 
+router.get(
+  "/:courseId/quizzes",
+  authenticate,
+  quizzesController.getCourseQuizzes
+);
+
+router.get(
+  "/:courseId/lessons/:lessonId/quiz",
+  authenticate,
+  quizzesController.getLessonQuiz
+);
+
 
 // Mount reviews as nested resource under courses
 router.use("/:courseId/reviews", reviewsRouter);

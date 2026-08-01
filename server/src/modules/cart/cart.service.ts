@@ -108,9 +108,24 @@ export async function addToCart(userId: string, courseId: string) {
   }
 
   // 5. Add item
-  await prisma.cartItem.create({
-    data: { cartId: cart.id, courseId },
-  });
+  // The existingItem check above has a TOCTOU race window — two near-
+  // simultaneous requests could both pass it before either insert commits.
+  // The DB's @@unique([cartId, courseId]) constraint is the real guarantee;
+  // this catch converts that low-level violation into the same clean 409
+  // the app-level check already returns, instead of letting it surface as
+  // an unhandled 500.
+  try {
+    await prisma.cartItem.create({
+      data: { cartId: cart.id, courseId },
+    });
+  } catch (err: any) {
+    if (err.code === "P2002") {
+      const error = new Error("Course is already in your cart");
+      (error as any).statusCode = 409;
+      throw error;
+    }
+    throw err;
+  }
 
   // Return updated cart
   return getCart(userId);
