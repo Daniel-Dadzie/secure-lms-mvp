@@ -24,7 +24,7 @@ export async function getPlatformStats() {
     prisma.purchase.count({ where: { status: "COMPLETED" } }),
     prisma.purchase.aggregate({
       where: { status: "COMPLETED" },
-      _sum: { amountCents: true },
+      _sum: { finalAmountCents: true },
     }),
     prisma.auditEvent.findMany({
       take: 20,
@@ -41,7 +41,7 @@ export async function getPlatformStats() {
     enrollments: { total: totalEnrollments },
     revenue: {
       totalPurchases,
-      totalRevenueCents: totalRevenueCents._sum.amountCents || 0,
+      totalRevenueCents: totalRevenueCents._sum.finalAmountCents || 0,
     },
     recentActivity: recentAuditEvents,
   };
