@@ -8,7 +8,7 @@
 # (lint/build/test) and focuses purely on security gates:
 #   1. Secret scanning        (Gitleaks)
 #   2. Dependency scanning     (npm audit — client, server, packages/shared workspaces)
-#   3. Static analysis (SAST)  (Semgrep — non-blocking in Week 1-2, blocking from Week 3)
+#   3. Static analysis (SAST)  (Semgrep — blocking from Week 3)
 #
 # Runs on every push and pull request targeting main/develop.
 
@@ -66,7 +66,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: "20"
+          node-version-file: .node-version
           cache: "npm"
           cache-dependency-path: package-lock.json
 
@@ -130,15 +130,34 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
-    container:
-      image: semgrep/semgrep
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Run Semgrep
-        continue-on-error: true
+      - name: Install pinned Semgrep
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          SEMGREP_VERSION="1.162.0"
+          SEMGREP_VENV="$RUNNER_TEMP/semgrep-venv"
+
+          python3 -m venv "$SEMGREP_VENV"
+
+          "$SEMGREP_VENV/bin/python" \
+            -m pip \
+            install \
+            --disable-pip-version-check \
+            "semgrep==${SEMGREP_VERSION}"
+
+          echo "$SEMGREP_VENV/bin" >> "$GITHUB_PATH"
+
+          "$SEMGREP_VENV/bin/semgrep" --version
+
+      - name: Run blocking Semgrep
+        shell: bash
+        env:
+          SEMGREP_SEND_METRICS: "off"
         run: |
           semgrep scan \
             --config p/owasp-top-ten \
@@ -148,8 +167,6 @@ jobs:
             --config p/react \
             --error \
             .
-        env:
-          SEMGREP_SEND_METRICS: "off"
 
   summary:
     name: Security Pipeline Summary
@@ -184,5 +201,10 @@ jobs:
             exit 1
           fi
 
-          echo "Blocking Week 1 security gates passed."
-          echo "Semgrep remains non-blocking during Weeks 1-2 while rules are tuned."
+          if [ "$SAST_RESULT" != "success" ]; then
+            echo "Static analysis failed or found a blocking issue."
+            exit 1
+          fi
+
+          echo "All blocking security gates passed."
+          echo "Gitleaks, dependency scanning and Semgrep completed successfully."

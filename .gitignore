@@ -30,3 +30,5 @@ Thumbs.db
 *.tmp
 *.swp
 serviceAccountKey.json
+# Generated PR validation evidence
+.ci-evidence/
