@@ -38,11 +38,11 @@ export async function updateLessonProgress(
     select: { id: true, status: true },
   });
 
-if (!enrollment || enrollment.status === "CANCELLED") {
-  const error = new Error("You are not enrolled in this course");
-  (error as any).statusCode = 403;
-  throw error;
-}
+  if (!enrollment || enrollment.status === "CANCELLED") {
+    const error = new Error("You are not enrolled in this course");
+    (error as any).statusCode = 403;
+    throw error;
+  }
 
   // Update progress
   const progress = await prisma.lessonProgress.upsert({
