@@ -6,8 +6,12 @@ import { prisma } from "../src/config/prisma";
 // Only mocks Nodemailer when no real SMTP_HOST is provided in the test env.
 // In production or live environments, real emails and network calls will run.
 // ----------------------------------------------------------------------------
-if (!process.env.SMTP_HOST) {
-  vi.mock("nodemailer", () => ({
+vi.mock("nodemailer", async () => {
+  if (process.env.SMTP_HOST) {
+    return await vi.importActual<any>("nodemailer");
+  }
+
+  return {
     default: {
       createTransport: vi.fn().mockReturnValue({
         sendMail: vi.fn().mockResolvedValue({ messageId: "test-email-id" }),
@@ -18,8 +22,8 @@ if (!process.env.SMTP_HOST) {
       sendMail: vi.fn().mockResolvedValue({ messageId: "test-email-id" }),
       verify: vi.fn().mockResolvedValue(true),
     }),
-  }));
-}
+  };
+});
 
 vi.mock("firebase-admin/storage", () => ({
   getStorage: vi.fn().mockReturnValue({
