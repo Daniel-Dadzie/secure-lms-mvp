@@ -1,0 +1,200 @@
+name: PR Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-validation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Application and Security Validation
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: secure_lms_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://postgres:password@localhost:5432/secure_lms_test
+      JWT_ACCESS_EXPIRES_IN: 15m
+      JWT_REFRESH_EXPIRES_IN: 7d
+      NODE_ENV: test
+      CLIENT_URL: http://localhost:3000
+      EVIDENCE_ROOT: .ci-evidence/pr-validation
+      PR_NUMBER: ${{ github.event.pull_request.number || 'not-applicable' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version-file: .node-version
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Configure test secrets
+        shell: bash
+        run: |
+          ACCESS_SECRET="$(openssl rand -hex 64)"
+          REFRESH_SECRET="$(openssl rand -hex 64)"
+
+          echo "::add-mask::$ACCESS_SECRET"
+          echo "::add-mask::$REFRESH_SECRET"
+          echo "::add-mask::$DATABASE_URL"
+
+          {
+            echo "JWT_ACCESS_SECRET=$ACCESS_SECRET"
+            echo "JWT_REFRESH_SECRET=$REFRESH_SECRET"
+          } >> "$GITHUB_ENV"
+
+      - name: Install pinned Gitleaks
+        shell: bash
+        run: |
+          GITLEAKS_VERSION="8.30.1"
+          GITLEAKS_ARCHIVE="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          GITLEAKS_SHA256="551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+          GITLEAKS_BIN_DIR="$RUNNER_TEMP/gitleaks-bin"
+
+          curl \
+            --fail \
+            --silent \
+            --show-error \
+            --location \
+            --output "$RUNNER_TEMP/$GITLEAKS_ARCHIVE" \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${GITLEAKS_ARCHIVE}"
+
+          echo "$GITLEAKS_SHA256  $RUNNER_TEMP/$GITLEAKS_ARCHIVE" |
+            sha256sum --check -
+
+          tar \
+            --extract \
+            --gzip \
+            --file "$RUNNER_TEMP/$GITLEAKS_ARCHIVE" \
+            --directory "$RUNNER_TEMP" \
+            gitleaks
+
+          mkdir -p "$GITLEAKS_BIN_DIR"
+
+          install \
+            --mode 0755 \
+            "$RUNNER_TEMP/gitleaks" \
+            "$GITLEAKS_BIN_DIR/gitleaks"
+
+          echo "$GITLEAKS_BIN_DIR" >> "$GITHUB_PATH"
+          "$GITLEAKS_BIN_DIR/gitleaks" version
+
+      - name: Install pinned Semgrep
+        shell: bash
+        run: |
+          SEMGREP_VERSION="1.162.0"
+          SEMGREP_VENV="$RUNNER_TEMP/semgrep-venv"
+
+          python3 -m venv "$SEMGREP_VENV"
+
+          "$SEMGREP_VENV/bin/python" \
+            -m pip \
+            install \
+            --disable-pip-version-check \
+            "semgrep==${SEMGREP_VERSION}"
+
+          echo "$SEMGREP_VENV/bin" >> "$GITHUB_PATH"
+          "$SEMGREP_VENV/bin/semgrep" --version
+
+      - name: Run reusable PR validation
+        id: validation
+        continue-on-error: true
+        shell: bash
+        env:
+          SEMGREP_SEND_METRICS: "off"
+        run: scripts/ci/run_pr_validation.sh all
+
+      - name: Select safe validation evidence
+        id: evidence
+        if: always()
+        shell: bash
+        run: |
+          EVIDENCE_DIR="${{ steps.validation.outputs.evidence_dir }}"
+
+          if [ -z "$EVIDENCE_DIR" ] ||
+             [ ! -f "$EVIDENCE_DIR/.safe-to-upload" ]; then
+            EVIDENCE_DIR=".ci-evidence/pr-validation/workflow-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            mkdir -p "$EVIDENCE_DIR"
+
+            {
+              echo "Secure LMS PR Validation Fallback Evidence"
+              echo
+              echo "Result: FAIL"
+              echo "Reason: The validation runner did not produce a verified evidence package."
+              echo "Commit: $GITHUB_SHA"
+              echo "Workflow run ID: $GITHUB_RUN_ID"
+              echo "Workflow attempt: $GITHUB_RUN_ATTEMPT"
+            } > "$EVIDENCE_DIR/validation-summary.txt"
+
+            (
+              cd "$EVIDENCE_DIR"
+              sha256sum validation-summary.txt > evidence-manifest.sha256
+            )
+
+            touch "$EVIDENCE_DIR/.safe-to-upload"
+          fi
+
+          echo "path=$EVIDENCE_DIR" >> "$GITHUB_OUTPUT"
+          echo "ready=true" >> "$GITHUB_OUTPUT"
+
+      - name: Upload sanitised validation evidence
+        if: always() && steps.evidence.outputs.ready == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: pr-validation-evidence-${{ github.event.pull_request.number || github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.evidence.outputs.path }}
+          if-no-files-found: error
+          include-hidden-files: true
+          retention-days: 14
+
+      - name: Enforce validation result
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ steps.validation.outcome }}" != "success" ]; then
+            echo "Reusable PR validation failed."
+            exit 1
+          fi
+
+          if [ "${{ steps.evidence.outputs.ready }}" != "true" ]; then
+            echo "No safe validation evidence package was produced."
+            exit 1
+          fi
+
+          echo "Reusable PR validation and evidence upload completed successfully."

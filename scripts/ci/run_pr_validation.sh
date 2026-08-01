@@ -132,23 +132,48 @@ write_metadata() {
 }
 
 snapshot_workspace_state() {
-  WORKSPACE_STATE_DIR="$(mktemp -d)"
+  local state_dir
 
-  git status \
+  state_dir="$(mktemp -d)" || return 1
+  WORKSPACE_STATE_DIR="$state_dir"
+
+  if ! git status \
     --porcelain=v1 \
     --untracked-files=all \
-    > "$WORKSPACE_STATE_DIR/git-status-before.txt"
+    > "$WORKSPACE_STATE_DIR/git-status-before.txt"; then
+
+    rm -rf "$WORKSPACE_STATE_DIR"
+    WORKSPACE_STATE_DIR=""
+    return 1
+  fi
 
   if [[ -e client/next-env.d.ts ]]; then
-    cp \
+    if ! cp \
       client/next-env.d.ts \
-      "$WORKSPACE_STATE_DIR/next-env.d.ts"
+      "$WORKSPACE_STATE_DIR/next-env.d.ts"; then
 
-    printf 'present\n' \
-      > "$WORKSPACE_STATE_DIR/next-env.state"
+      rm -rf "$WORKSPACE_STATE_DIR"
+      WORKSPACE_STATE_DIR=""
+      return 1
+    fi
+
+    if ! printf 'present
+' \
+      > "$WORKSPACE_STATE_DIR/next-env.state"; then
+
+      rm -rf "$WORKSPACE_STATE_DIR"
+      WORKSPACE_STATE_DIR=""
+      return 1
+    fi
   else
-    printf 'absent\n' \
-      > "$WORKSPACE_STATE_DIR/next-env.state"
+    if ! printf 'absent
+' \
+      > "$WORKSPACE_STATE_DIR/next-env.state"; then
+
+      rm -rf "$WORKSPACE_STATE_DIR"
+      WORKSPACE_STATE_DIR=""
+      return 1
+    fi
   fi
 }
 
@@ -190,10 +215,17 @@ verify_workspace_integrity() {
   after_file="$WORKSPACE_STATE_DIR/git-status-after.txt"
   evidence_file="$EVIDENCE_DIR/workspace-integrity.txt"
 
-  git status \
+  if ! git status \
     --porcelain=v1 \
     --untracked-files=all \
-    > "$after_file"
+    > "$after_file"; then
+
+    record_message \
+      "workspace-integrity.txt" \
+      "FAIL: Unable to capture the final repository working state."
+
+    return 1
+  fi
 
   if cmp -s "$before_file" "$after_file"; then
     record_message \
@@ -316,6 +348,7 @@ run_semgrep_validation() {
 
   run_step \
     "semgrep" \
+    env SEMGREP_SEND_METRICS=off \
     semgrep scan \
       --config p/owasp-top-ten \
       --config p/javascript \
@@ -574,19 +607,33 @@ write_summary() {
 }
 
 create_manifest() {
-  (
-    cd "$EVIDENCE_DIR" || exit 1
+  python3 - "$EVIDENCE_DIR" <<'PYMANIFEST'
+from __future__ import annotations
 
-    find . \
-      -type f \
-      ! -name 'evidence-manifest.sha256' \
-      -print0 |
-      sort -z |
-      xargs -0 -r sha256sum \
-      > evidence-manifest.sha256
-  )
+import hashlib
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+manifest = root / "evidence-manifest.sha256"
+
+files = sorted(
+    path
+    for path in root.rglob("*")
+    if path.is_file() and path != manifest
+)
+
+with manifest.open(
+    "w",
+    encoding="utf-8",
+    newline="\n",
+) as output:
+    for path in files:
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        relative_path = path.relative_to(root).as_posix()
+        output.write(f"{digest}  {relative_path}\n")
+PYMANIFEST
 }
-
 write_metadata
 
 if ! snapshot_workspace_state; then
