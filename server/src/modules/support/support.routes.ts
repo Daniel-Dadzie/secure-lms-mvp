@@ -1,18 +1,13 @@
 import { Router } from "express";
-import rateLimit from "express-rate-limit";
+import { optionalAuthenticate } from "../../middleware";
 import * as supportController from "./support.controller";
 
 const router = Router();
 
-const supportRateLimit = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
-  max: 30,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { message: "Too many support requests, please try again later" },
-});
-
-// Public — support assistant available to all users including unauthenticated
-router.post("/ask", supportRateLimit, supportController.ask);
+// Public — available to all users including unauthenticated.
+// optionalAuthenticate attaches req.user when a valid token is present,
+// so logged-in users' questions get tied to their account in the audit log,
+// without requiring authentication for anonymous visitors.
+router.post("/ask", optionalAuthenticate, supportController.ask);
 
 export default router;

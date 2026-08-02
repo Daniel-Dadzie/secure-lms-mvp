@@ -106,13 +106,13 @@ export async function createReview(
     select: { status: true },
   });
 
-  if (!enrollment || enrollment.status !== "ACTIVE") {
+  if (!enrollment || enrollment.status === "CANCELLED") {
     const error = new Error("You must be enrolled in this course to leave a review");
     (error as any).statusCode = 403;
     throw error;
   }
 
-  // Check for existing review
+ // Check for existing review
   const existing = await prisma.review.findUnique({
     where: { userId_courseId: { userId, courseId } },
   });
@@ -123,10 +123,24 @@ export async function createReview(
     throw error;
   }
 
-  const review = await prisma.review.create({
-    data: { userId, courseId, rating: input.rating, comment: input.comment },
-    select: reviewSelect,
-  });
+  // The existing check above has a TOCTOU race window — same pattern as
+  // cart/categories. The DB's @@unique([userId, courseId]) constraint is the
+  // real guarantee; this catch converts a low-level violation into the same
+  // clean 409 instead of an unhandled 500.
+  let review;
+  try {
+    review = await prisma.review.create({
+      data: { userId, courseId, rating: input.rating, comment: input.comment },
+      select: reviewSelect,
+    });
+  } catch (err: any) {
+    if (err.code === "P2002") {
+      const error = new Error("You have already reviewed this course");
+      (error as any).statusCode = 409;
+      throw error;
+    }
+    throw err;
+  }
 
   // Update aggregates immediately after creation
   await updateRatingAggregate(courseId);

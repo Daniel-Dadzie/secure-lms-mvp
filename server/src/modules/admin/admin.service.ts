@@ -134,6 +134,14 @@ export async function verifyUserEmail(
   targetUserId: string,
   adminId: string
 ): Promise<void> {
+  const user = await prisma.user.findUnique({ where: { id: targetUserId } });
+
+  if (!user) {
+    const error = new Error("User not found");
+    (error as any).statusCode = 404;
+    throw error;
+  }
+
   await prisma.user.update({
     where: { id: targetUserId },
     data: { isEmailVerified: true },

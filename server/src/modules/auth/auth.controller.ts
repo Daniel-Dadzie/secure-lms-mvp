@@ -2,7 +2,8 @@ import type { Request, Response, NextFunction } from "express";
 import { registerSchema, loginSchema } from "./auth.schemas";
 import * as authService from "./auth.service";
 import { JWT_CONFIG } from "../../config/jwt";
-
+import * as passwordResetService from "./password-reset.service";
+import { forgotPasswordSchema, resetPasswordSchema } from "./auth.schemas";
 // ----------------------------------------------------------------------------
 // Cookie config — httpOnly, Secure, SameSite-Strict per security policy.
 // The refresh token cookie is scoped to /api/auth only, not the whole app,
@@ -184,6 +185,66 @@ export async function me(
   } catch (error: any) {
     if (error.statusCode === 404) {
       res.status(404).json({ message: "User not found" });
+      return;
+    }
+    next(error);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// POST /api/auth/forgot-password
+// ----------------------------------------------------------------------------
+export async function forgotPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const parsed = forgotPasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        message: "Validation failed",
+        errors: parsed.error.flatten().fieldErrors,
+      });
+      return;
+    }
+
+    await passwordResetService.forgotPassword(parsed.data.email);
+
+    // Always the same generic response, regardless of whether the email
+    // exists — prevents user enumeration.
+    res.status(200).json({
+      message: "If an account with that email exists, a reset link has been sent.",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+// ----------------------------------------------------------------------------
+// POST /api/auth/reset-password
+// ----------------------------------------------------------------------------
+export async function resetPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const parsed = resetPasswordSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({
+        message: "Validation failed",
+        errors: parsed.error.flatten().fieldErrors,
+      });
+      return;
+    }
+
+    await passwordResetService.resetPassword(parsed.data.token, parsed.data.newPassword);
+
+    res.status(200).json({ message: "Password reset successful. Please log in." });
+  } catch (error: any) {
+    if (error.statusCode === 400) {
+      res.status(400).json({ message: error.message });
       return;
     }
     next(error);

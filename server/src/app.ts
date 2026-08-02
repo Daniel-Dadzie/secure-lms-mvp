@@ -16,6 +16,8 @@ import enrolmentsRouter from "./modules/enrolments/enrolments.routes";
 import progressRouter from "./modules/progress/progress.routes";
 import supportRouter from "./modules/support/support.routes";
 import adminRouter from "./modules/admin/admin.routes";
+import quizzesRouter from "./modules/quizzes/quizzes.routes";
+import instructorAnalyticsRouter from "./modules/instructor-analytics/instructor-analytics.routes";
 
 export const app = express();
 
@@ -40,6 +42,7 @@ app.use(cookieParser());
 app.use("/api/auth", authRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/courses", coursesRouter);
+app.use("/api/quizzes", quizzesRouter);
 app.use("/api/categories", categoriesRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/payments", paymentsRouter);
@@ -47,6 +50,7 @@ app.use("/api/enrolments", enrolmentsRouter);
 app.use("/api/progress", progressRouter);
 app.use("/api/support", supportRouter);
 app.use("/api/admin", adminRouter);
+app.use("/api/instructor/analytics", instructorAnalyticsRouter);
 
 // ----------------------------------------------------------------------------
 // Health check

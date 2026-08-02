@@ -19,7 +19,7 @@ export async function getAllCategories(): Promise<CategoryResponse[]> {
     },
   });
 }
-
+ 
 export async function createCategory(name: string): Promise<CategoryResponse> {
   const slug = slugify(name, { lower: true, strict: true });
 
@@ -30,10 +30,24 @@ export async function createCategory(name: string): Promise<CategoryResponse> {
     throw error;
   }
 
-  return prisma.category.create({
-    data: { name, slug },
-    select: { id: true, name: true, slug: true },
-  });
+  // The existing check above has a TOCTOU race window — two near-simultaneous
+  // create calls (unlikely for an admin-only, low-frequency action, but still
+  // a real gap) could both pass it before either insert commits. The DB's
+  // @unique constraint on slug/name is the real guarantee; this catch converts
+  // that low-level violation into the same clean 409 instead of an unhandled 500.
+  try {
+    return await prisma.category.create({
+      data: { name, slug },
+      select: { id: true, name: true, slug: true },
+    });
+  } catch (err: any) {
+    if (err.code === "P2002") {
+      const error = new Error("Category already exists");
+      (error as any).statusCode = 409;
+      throw error;
+    }
+    throw err;
+  }
 }
 
 export async function deleteCategory(categoryId: string): Promise<void> {
