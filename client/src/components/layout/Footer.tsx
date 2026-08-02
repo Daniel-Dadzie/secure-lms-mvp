@@ -1,4 +1,3 @@
-// src/components/layout/Footer.tsx
 "use client";
 
 import Link from "next/link";
@@ -61,7 +60,7 @@ export const Footer = () => {
               <li>
                 <Link
                   href="/courses"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-white transition-colors cursor-pointer"
                 >
                   Browse Courses
                 </Link>
@@ -69,7 +68,7 @@ export const Footer = () => {
               <li>
                 <Link
                   href="/instructors"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-white transition-colors cursor-pointer"
                 >
                   Instructors
                 </Link>
@@ -77,7 +76,7 @@ export const Footer = () => {
               <li>
                 <Link
                   href="/pricing"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-white transition-colors cursor-pointer"
                 >
                   Pricing
                 </Link>
@@ -85,7 +84,7 @@ export const Footer = () => {
               <li>
                 <Link
                   href="/about"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-white transition-colors cursor-pointer"
                 >
                   About
                 </Link>
@@ -101,7 +100,7 @@ export const Footer = () => {
               <li>
                 <Link
                   href="/support"
-                  className="hover:text-white transition-colors"
+                  className="hover:text-white transition-colors cursor-pointer"
                 >
                   FAQ &amp; Help Center
                 </Link>
@@ -114,11 +113,21 @@ export const Footer = () => {
               Legal
             </h4>
             <ul className="mt-4 space-y-2 text-sm">
-              <li className="text-slate-500 cursor-not-allowed">
-                Privacy Policy
+              <li>
+                <Link
+                  href="/privacy"
+                  className="text-slate-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  Privacy Policy
+                </Link>
               </li>
-              <li className="text-slate-500 cursor-not-allowed">
-                Terms of Service
+              <li>
+                <Link
+                  href="/terms"
+                  className="text-slate-400 hover:text-white transition-colors cursor-pointer"
+                >
+                  Terms of Service
+                </Link>
               </li>
             </ul>
           </div>
