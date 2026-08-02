@@ -456,7 +456,7 @@ export default function HomePage() {
           </p>
           <div className="mt-8 flex justify-center gap-4">
             <Link
-              href="/courses"
+              href="/register"
               className="rounded-lg bg-white px-6 py-3 text-sm font-semibold text-blue-700 shadow-sm transition hover:bg-blue-50"
             >
               Start Learning Today
