@@ -1,4 +1,5 @@
 import { prisma } from "../../config/prisma";
+import { createNotification } from "../notifications/notifications.service";
 
 // ----------------------------------------------------------------------------
 // Update lesson progress — marks IN_PROGRESS or COMPLETED.
@@ -114,7 +115,17 @@ async function checkCourseCompletion(
       await tx.certificate.create({
         data: { userId, courseId },
       });
+
+    // Notify the student
+    await createNotification(
+        userId,
+        "CERTIFICATE_ISSUED",
+        "Certificate earned!",
+        `Congratulations — you've earned a certificate for completing the course.`,
+        { courseId }
+      );
     }
+    
 
     await tx.auditEvent.create({
       data: {

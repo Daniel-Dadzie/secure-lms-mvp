@@ -22,7 +22,14 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  isLoading: false,
+  // Starts true, not false. ProtectedRoute reads isLoading/isAuthenticated
+  // synchronously on first render, before AuthProvider's loadUser() effect
+  // has a chance to run (child effects fire before parent effects in React).
+  // With isLoading defaulting to false, a real logged-in user hitting a hard
+  // refresh on a protected page would be redirected to /login before their
+  // session cookie is ever checked. Starting true forces ProtectedRoute to
+  // wait and show a loading state until loadUser() genuinely resolves.
+  isLoading: true,
   isAuthenticated: false,
 
   login: async (input) => {

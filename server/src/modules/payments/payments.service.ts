@@ -1,5 +1,6 @@
 import { prisma } from "../../config/prisma";
 import { firebaseMessaging } from "../../config/firebase";
+import { createNotification } from "../notifications/notifications.service";
 
 // ----------------------------------------------------------------------------
 // Simulate checkout for a single course.
@@ -200,6 +201,15 @@ export async function checkout(
         },
       },
     });
+
+    // Notify the student
+    await createNotification(
+      userId,
+      "ENROLLMENT_CONFIRMED",
+      "Enrollment confirmed",
+      `You're now enrolled in ${course.title}.`,
+      { courseId }
+    );
 
     return { purchase, enrollment };
   });

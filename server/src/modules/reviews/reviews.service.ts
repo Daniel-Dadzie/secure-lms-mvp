@@ -1,5 +1,7 @@
 import { prisma } from "../../config/prisma";
 import type { CreateReviewInput, UpdateReviewInput } from "./reviews.schemas";
+import { createNotification } from "../notifications/notifications.service";
+
 
 const reviewSelect = {
   id: true,
@@ -133,6 +135,24 @@ export async function createReview(
       data: { userId, courseId, rating: input.rating, comment: input.comment },
       select: reviewSelect,
     });
+
+    await updateRatingAggregate(courseId);
+
+  const course = await prisma.course.findUnique({
+    where: { id: courseId },
+    select: { instructorId: true, title: true },
+  });
+
+  if (course) {
+    await createNotification(
+      course.instructorId,
+      "NEW_REVIEW",
+      "New review received",
+      `Your course "${course.title}" received a new ${input.rating}-star review.`,
+      { courseId, reviewId: review.id }
+    );
+  }
+
   } catch (err: any) {
     if (err.code === "P2002") {
       const error = new Error("You have already reviewed this course");

@@ -110,6 +110,7 @@ model User {
   emailVerifications  EmailVerification[]
   passwordResets      PasswordReset[]
   instructorAnalytics InstructorAnalytics[]
+  notifications       Notification[]
 
   @@index([role])
   @@map("users")
@@ -614,3 +615,24 @@ model AuditEvent {
 }
 
 
+enum NotificationType {
+  ENROLLMENT_CONFIRMED
+  CERTIFICATE_ISSUED
+  NEW_REVIEW
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      NotificationType
+  title     String
+  message   String
+  isRead    Boolean          @default(false)
+  metadata  Json?
+  createdAt DateTime         @default(now())
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@map("notifications")
+}

@@ -5,7 +5,7 @@ import axios from "axios";
 // Centralizing here means token attachment, refresh logic, and base URL
 // are configured once, not scattered across every component.
 // ----------------------------------------------------------------------------
-const api = axios.create({
+export const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api",
   withCredentials: true, // sends httpOnly refresh cookie on every request
   headers: {
@@ -19,7 +19,6 @@ const api = axios.create({
 // It comes from the Zustand auth store (in-memory only).
 // ----------------------------------------------------------------------------
 api.interceptors.request.use((config) => {
-  // Dynamically import to avoid circular dependency with the store
   const token = getAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -55,7 +54,22 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Never attempt a refresh-and-retry for the refresh/login/register
+    // endpoints themselves. Retrying a failed /auth/refresh call by calling
+    // /auth/refresh again deadlocks: the first call's isRefreshing lock
+    // never releases because it's waiting on a queued promise from the
+    // second call, which is waiting on the same lock. This hits on every
+    // single first-time visitor with no session cookie yet.
+    const isAuthEndpoint =
+      originalRequest.url?.includes("/auth/refresh") ||
+      originalRequest.url?.includes("/auth/login") ||
+      originalRequest.url?.includes("/auth/register");
+
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !isAuthEndpoint
+    ) {
       if (isRefreshing) {
         // Queue this request until the refresh completes
         return new Promise((resolve, reject) => {

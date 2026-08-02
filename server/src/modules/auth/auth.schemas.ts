@@ -2,9 +2,12 @@ import { z } from "zod";
 
 // ----------------------------------------------------------------------------
 // Register input — validated on every POST /auth/register request.
-// Role is restricted to STUDENT only for public registration — clients can never
-// self-assign ADMIN or INSTRUCTOR. The security team's RBAC matrix explicitly requires this.
-// Instructor role assignment requires admin approval via a separate admin endpoint.
+// Role is restricted to STUDENT or INSTRUCTOR — clients can never self-assign
+// ADMIN. This matches an open marketplace model (like Udemy): anyone can
+// register as an instructor immediately, but nothing they create is visible
+// to students until they explicitly publish a course (see courses.service.ts
+// publishCourse — courses default to DRAFT). Content-level gating replaces
+// account-level gating as the trust/safety boundary.
 // ----------------------------------------------------------------------------
 export const registerSchema = z.object({
   email: z
@@ -21,7 +24,7 @@ export const registerSchema = z.object({
     .min(2, "Full name must be at least 2 characters")
     .max(100, "Full name must be at most 100 characters")
     .trim(),
-  role: z.literal("STUDENT"),
+  role: z.enum(["STUDENT", "INSTRUCTOR"]),
 });
 
 // ----------------------------------------------------------------------------

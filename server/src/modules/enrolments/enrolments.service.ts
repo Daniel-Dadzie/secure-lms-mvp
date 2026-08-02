@@ -1,4 +1,5 @@
 import { prisma } from "../../config/prisma";
+import { createNotification } from "../notifications/notifications.service";
 
 const enrollmentSelect = {
   id: true,
@@ -177,6 +178,14 @@ export async function enrollFree(userId: string, courseId: string) {
         metadata: { courseId, courseTitle: course.title },
       },
     });
+
+    await createNotification(
+      userId,
+      "ENROLLMENT_CONFIRMED",
+      "Enrollment confirmed",
+      `You're now enrolled in ${course.title}.`,
+      { courseId }
+    );
 
     return enrollment;
   });

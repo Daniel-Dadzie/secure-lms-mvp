@@ -1,10 +1,11 @@
 import type { Request, Response, NextFunction } from "express";
-import { uploadThumbnail, generateVideoUploadUrl } from "../../services/upload.service";
 import { prisma } from "../../config/prisma";
+import { uploadThumbnail, generateVideoUploadUrl, deleteThumbnail } from "../../services/upload.service";
 
 interface MulterRequest extends Request {
   file?: Express.Multer.File;
 }
+
 export async function uploadThumbnailHandler(
   req: Request,
   res: Response,
@@ -16,6 +17,14 @@ export async function uploadThumbnailHandler(
       return;
     }
 
+    // Fetch the existing thumbnail URL before overwriting, so we can clean
+    // up the old Cloudinary asset after the new one is confirmed uploaded —
+    // otherwise every re-upload leaves an orphaned image on Cloudinary forever.
+    const existingCourse = await prisma.course.findUnique({
+      where: { id: req.params.courseId as string },
+      select: { thumbnailUrl: true },
+    });
+
     const thumbnailUrl = await uploadThumbnail(
       req.file.buffer,
       req.file.mimetype
@@ -25,6 +34,15 @@ export async function uploadThumbnailHandler(
       where: { id: req.params.courseId as string },
       data: { thumbnailUrl },
     });
+
+    // Delete the old thumbnail only after the new one is successfully
+    // uploaded and saved — never delete first, to avoid ending up with no
+    // thumbnail at all if the new upload fails partway through.
+    if (existingCourse?.thumbnailUrl) {
+      deleteThumbnail(existingCourse.thumbnailUrl).catch((err) =>
+        console.error("Failed to delete old thumbnail:", err)
+      );
+    }
 
     await prisma.auditEvent.create({
       data: {
