@@ -1,4 +1,4 @@
-// src/app/login/page.tsx
+// src/app/register/page.tsx
 "use client";
 
 import { useState } from "react";
@@ -7,51 +7,68 @@ import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { getDashboardPath } from "@/lib/redirects";
 
-// ----------------------------------------------------------------------------
-// Testimonial/feature content — kept as local, swappable config rather than
-// hardcoded JSX. The testimonial (name/company/quote) is placeholder content
-// pending real user testimonials; swapping or removing it later is a one-line
-// change here, not a page rewrite.
-// ----------------------------------------------------------------------------
 const FEATURES = [
-  { emoji: "🎓", text: "Access engineering courses" },
-  { emoji: "📊", text: "Track progress and earn certificates" },
-  { emoji: "🤖", text: "AI-powered learning assistant" },
+  "Free access to starter courses",
+  "Earn industry-recognized certificates",
+  "Learn from instructors worldwide",
+  "Track your progress as you learn",
 ];
 
-const TESTIMONIAL = {
-  quote: "The best engineering platform I've used. Completely changed my career trajectory.",
-  name: "Alex Rivera",
-  role: "Mechanical Engineer",
-  rating: 5,
-};
+type RoleChoice = "STUDENT" | "INSTRUCTOR";
 
-export default function LoginPage() {
+export default function RegisterPage() {
   const router = useRouter();
-  const login = useAuthStore((state) => state.login);
+  const register = useAuthStore((state) => state.register);
   const isLoading = useAuthStore((state) => state.isLoading);
 
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [role, setRole] = useState<RoleChoice>("STUDENT");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  function validate(): boolean {
+    const errors: Record<string, string> = {};
+
+    if (fullName.trim().length < 2) {
+      errors.fullName = "Full name must be at least 2 characters";
+    }
+    if (password.length < 8) {
+      errors.password = "Password must be at least 8 characters";
+    }
+    // Client-side only — confirmPassword is never sent to the backend,
+    // it has no meaning there. This check exists purely to catch typos
+    // before submitting.
+    if (password !== confirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
+    }
+    if (!agreedToTerms) {
+      errors.terms = "You must agree to the Terms of Service and Privacy Policy";
+    }
+
+    setFieldErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
 
+    if (!validate()) return;
+
     try {
-      await login({ email, password });
+      await register({ email, password, fullName, role });
       const user = useAuthStore.getState().user;
       if (user) {
         router.push(getDashboardPath(user.role));
       }
     } catch (err: any) {
-      // Backend returns a generic message for both wrong email and wrong
-      // password (user-enumeration prevention) — surfaced as-is, not
-      // reinterpreted, so we don't accidentally leak more detail client-side
-      // than the API deliberately withholds.
+      // Backend returns a generic 409 for duplicate emails deliberately
+      // (never confirms whether an email is already registered) — shown
+      // as-is, not reinterpreted into something more specific.
       const message =
         err?.response?.data?.message || "Something went wrong. Please try again.";
       setError(message);
@@ -60,8 +77,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row">
-      {/* Left panel — branding, features, testimonial */}
-      <div className="md:w-1/2 bg-gradient-to-br from-blue-900 to-blue-700 text-white p-8 md:p-12 flex flex-col justify-center relative overflow-hidden">
+      {/* Left panel */}
+      <div className="md:w-1/2 bg-gradient-to-br from-blue-900 to-blue-700 text-white p-8 md:p-12 flex flex-col justify-center">
         {/* Brand Header with Standardized Vector SVG Icon & Color-Split Text */}
         <div className="flex items-center gap-3 mb-12">
           <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-sm shrink-0 border border-blue-500/40">
@@ -86,44 +103,28 @@ export default function LoginPage() {
         </div>
 
         <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
-          Welcome Back,
+          Start Your Engineering
           <br />
-          Engineer.
+          Journey Today
         </h1>
         <p className="text-blue-100 text-lg mb-10">
-          Continue your learning journey and advance your engineering career.
+          Create your free account and get instant access to our engineering
+          courses.
         </p>
 
-        <ul className="space-y-4 mb-10">
+        <ul className="space-y-3">
           {FEATURES.map((feature) => (
-            <li key={feature.text} className="flex items-center gap-3 text-blue-50">
-              <span className="text-xl">{feature.emoji}</span>
-              <span>{feature.text}</span>
+            <li key={feature} className="flex items-center gap-3 text-blue-50">
+              <span className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center text-xs shrink-0">
+                ✓
+              </span>
+              <span>{feature}</span>
             </li>
           ))}
         </ul>
-
-        <div className="bg-white/10 rounded-xl p-5 backdrop-blur-sm">
-          <div className="text-amber-400 mb-2" aria-hidden="true">
-            {"★".repeat(TESTIMONIAL.rating)}
-          </div>
-          <p className="italic text-blue-50 mb-4">&ldquo;{TESTIMONIAL.quote}&rdquo;</p>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-blue-400 flex items-center justify-center text-sm font-semibold">
-              {TESTIMONIAL.name
-                .split(" ")
-                .map((n) => n[0])
-                .join("")}
-            </div>
-            <div>
-              <p className="font-semibold text-sm">{TESTIMONIAL.name}</p>
-              <p className="text-blue-200 text-xs">{TESTIMONIAL.role}</p>
-            </div>
-          </div>
-        </div>
       </div>
 
-      {/* Right panel — login form */}
+      {/* Right panel */}
       <div className="md:w-1/2 flex flex-col justify-center px-6 py-12 md:px-16 bg-gray-50">
         <Link
           href="/"
@@ -132,11 +133,11 @@ export default function LoginPage() {
           ← Back to Home
         </Link>
 
-        <h2 className="text-2xl font-bold text-gray-900 mb-1">Sign in to your account</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-1">Create your account</h2>
         <p className="text-sm text-gray-600 mb-8">
-          Don&apos;t have an account?{" "}
-          <Link href="/register" className="text-blue-700 font-medium hover:underline">
-            Create one free
+          Already have one?{" "}
+          <Link href="/login" className="text-blue-700 font-medium hover:underline">
+            Sign in
           </Link>
         </p>
 
@@ -151,8 +152,27 @@ export default function LoginPage() {
           )}
 
           <div className="mb-4">
+            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1.5">
+              Full Name
+            </label>
+            <input
+              id="fullName"
+              type="text"
+              autoComplete="name"
+              required
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Daniel Johnson"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900"
+            />
+            {fieldErrors.fullName && (
+              <p className="text-red-600 text-xs mt-1">{fieldErrors.fullName}</p>
+            )}
+          </div>
+
+          <div className="mb-4">
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
-              Email address
+              Email Address
             </label>
             <input
               id="email"
@@ -161,8 +181,8 @@ export default function LoginPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@company.com"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-slate-900"
+              placeholder="daniel@company.com"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900"
             />
           </div>
 
@@ -170,49 +190,105 @@ export default function LoginPage() {
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
               Password
             </label>
-            <div className="relative">
-              <input
-                id="password"
-                type={showPassword ? "text" : "password"}
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 pr-16 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent text-slate-900"
-              />
+            <input
+              id="password"
+              type="password"
+              autoComplete="new-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Create a password (min. 8 characters)"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900"
+            />
+            {fieldErrors.password && (
+              <p className="text-red-600 text-xs mt-1">{fieldErrors.password}</p>
+            )}
+          </div>
+
+          <div className="mb-4">
+            <label
+              htmlFor="confirmPassword"
+              className="block text-sm font-medium text-gray-700 mb-1.5"
+            >
+              Confirm Password
+            </label>
+            <input
+              id="confirmPassword"
+              type="password"
+              autoComplete="new-password"
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Repeat your password"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 text-slate-900"
+            />
+            {fieldErrors.confirmPassword && (
+              <p className="text-red-600 text-xs mt-1">{fieldErrors.confirmPassword}</p>
+            )}
+          </div>
+
+          <div className="mb-4">
+            <span className="block text-sm font-medium text-gray-700 mb-2">I want to join as</span>
+            <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
-                onClick={() => setShowPassword((s) => !s)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 hover:text-gray-700"
-                aria-label={showPassword ? "Hide password" : "Show password"}
+                onClick={() => setRole("STUDENT")}
+                className={`text-left border rounded-lg p-4 transition-colors ${
+                  role === "STUDENT"
+                    ? "border-blue-600 bg-blue-50"
+                    : "border-gray-300 hover:border-gray-400"
+                }`}
               >
-                {showPassword ? "Hide" : "Show"}
+                <div className="text-xl mb-1">🎓</div>
+                <div className="font-semibold text-sm text-gray-900">Student</div>
+                <div className="text-xs text-gray-500">Learn and grow</div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole("INSTRUCTOR")}
+                className={`text-left border rounded-lg p-4 transition-colors ${
+                  role === "INSTRUCTOR"
+                    ? "border-blue-600 bg-blue-50"
+                    : "border-gray-300 hover:border-gray-400"
+                }`}
+              >
+                <div className="text-xl mb-1">👨‍🏫</div>
+                <div className="font-semibold text-sm text-gray-900">Instructor</div>
+                <div className="text-xs text-gray-500">Teach and earn</div>
               </button>
             </div>
           </div>
 
-          <div className="flex items-center justify-between mb-6">
-            <label className="flex items-center gap-2 text-sm text-gray-700">
+          <div className="mb-2">
+            <label className="flex items-start gap-2 text-sm text-gray-700">
               <input
                 type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
               />
-              Remember me
+              <span>
+                I agree to the{" "}
+                <Link href="/terms" className="text-blue-700 hover:underline">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="text-blue-700 hover:underline">
+                  Privacy Policy
+                </Link>
+              </span>
             </label>
-            <Link href="/forgot-password" className="text-sm text-blue-700 hover:underline">
-              Forgot password?
-            </Link>
+            {fieldErrors.terms && (
+              <p className="text-red-600 text-xs mt-1">{fieldErrors.terms}</p>
+            )}
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-blue-800 hover:bg-blue-900 disabled:bg-blue-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors shadow-sm"
+            className="w-full mt-4 bg-blue-800 hover:bg-blue-900 disabled:bg-blue-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-colors shadow-sm"
           >
-            {isLoading ? "Signing in..." : "Sign In"}
+            {isLoading ? "Creating account..." : "Create Account"}
           </button>
         </form>
       </div>
