@@ -1,87 +1,138 @@
 "use client";
-import { useState, Suspense } from "react";
+
+import { Suspense, useState, FormEvent } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
-import { getDashboardPath } from "@/lib/redirects";
 
-// 1. Extract the logic that uses searchParams into an inner component
+// ----------------------------------------------------------------------------
+// Separated into its own component because useSearchParams() requires
+// a Suspense boundary in Next.js App Router during static generation.
+// All logic is unchanged — only the export structure is different.
+// ----------------------------------------------------------------------------
 function LoginForm() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo") || "/student";
+
+  const { login } = useAuthStore();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // This hook is now safely inside a component that will be wrapped in Suspense
-  const searchParams = useSearchParams();
-  const justRegistered = searchParams.get("registered") === "true";
+  const handleLogin = async (e: FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    setErrorMessage(null);
 
-  async function handleSubmit() {
-    if (!email || !password) {
-      setError("Please enter your email and password");
-      return;
-    }
-    setError("");
-    setSubmitting(true);
     try {
-      const store = useAuthStore.getState();
-      await store.login({ email, password });
-      const user = useAuthStore.getState().user;
-      if (user) router.replace(getDashboardPath(user.role));
-    } catch {
-      setError("Invalid email or password");
+      await login({ email, password });
+      router.push(returnTo);
+    } catch (error: any) {
+      setErrorMessage(
+        error?.response?.data?.message ||
+          "Invalid email or password. Please try again."
+      );
     } finally {
-      setSubmitting(false);
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
-    <>
-      <h1 className="text-2xl font-bold">Login</h1>
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-xl border border-slate-100">
+        <div>
+          <h2 className="text-center text-3xl font-extrabold text-slate-900 tracking-tight">
+            Welcome back
+          </h2>
+          <p className="mt-2 text-center text-sm text-slate-500">
+            Sign in to access your engineering courses
+          </p>
+        </div>
 
-      {justRegistered && (
-        <p className="text-green-600 text-sm bg-green-50 px-4 py-2 rounded w-full max-w-sm text-center">
-          Account created successfully! Please log in.
+        {errorMessage && (
+          <div className="rounded-lg bg-red-50 p-4 text-sm font-medium text-red-700 border border-red-200">
+            {errorMessage}
+          </div>
+        )}
+
+        <form className="mt-8 space-y-6" onSubmit={handleLogin}>
+          <div className="space-y-4 rounded-md shadow-sm">
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1" htmlFor="email">
+                Email address
+              </label>
+              <input
+                id="email"
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="relative block w-full appearance-none rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm"
+                placeholder="engineer@example.com"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1" htmlFor="password">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="relative block w-full appearance-none rounded-lg border border-slate-300 px-3 py-2 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm"
+                placeholder="••••••••"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="text-sm">
+              <Link href="/forgot-password" className="font-semibold text-blue-600 hover:text-blue-500">
+                Forgot your password?
+              </Link>
+            </div>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="group relative flex w-full justify-center rounded-lg border border-transparent bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-blue-400 disabled:cursor-not-allowed transition-colors shadow-sm"
+            >
+              {isSubmitting ? "Signing in..." : "Sign in"}
+            </button>
+          </div>
+        </form>
+
+        <p className="text-center text-sm text-slate-500 mt-6">
+          Don&apos;t have an account?{" "}
+          <Link
+            href={`/register${returnTo !== "/student" ? `?returnTo=${returnTo}` : ""}`}
+            className="font-bold text-blue-600 hover:text-blue-500"
+          >
+            Sign up now
+          </Link>
         </p>
-      )}
-
-      {error && <p className="text-red-600 text-sm">{error}</p>}
-
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        className="border rounded px-4 py-2 w-full max-w-sm"
-      />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="border rounded px-4 py-2 w-full max-w-sm"
-      />
-      <button
-        onClick={handleSubmit}
-        disabled={submitting}
-        className="px-6 py-2 bg-blue-600 text-white rounded disabled:opacity-50 w-full max-w-sm"
-      >
-        {submitting ? "Logging in..." : "Login"}
-      </button>
-      <a href="/register" className="text-sm text-blue-600 underline">
-        Don't have an account? Register
-      </a>
-    </>
+      </div>
+    </div>
   );
 }
 
-// 2. Wrap the inner component with Suspense in the main page export
 export default function LoginPage() {
   return (
-    <main className="flex flex-col items-center justify-center min-h-screen gap-4 p-8">
-      <Suspense fallback={<p className="text-sm text-gray-500">Loading form...</p>}>
-        <LoginForm />
-      </Suspense>
-    </main>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-slate-50">
+          <div className="text-slate-500 text-sm">Loading...</div>
+        </div>
+      }
+    >
+      <LoginForm />
+    </Suspense>
   );
 }

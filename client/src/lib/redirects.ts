@@ -1,4 +1,13 @@
+// src/lib/redirect.ts
 import type { Role } from "@/types/auth";
+
+export const APP_ROUTES = {
+  HOME: "/",
+  LOGIN: "/login",
+  ADMIN_DASHBOARD: "/admin",
+  INSTRUCTOR_DASHBOARD: "/instructor",
+  STUDENT_DASHBOARD: "/student",
+} as const;
 
 // ----------------------------------------------------------------------------
 // Central place for role-based redirect destinations.
@@ -8,12 +17,12 @@ import type { Role } from "@/types/auth";
 export function getDashboardPath(role: Role): string {
   switch (role) {
     case "ADMIN":
-      return "/admin";
+      return APP_ROUTES.ADMIN_DASHBOARD;
     case "INSTRUCTOR":
-      return "/instructor";
+      return APP_ROUTES.INSTRUCTOR_DASHBOARD;
     case "STUDENT":
-      return "/student";
+      return APP_ROUTES.STUDENT_DASHBOARD;
     default:
-      return "/";
+      return APP_ROUTES.HOME;
   }
 }

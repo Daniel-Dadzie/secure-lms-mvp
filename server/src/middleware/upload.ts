@@ -9,7 +9,9 @@ export const thumbnailUpload = multer({
     if (allowed.includes(file.mimetype)) {
       cb(null, true);
     } else {
-      cb(new Error("Invalid file type. Only JPG, PNG and WebP allowed."));
+      const error = new Error("Invalid file type. Only JPG, PNG and WebP allowed.");
+      (error as any).statusCode = 400;
+      cb(error);
     }
   },
 });

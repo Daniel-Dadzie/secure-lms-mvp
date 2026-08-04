@@ -18,6 +18,7 @@ import supportRouter from "./modules/support/support.routes";
 import adminRouter from "./modules/admin/admin.routes";
 import quizzesRouter from "./modules/quizzes/quizzes.routes";
 import instructorAnalyticsRouter from "./modules/instructor-analytics/instructor-analytics.routes";
+import notificationsRouter from "./modules/notifications/notifications.routes";
 
 export const app = express();
 
@@ -33,7 +34,18 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(express.json({ limit: "10kb" }));
+app.use(
+  express.json({
+    verify: (req: any, _res, buf) => {
+      // Preserve the raw body for webhook signature verification —
+      // express.json() would otherwise only leave us the parsed object,
+      // and Paystack's HMAC is computed over the exact original bytes.
+      req.rawBody = buf;
+    },
+  })
+);
+
+
 app.use(cookieParser());
 
 // ----------------------------------------------------------------------------
@@ -51,6 +63,7 @@ app.use("/api/progress", progressRouter);
 app.use("/api/support", supportRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/instructor/analytics", instructorAnalyticsRouter);
+app.use("/api/notifications", notificationsRouter);
 
 // ----------------------------------------------------------------------------
 // Health check

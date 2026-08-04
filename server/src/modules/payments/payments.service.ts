@@ -1,33 +1,23 @@
+import crypto from "crypto";
 import { prisma } from "../../config/prisma";
 import { firebaseMessaging } from "../../config/firebase";
+import { initializeTransaction, verifyTransaction } from "../../services/paystack.service";
+import { createNotification } from "../notifications/notifications.service";
 
 // ----------------------------------------------------------------------------
-// Simulate checkout for a single course.
-// Price is ALWAYS read from the DB — never from the client or cart.
-// Optional couponCode is validated and applied server-side; discount amounts
-// are never trusted from the client.
-// The entire purchase + coupon usage + enrollment + progress initialization
-// is wrapped in a single DB transaction: all succeed or all fail together.
+// Initiate checkout for a single course. Creates a PENDING purchase and
+// returns a Paystack authorization_url for the client to redirect to.
+// Nothing is enrolled yet — that only happens once payment is confirmed
+// via webhook (or the verify fallback), never at this step.
 // ----------------------------------------------------------------------------
 export async function checkout(
   userId: string,
   courseId: string,
   couponCode?: string
 ) {
-  // 1. Verify course exists and is published
   const course = await prisma.course.findFirst({
     where: { id: courseId, status: "PUBLISHED", isActive: true },
-    select: {
-      id: true,
-      title: true,
-      priceCents: true,
-      instructorId: true,
-      modules: {
-        select: {
-          lessons: { select: { id: true } },
-        },
-      },
-    },
+    select: { id: true, title: true, priceCents: true },
   });
 
   if (!course) {
@@ -36,7 +26,6 @@ export async function checkout(
     throw error;
   }
 
-  // 2. Check not already enrolled
   const existingEnrollment = await prisma.enrollment.findUnique({
     where: { userId_courseId: { userId, courseId } },
   });
@@ -47,52 +36,42 @@ export async function checkout(
     throw error;
   }
 
-  // 3. Get all lesson IDs for progress initialization
-  const lessonIds = course.modules.flatMap((m) =>
-    m.lessons.map((l) => l.id)
-  );
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { email: true },
+  });
+  if (!user) {
+    const error = new Error("User not found");
+    (error as any).statusCode = 404;
+    throw error;
+  }
 
-  // 4. Validate coupon (if provided) BEFORE the transaction — fail fast with
-  //    a clear error rather than letting a DB constraint throw mid-transaction.
-  let coupon: {
-    id: string;
-    discountType: "PERCENTAGE" | "FIXED_AMOUNT";
-    discountValue: number;
-  } | null = null;
+  // Coupon validation — same logic as before, just computed up front
+  // rather than inside a completion transaction.
+  let coupon: { id: string; discountType: "PERCENTAGE" | "FIXED_AMOUNT"; discountValue: number } | null = null;
 
   if (couponCode) {
-    const foundCoupon = await prisma.coupon.findUnique({
-      where: { code: couponCode },
-    });
+    const foundCoupon = await prisma.coupon.findUnique({ where: { code: couponCode } });
 
     if (!foundCoupon || !foundCoupon.isActive) {
       const error = new Error("Coupon is invalid or no longer active");
       (error as any).statusCode = 400;
       throw error;
     }
-
     if (foundCoupon.expiresAt && foundCoupon.expiresAt < new Date()) {
       const error = new Error("Coupon has expired");
       (error as any).statusCode = 400;
       throw error;
     }
-
-    if (
-      foundCoupon.maxUses !== null &&
-      foundCoupon.usedCount >= foundCoupon.maxUses
-    ) {
+    if (foundCoupon.maxUses !== null && foundCoupon.usedCount >= foundCoupon.maxUses) {
       const error = new Error("Coupon usage limit has been reached");
       (error as any).statusCode = 400;
       throw error;
     }
 
-    // Enforce the one-use-per-user rule implied by @@unique([couponId, userId])
     const existingUsage = await prisma.couponUsage.findUnique({
-      where: {
-        couponId_userId: { couponId: foundCoupon.id, userId },
-      },
+      where: { couponId_userId: { couponId: foundCoupon.id, userId } },
     });
-
     if (existingUsage) {
       const error = new Error("You have already used this coupon");
       (error as any).statusCode = 409;
@@ -106,159 +85,56 @@ export async function checkout(
     };
   }
 
-  // 5. Compute discount server-side — never trust a discount amount from the client
   const amountCents = course.priceCents;
   let discountCents = 0;
 
   if (coupon) {
-    if (coupon.discountType === "PERCENTAGE") {
-      discountCents = Math.round((amountCents * coupon.discountValue) / 100);
-    } else {
-      // FIXED_AMOUNT — value is already in cents
-      discountCents = coupon.discountValue;
-    }
-    // Never let a discount exceed the price itself
+    discountCents =
+      coupon.discountType === "PERCENTAGE"
+        ? Math.round((amountCents * coupon.discountValue) / 100)
+        : coupon.discountValue;
     discountCents = Math.min(discountCents, amountCents);
   }
 
   const finalAmountCents = amountCents - discountCents;
+  const reference = `PSK-${crypto.randomUUID()}`;
 
-  // 6. Atomic transaction: purchase + coupon usage + enrollment + progress records
-  const { purchase, enrollment } = await prisma.$transaction(async (tx) => {
-    // Create purchase with server-computed price and discount — client cannot tamper
-    const purchase = await tx.purchase.create({
-      data: {
-        userId,
-        courseId,
-        amountCents,
-        discountCents,
-        finalAmountCents,
-        couponId: coupon?.id,
-        currency: "GHS",
-        status: "COMPLETED", // simulated — real gateway would start as PENDING
-        provider: "SIMULATED",
-      },
-    });
-
-    // Record coupon usage + increment usedCount atomically with the purchase
-    if (coupon) {
-      await tx.couponUsage.create({
-        data: {
-          couponId: coupon.id,
-          userId,
-          courseId,
-          purchaseId: purchase.id,
-        },
-      });
-
-      await tx.coupon.update({
-        where: { id: coupon.id },
-        data: { usedCount: { increment: 1 } },
-      });
-    }
-
-    // Create enrollment linked to purchase
-    const enrollment = await tx.enrollment.create({
-      data: {
-        userId,
-        courseId,
-        purchaseId: purchase.id,
-        status: "ACTIVE",
-      },
-    });
-
-    // Initialize LessonProgress for every lesson in the course
-    // so student dashboard shows 0% immediately (not null/missing)
-    if (lessonIds.length > 0) {
-      await tx.lessonProgress.createMany({
-        data: lessonIds.map((lessonId) => ({
-          userId,
-          lessonId,
-          enrollmentId: enrollment.id,
-          status: "NOT_STARTED",
-          progressSeconds: 0,
-        })),
-        skipDuplicates: true,
-      });
-    }
-
-    // Write audit event inside transaction
-    await tx.auditEvent.create({
-      data: {
-        userId,
-        action: "purchase.completed",
-        entityType: "Purchase",
-        entityId: purchase.id,
-        metadata: {
-          courseId,
-          courseTitle: course.title,
-          amountCents,
-          discountCents,
-          finalAmountCents,
-          couponCode: couponCode ?? null,
-          currency: "GHS",
-        },
-      },
-    });
-
-    return { purchase, enrollment };
+  const purchase = await prisma.purchase.create({
+    data: {
+      userId,
+      courseId,
+      amountCents,
+      discountCents,
+      finalAmountCents,
+      couponId: coupon?.id,
+      currency: "GHS",
+      status: "PENDING",
+      provider: "PAYSTACK",
+      providerReference: reference,
+    },
   });
 
-  // 7. Remove course from cart after successful purchase
-  const cart = await prisma.cart.findUnique({ where: { userId } });
-  if (cart) {
-    await prisma.cartItem.deleteMany({
-      where: { cartId: cart.id, courseId },
-    });
-  }
+  const { authorizationUrl } = await initializeTransaction({
+    email: user.email,
+    amountInSubunit: finalAmountCents,
+    reference,
+    callbackUrl: `${process.env.CLIENT_URL}/payment/callback`,
+    metadata: { userId, courseId, purchaseId: purchase.id },
+  });
 
-  // 8. Send FCM push notification (non-blocking — don't fail checkout if this fails)
-  try {
-    await firebaseMessaging.send({
-      topic: `user-${userId}`,
-      notification: {
-        title: "Enrollment Confirmed!",
-        body: `You are now enrolled in ${course.title}. Start learning now!`,
-      },
-      data: {
-        type: "enrollment_confirmed",
-        courseId,
-        enrollmentId: enrollment.id,
-      },
-    });
-  } catch (notifError) {
-    // Log but don't throw — notification failure must not roll back a successful purchase
-    console.error("FCM notification failed:", notifError);
-  }
-
-  return {
-    purchase,
-    enrollment,
-    course: {
-      id: course.id,
-      title: course.title,
-      priceCents: course.priceCents,
-    },
-  };
+  return { authorizationUrl, reference, purchase };
 }
 
 // ----------------------------------------------------------------------------
-// Checkout entire cart — processes each course sequentially.
-// Skips already-enrolled courses gracefully.
-// Coupons are not supported in bulk cart checkout — the schema only allows
-// one CouponUsage per coupon per user, not per course, so applying a single
-// coupon across multiple cart items needs its own design decision.
+// Initiate checkout for the whole cart as ONE Paystack transaction. All
+// cart items share a single reference; the webhook completes them together.
+// Coupons are not supported here, matching the existing single-coupon
+// design constraint (@@unique([couponId, userId]) on CouponUsage).
 // ----------------------------------------------------------------------------
 export async function checkoutCart(userId: string) {
   const cart = await prisma.cart.findUnique({
     where: { userId },
-    include: {
-      items: {
-        include: {
-          course: { select: { id: true, title: true, priceCents: true, status: true } },
-        },
-      },
-    },
+    include: { items: { include: { course: true } } },
   });
 
   if (!cart || cart.items.length === 0) {
@@ -267,28 +143,213 @@ export async function checkoutCart(userId: string) {
     throw error;
   }
 
-  const results = [];
-  const errors = [];
-
-  for (const item of cart.items) {
-    try {
-      const result = await checkout(userId, item.courseId);
-      results.push(result);
-    } catch (err: any) {
-      // Already enrolled — skip gracefully
-      if (err.statusCode === 409) {
-        errors.push({ courseId: item.courseId, reason: err.message });
-      } else {
-        throw err; // unexpected error — bubble up
-      }
-    }
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
+  if (!user) {
+    const error = new Error("User not found");
+    (error as any).statusCode = 404;
+    throw error;
   }
 
-  return { purchases: results, skipped: errors };
+  const eligibleItems = [];
+  const skipped = [];
+
+  for (const item of cart.items) {
+    const existing = await prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId, courseId: item.courseId } },
+    });
+    if (existing) {
+      skipped.push({ courseId: item.courseId, reason: "Already enrolled" });
+      continue;
+    }
+    if (item.course.status !== "PUBLISHED" || !item.course.isActive) {
+      skipped.push({ courseId: item.courseId, reason: "Course not available" });
+      continue;
+    }
+    eligibleItems.push(item);
+  }
+
+  if (eligibleItems.length === 0) {
+    const error = new Error("No eligible courses to purchase");
+    (error as any).statusCode = 400;
+    throw error;
+  }
+
+  const totalAmountCents = eligibleItems.reduce((sum, item) => sum + item.course.priceCents, 0);
+  const reference = `PSK-CART-${crypto.randomUUID()}`;
+
+  const purchases = await prisma.$transaction(
+    eligibleItems.map((item) =>
+      prisma.purchase.create({
+        data: {
+          userId,
+          courseId: item.courseId,
+          amountCents: item.course.priceCents,
+          discountCents: 0,
+          finalAmountCents: item.course.priceCents,
+          currency: "GHS",
+          status: "PENDING",
+          provider: "PAYSTACK",
+          providerReference: reference,
+        },
+      })
+    )
+  );
+
+  const { authorizationUrl } = await initializeTransaction({
+    email: user.email,
+    amountInSubunit: totalAmountCents,
+    reference,
+    callbackUrl: `${process.env.CLIENT_URL}/payment/callback`,
+    metadata: { userId, courseIds: eligibleItems.map((i) => i.courseId) },
+  });
+
+  return { authorizationUrl, reference, purchases, skipped };
 }
 
 // ----------------------------------------------------------------------------
-// Get student's purchase history
+// Complete all PENDING purchases sharing a reference — the actual
+// enrollment/certificate-eligible/notification logic that used to run
+// inline in checkout(). Called ONLY from the webhook handler or the verify
+// fallback, never directly from a client-facing route. Idempotent: if
+// purchases are already COMPLETED, this safely no-ops (Paystack may
+// legitimately resend the same webhook event more than once).
+// ----------------------------------------------------------------------------
+export async function completePurchasesByReference(reference: string): Promise<void> {
+  const pendingPurchases = await prisma.purchase.findMany({
+    where: { providerReference: reference, status: "PENDING" },
+    include: { course: { select: { title: true, modules: { select: { lessons: { select: { id: true } } } } } } },
+  });
+
+  if (pendingPurchases.length === 0) {
+    // Already completed (duplicate webhook) or reference doesn't exist —
+    // either way, nothing to do. Not an error.
+    return;
+  }
+
+  for (const purchase of pendingPurchases) {
+    const lessonIds = purchase.course.modules.flatMap((m) => m.lessons.map((l) => l.id));
+
+    await prisma.$transaction(async (tx) => {
+      await tx.purchase.update({
+        where: { id: purchase.id },
+        data: { status: "COMPLETED" },
+      });
+
+      const enrollment = await tx.enrollment.create({
+        data: {
+          userId: purchase.userId,
+          courseId: purchase.courseId,
+          purchaseId: purchase.id,
+          status: "ACTIVE",
+        },
+      });
+
+      if (lessonIds.length > 0) {
+        await tx.lessonProgress.createMany({
+          data: lessonIds.map((lessonId) => ({
+            userId: purchase.userId,
+            lessonId,
+            enrollmentId: enrollment.id,
+            status: "NOT_STARTED",
+            progressSeconds: 0,
+          })),
+          skipDuplicates: true,
+        });
+      }
+
+      if (purchase.couponId) {
+        await tx.couponUsage.create({
+          data: {
+            couponId: purchase.couponId,
+            userId: purchase.userId,
+            courseId: purchase.courseId,
+            purchaseId: purchase.id,
+          },
+        });
+        await tx.coupon.update({
+          where: { id: purchase.couponId },
+          data: { usedCount: { increment: 1 } },
+        });
+      }
+
+      await tx.cartItem.deleteMany({
+        where: { courseId: purchase.courseId, cart: { userId: purchase.userId } },
+      });
+
+      await tx.auditEvent.create({
+        data: {
+          userId: purchase.userId,
+          action: "purchase.completed",
+          entityType: "Purchase",
+          entityId: purchase.id,
+          metadata: {
+            courseId: purchase.courseId,
+            courseTitle: purchase.course.title,
+            amountCents: purchase.amountCents,
+            discountCents: purchase.discountCents,
+            finalAmountCents: purchase.finalAmountCents,
+            currency: purchase.currency,
+          },
+        },
+      });
+
+      await createNotification(
+        purchase.userId,
+        "ENROLLMENT_CONFIRMED",
+        "Enrollment confirmed",
+        `You're now enrolled in ${purchase.course.title}.`,
+        { courseId: purchase.courseId }
+      );
+    });
+
+    // Best-effort push notification — never block payment completion on this
+    try {
+      await firebaseMessaging.send({
+        topic: `user-${purchase.userId}`,
+        notification: {
+          title: "Enrollment Confirmed!",
+          body: `You are now enrolled in ${purchase.course.title}.`,
+        },
+        data: { type: "enrollment_confirmed", courseId: purchase.courseId },
+      });
+    } catch (err) {
+      console.error("FCM notification failed:", err);
+    }
+  }
+}
+
+// ----------------------------------------------------------------------------
+// Fallback verification for the frontend's post-redirect callback page.
+// Re-checks with Paystack directly (never trusts the redirect alone) —
+// covers the case where the user lands back before the webhook has arrived.
+// ----------------------------------------------------------------------------
+export async function verifyAndComplete(reference: string, userId: string) {
+  const purchases = await prisma.purchase.findMany({
+    where: { providerReference: reference },
+  });
+
+  if (purchases.length === 0 || purchases[0].userId !== userId) {
+    const error = new Error("Purchase not found");
+    (error as any).statusCode = 404;
+    throw error;
+  }
+
+  if (purchases[0].status === "COMPLETED") {
+    return { status: "COMPLETED" as const };
+  }
+
+  const result = await verifyTransaction(reference);
+
+  if (result.status === "success") {
+    await completePurchasesByReference(reference);
+    return { status: "COMPLETED" as const };
+  }
+
+  return { status: purchases[0].status as string };
+}
+
+// ----------------------------------------------------------------------------
+// Get student's purchase history (unchanged)
 // ----------------------------------------------------------------------------
 export async function getPurchaseHistory(userId: string) {
   return prisma.purchase.findMany({
@@ -296,10 +357,7 @@ export async function getPurchaseHistory(userId: string) {
     include: {
       course: {
         select: {
-          id: true,
-          title: true,
-          slug: true,
-          thumbnailUrl: true,
+          id: true, title: true, slug: true, thumbnailUrl: true,
           instructor: { select: { id: true, fullName: true } },
         },
       },
@@ -308,22 +366,10 @@ export async function getPurchaseHistory(userId: string) {
   });
 }
 
-// ----------------------------------------------------------------------------
-// Get single purchase detail
-// ----------------------------------------------------------------------------
 export async function getPurchaseById(purchaseId: string, userId: string) {
   const purchase = await prisma.purchase.findUnique({
     where: { id: purchaseId },
-    include: {
-      course: {
-        select: {
-          id: true,
-          title: true,
-          slug: true,
-          thumbnailUrl: true,
-        },
-      },
-    },
+    include: { course: { select: { id: true, title: true, slug: true, thumbnailUrl: true } } },
   });
 
   if (!purchase) {
@@ -331,8 +377,6 @@ export async function getPurchaseById(purchaseId: string, userId: string) {
     (error as any).statusCode = 404;
     throw error;
   }
-
-  // Ownership check — student can only see own purchases
   if (purchase.userId !== userId) {
     const error = new Error("Purchase not found");
     (error as any).statusCode = 404;
