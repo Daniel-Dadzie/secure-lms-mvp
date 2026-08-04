@@ -11,11 +11,11 @@ export async function uploadCourseThumbnail(
   const formData = new FormData();
   formData.append("thumbnail", file);
 
-  const response = await api.post(
-    `/courses/${courseId}/thumbnail`,
-    formData,
-    { headers: { "Content-Type": "multipart/form-data" } }
-  );
+  // Do NOT set Content-Type manually — axios/browser must compute the
+  // multipart boundary automatically. Setting it here strips the boundary
+  // and breaks server-side parsing (same "Malformed part header" issue
+  // we hit testing this in Postman).
+  const response = await api.post(`/courses/${courseId}/thumbnail`, formData);
 
   return response.data.thumbnailUrl;
 }

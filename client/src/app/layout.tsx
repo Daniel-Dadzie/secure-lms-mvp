@@ -1,12 +1,11 @@
-// src/app/layout.tsx
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
-// 1. Import our standardized structural layout components
 import { Navbar } from "@/components/layout/Navbar";
 import { Footer } from "@/components/layout/Footer";
 import { FloatingFAQAssistant } from "@/components/shared/FloatingFAQAssistant";
+import AuthProvider from "@/components/shared/AuthProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,17 +25,15 @@ export default function RootLayout({
       <body
         className={`${inter.className} min-h-screen flex flex-col bg-slate-50 text-slate-900 antialiased`}
       >
-        {/* Persistent Header */}
-        <Navbar />
-
-        {/* Main Page Viewport */}
-        <main className="flex-grow">{children}</main>
-
-        {/* Floating FAQ Modal Trigger (Self-hides on auth/admin/instructor routes) */}
-        <FloatingFAQAssistant />
-
-        {/* Persistent Footer */}
-        <Footer />
+        {/* AuthProvider MUST wrap everything that depends on auth state —
+            it's what actually calls loadUser() on boot. Without this,
+            isLoading never resolves and ProtectedRoute hangs forever. */}
+        <AuthProvider>
+          <Navbar />
+          <main className="flex-grow">{children}</main>
+          <FloatingFAQAssistant />
+          <Footer />
+        </AuthProvider>
       </body>
     </html>
   );

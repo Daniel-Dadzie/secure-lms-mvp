@@ -34,7 +34,18 @@ app.use(cors({
   credentials: true,
 }));
 
-app.use(express.json({ limit: "10kb" }));
+app.use(
+  express.json({
+    verify: (req: any, _res, buf) => {
+      // Preserve the raw body for webhook signature verification —
+      // express.json() would otherwise only leave us the parsed object,
+      // and Paystack's HMAC is computed over the exact original bytes.
+      req.rawBody = buf;
+    },
+  })
+);
+
+
 app.use(cookieParser());
 
 // ----------------------------------------------------------------------------

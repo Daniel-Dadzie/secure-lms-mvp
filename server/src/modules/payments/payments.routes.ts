@@ -36,4 +36,12 @@ router.get(
   paymentsController.getPurchaseById
 );
 
+router.post(
+  "/webhook", 
+  paymentsController.webhook); // public, no auth — signature-verified instead
+
+router.get(
+  "/verify/:reference", 
+  authenticate, requireRole(["STUDENT"]), paymentsController.verifyPayment);
+
 export default router;

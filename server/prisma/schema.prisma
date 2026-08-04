@@ -251,12 +251,14 @@ model Purchase {
   user         User           @relation(fields: [userId], references: [id], onDelete: Restrict)
   courseId     String
   course       Course         @relation(fields: [courseId], references: [id], onDelete: Restrict)
-  // Restrict on both sides: a financial record must never silently
-  // disappear because a user or course row was removed.
   amountCents  Int
   currency     String         @default("GHS")
   status       PurchaseStatus @default(PENDING)
-  provider     String         @default("SIMULATED") // swap for real gateway name post-MVP
+  provider     String         @default("PAYSTACK")
+  providerReference String?
+  // Not unique — cart checkout creates multiple Purchase rows sharing one
+  // Paystack reference (one payment, several courses). Indexed for the
+  // webhook lookup, which queries "all purchases with this reference".
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
@@ -265,11 +267,10 @@ model Purchase {
   couponId         String?
   discountCents    Int     @default(0)
   finalAmountCents Int
-  // finalAmountCents = amountCents - discountCents
-  // Stored separately so refund calculations are always correct
 
   @@index([userId])
   @@index([status])
+  @@index([providerReference])
   @@map("purchases")
 }
 

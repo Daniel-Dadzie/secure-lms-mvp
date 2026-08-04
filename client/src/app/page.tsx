@@ -16,7 +16,27 @@ interface Category {
   };
 }
 
-// Deterministic pastel color mapping matching Chioma's category grid UI
+// ----------------------------------------------------------------------------
+// Skeleton Components for UI Feedback
+// ----------------------------------------------------------------------------
+const CourseSkeleton = () => (
+  <div className="flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm animate-pulse">
+    <div className="h-48 w-full bg-slate-200" />
+    <div className="flex flex-1 flex-col p-5 gap-4">
+      <div className="h-6 w-3/4 rounded bg-slate-200" />
+      <div className="space-y-2">
+        <div className="h-4 w-full rounded bg-slate-200" />
+        <div className="h-4 w-5/6 rounded bg-slate-200" />
+      </div>
+      <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
+        <div className="h-6 w-16 rounded bg-slate-200" />
+        <div className="h-9 w-28 rounded-lg bg-slate-200" />
+      </div>
+    </div>
+  </div>
+);
+
+// Deterministic pastel color mapping
 const PASTEL_THEMES = [
   "bg-blue-50/70 border-blue-100 hover:border-blue-400 text-blue-950",
   "bg-emerald-50/70 border-emerald-100 hover:border-emerald-400 text-emerald-950",
@@ -28,7 +48,7 @@ const PASTEL_THEMES = [
   "bg-teal-50/70 border-teal-100 hover:border-teal-400 text-teal-950",
 ];
 
-// Static testimonials block matching Chioma's design exactly
+// Static testimonials block
 const TESTIMONIALS = [
   {
     quote:
@@ -88,7 +108,6 @@ export default function HomePage() {
         setCourses(Array.isArray(rawCourses) ? rawCourses : []);
         setCategories(Array.isArray(rawCategories) ? rawCategories : []);
 
-        // Proactive Enrollment Check: swap CTA to "Continue Learning"
         if (isAuthenticated && user?.role === "STUDENT") {
           try {
             const enrollmentsRes = await api.get("/enrolments");
@@ -136,7 +155,6 @@ export default function HomePage() {
   };
 
   const handleEnrollFree = async (courseId: string) => {
-    // Intent preservation for unauthenticated users
     if (!isAuthenticated) {
       router.push(`/login?returnTo=/courses/${courseId}`);
       return;
@@ -147,7 +165,6 @@ export default function HomePage() {
       setToastMessage("Successfully enrolled! You can now start learning.");
       setEnrolledCourseIds((prev) => new Set(prev).add(courseId));
     } catch (error: any) {
-      // Graceful 409 handling
       if (error?.response?.status === 409) {
         setToastMessage("You are already enrolled in this course!");
         setEnrolledCourseIds((prev) => new Set(prev).add(courseId));
@@ -161,7 +178,6 @@ export default function HomePage() {
   };
 
   const handleAddToCart = async (courseId: string) => {
-    // Intent preservation for unauthenticated users
     if (!isAuthenticated) {
       router.push(`/login?returnTo=/courses/${courseId}`);
       return;
@@ -171,7 +187,6 @@ export default function HomePage() {
       await api.post("/cart/items", { courseId });
       setToastMessage("Course added to your cart!");
     } catch (error: any) {
-      // Graceful 409 handling
       if (error?.response?.status === 409) {
         setToastMessage("You already own or have this course in your cart!");
         setEnrolledCourseIds((prev) => new Set(prev).add(courseId));
@@ -200,13 +215,23 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Hero Section - Removed Badge */}
-      <section className="bg-gradient-to-b from-blue-700 to-blue-600 py-16 text-white sm:py-24">
-        <div className="mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
-          <h1 className="text-4xl font-extrabold tracking-tight sm:text-5xl md:text-6xl max-w-4xl mx-auto leading-tight">
+      {/* Hero Section with Image Overlay */}
+      <section className="relative py-20 sm:py-32 overflow-hidden">
+        {/* Background Image */}
+        <div 
+          className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=2070&auto=format&fit=crop')" }}
+        />
+        
+        {/* Softened Gradient Overlay - Removed mix-blend-multiply for a more natural look */}
+        <div className="absolute inset-0 z-0 bg-gradient-to-br from-slate-900/80 via-slate-800/70 to-blue-900/50" />
+        
+        {/* Content Wrapper */}
+        <div className="relative z-10 mx-auto max-w-7xl px-4 text-center sm:px-6 lg:px-8">
+          <h1 className="text-4xl font-extrabold tracking-tight text-white sm:text-5xl md:text-6xl max-w-4xl mx-auto leading-tight drop-shadow-lg">
             Master Engineering Skills That Drive Industry Forward
           </h1>
-          <p className="mx-auto mt-4 max-w-2xl text-lg text-blue-100 sm:mt-6">
+          <p className="mx-auto mt-6 max-w-2xl text-lg text-blue-50 drop-shadow-md sm:text-xl">
             Learn from industry experts with hands-on courses in mechanical
             engineering, CNC programming, robotics, and more.
           </p>
@@ -214,26 +239,26 @@ export default function HomePage() {
           {/* Search Input Box */}
           <form
             onSubmit={handleSearchSubmit}
-            className="mx-auto mt-8 flex max-w-xl items-center gap-2 rounded-xl bg-white p-2 shadow-xl"
+            className="mx-auto mt-10 flex max-w-xl items-center gap-2 rounded-xl bg-white/10 p-2 shadow-2xl backdrop-blur-md ring-1 ring-white/20 focus-within:ring-white/40 transition-all"
           >
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search courses (e.g., CNC, SolidWorks, Robotics...)"
-              className="w-full border-none px-4 py-2 text-slate-900 placeholder-slate-400 focus:outline-none text-sm sm:text-base"
+              className="w-full bg-transparent border-none px-4 py-2 text-white placeholder-blue-100/80 focus:outline-none text-sm sm:text-base"
             />
             <button
               type="submit"
-              className="rounded-lg bg-slate-900 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:ring-offset-2 shrink-0"
+              className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 focus:ring-offset-slate-900 shrink-0 shadow-lg"
             >
               Search
             </button>
           </form>
 
           {/* Keyword Triggers */}
-          <div className="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm text-blue-100">
-            <span className="font-semibold text-white">Popular:</span>
+          <div className="mt-5 flex flex-wrap items-center justify-center gap-3 text-xs sm:text-sm text-blue-100">
+            <span className="font-semibold text-white drop-shadow-md">Popular:</span>
             {[
               "CNC Programming",
               "SolidWorks",
@@ -246,30 +271,30 @@ export default function HomePage() {
                 onClick={() =>
                   router.push(`/courses?search=${encodeURIComponent(tag)}`)
                 }
-                className="hover:text-white hover:underline transition"
+                className="rounded-full bg-slate-800/40 px-3 py-1 hover:bg-slate-700/60 hover:text-white transition backdrop-blur-sm ring-1 ring-white/20"
               >
                 {tag}
               </button>
             ))}
           </div>
 
-          {/* Quick Metrics Bar */}
-          <div className="mx-auto mt-14 grid max-w-4xl grid-cols-2 gap-6 border-t border-blue-500/40 pt-8 sm:grid-cols-4">
+          {/* Quick Metrics Bar (Hardcoded for MVP) */}
+          <div className="mx-auto mt-16 grid max-w-4xl grid-cols-2 gap-6 border-t border-white/20 pt-10 sm:grid-cols-4">
             <div>
-              <p className="text-2xl font-extrabold sm:text-3xl">50,000+</p>
-              <p className="text-xs text-blue-100 sm:text-sm">Students</p>
+              <p className="text-3xl font-extrabold text-white drop-shadow-md">50,000+</p>
+              <p className="mt-1 text-xs text-blue-100 sm:text-sm font-medium">Students</p>
             </div>
             <div>
-              <p className="text-2xl font-extrabold sm:text-3xl">200+</p>
-              <p className="text-xs text-blue-100 sm:text-sm">Instructors</p>
+              <p className="text-3xl font-extrabold text-white drop-shadow-md">200+</p>
+              <p className="mt-1 text-xs text-blue-100 sm:text-sm font-medium">Instructors</p>
             </div>
             <div>
-              <p className="text-2xl font-extrabold sm:text-3xl">500+</p>
-              <p className="text-xs text-blue-100 sm:text-sm">Courses</p>
+              <p className="text-3xl font-extrabold text-white drop-shadow-md">500+</p>
+              <p className="mt-1 text-xs text-blue-100 sm:text-sm font-medium">Courses</p>
             </div>
             <div>
-              <p className="text-2xl font-extrabold sm:text-3xl">98%</p>
-              <p className="text-xs text-blue-100 sm:text-sm">Satisfaction</p>
+              <p className="text-3xl font-extrabold text-white drop-shadow-md">98%</p>
+              <p className="mt-1 text-xs text-blue-100 sm:text-sm font-medium">Satisfaction</p>
             </div>
           </div>
         </div>
@@ -367,11 +392,8 @@ export default function HomePage() {
 
           {isLoading ? (
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {[1, 2, 3].map((placeholder) => (
-                <div
-                  key={placeholder}
-                  className="h-80 w-full animate-pulse rounded-xl bg-slate-200"
-                />
+              {[1, 2, 3].map((idx) => (
+                <CourseSkeleton key={idx} />
               ))}
             </div>
           ) : courses.length > 0 ? (

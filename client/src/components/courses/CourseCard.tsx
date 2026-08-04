@@ -37,7 +37,7 @@ export const CourseCard = ({
   const isFree = course.priceCents === 0;
   const formattedPrice = isFree
     ? "Free"
-    : `$${(course.priceCents / 100).toFixed(2)}`;
+    : `GH₵${(course.priceCents / 100).toFixed(2)}`;
 
   const handleActionClick = async () => {
     // 1. Guard: Unauthenticated users are sent to login with returnTo intent

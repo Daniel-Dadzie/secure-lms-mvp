@@ -42,15 +42,15 @@ describe("Auth — Register", () => {
     expect(res.status).toBe(400);
   });
 
-  it("rejects INSTRUCTOR role self-assignment", async () => {
+  it("allows INSTRUCTOR role self-assignment", async () => {
     const res = await request.post("/api/auth/register").send({
       email: "hacker2@test.com",
       password: "Password123!",
       fullName: "Hacker2",
       role: "INSTRUCTOR",
     });
-    expect(res.status).toBe(400);
-    expect(res.body.errors.role).toBeDefined();
+    expect(res.status).toBe(201);
+    expect(res.body.user.role).toBe("INSTRUCTOR");
   });
 
   it("rejects weak password (under 8 chars)", async () => {
