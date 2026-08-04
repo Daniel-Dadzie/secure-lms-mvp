@@ -36,6 +36,7 @@ app.use(cors({
 
 app.use(
   express.json({
+    limit: "10kb",
     verify: (req: any, _res, buf) => {
       // Preserve the raw body for webhook signature verification —
       // express.json() would otherwise only leave us the parsed object,
@@ -95,7 +96,7 @@ app.use((
   _next: express.NextFunction
 ) => {
   console.error(err);
-  res.status(err.statusCode || 500).json({
+  res.status(err.status || err.statusCode || 500).json({
     message: err.message || "Internal server error",
   });
 });
