@@ -12,6 +12,7 @@ coverage/
 .env*
 !.env.example
 .env.test
+.env.local
 
 # Logs and local security output
 *.log
@@ -32,3 +33,8 @@ Thumbs.db
 serviceAccountKey.json
 # Generated PR validation evidence
 .ci-evidence/
+
+restructure.ps1
+cleanup-routes.ps1
+
+apiContract

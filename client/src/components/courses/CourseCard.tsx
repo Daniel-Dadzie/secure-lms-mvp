@@ -1,133 +1,114 @@
-// src/components/courses/CourseCard.tsx
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 export interface ApiCourse {
   id: string;
   title: string;
-  instructorName?: string;
-  priceCents: number; // 0 = Free
-  averageRating?: number;
-  reviewCount?: number;
-  thumbnailUrl?: string | null;
-  category?: {
-    name: string;
+  description: string;
+  price: number;
+  thumbnailUrl: string | null;
+  instructor?: {
+    fullName: string;
   };
 }
 
 interface CourseCardProps {
   course: ApiCourse;
-  isEnrolled?: boolean;        // Passed down if we know user's enrollment state
-  isAuthenticated?: boolean;   // Passed down from auth store
-  onEnrollFree: (courseId: string) => Promise<void>;
-  onAddToCart: (courseId: string) => Promise<void>;
+  isAuthenticated: boolean;
+  isEnrolled: boolean;
+  onEnrollFree: (courseId: string) => void;
+  onAddToCart: (courseId: string) => void;
+  onBuyNow: (courseId: string) => void; // <--- NEW PROP
 }
 
-const FALLBACK_IMAGE_URL = "/images/course-fallback.jpg";
+const FALLBACK_IMAGE = "/images/course-fallback.jpg"; // Update this path if needed
 
-export const CourseCard = ({
+export function CourseCard({
   course,
-  isEnrolled = false,
-  isAuthenticated = false,
+  isEnrolled,
   onEnrollFree,
   onAddToCart,
-}: CourseCardProps) => {
-  const router = useRouter();
-  const isFree = course.priceCents === 0;
-  const formattedPrice = isFree
-    ? "Free"
-    : `GH₵${(course.priceCents / 100).toFixed(2)}`;
-
-  const handleActionClick = async () => {
-    // 1. Guard: Unauthenticated users are sent to login with returnTo intent
-    if (!isAuthenticated) {
-      router.push(`/login?returnTo=/courses`);
-      return;
-    }
-
-    // 2. Execute background action without navigating away from catalog
-    try {
-      if (isFree) {
-        await onEnrollFree(course.id);
-      } else {
-        await onAddToCart(course.id);
-      }
-    } catch (error: any) {
-      // 409 Already Enrolled fallback handling should be managed by the parent handler,
-      // but we ensure no unhandled promise rejections crash the card.
-      console.error("Action failed:", error?.message || error);
-    }
-  };
+  onBuyNow,
+}: CourseCardProps) {
+  const isFree = course.price === 0;
 
   return (
-    <article className="flex flex-col justify-between rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md">
-      <div>
-        {/* Thumbnail & Pastel Category Badge */}
-        <div className="relative mb-4 h-48 w-full overflow-hidden rounded-lg bg-slate-100">
-          <Image
-            src={course.thumbnailUrl || FALLBACK_IMAGE_URL}
-            alt={course.title}
-            fill
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          />
-          {course.category?.name && (
-            <span className="absolute left-3 top-3 rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700 ring-1 ring-blue-600/10">
-              {course.category.name}
-            </span>
-          )}
-        </div>
+    <div className="group flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:shadow-md hover:border-blue-300">
+      
+      {/* Thumbnail */}
+      <div className="relative h-48 w-full bg-slate-100 overflow-hidden">
+        <Image
+          src={course.thumbnailUrl || FALLBACK_IMAGE}
+          alt={course.title}
+          fill
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+      </div>
 
-        {/* Course Title & Instructor */}
-        <h3 className="line-clamp-2 text-lg font-bold text-slate-900">
-          <Link
-            href={`/courses/${course.id}`}
-            className="hover:text-blue-600 transition-colors"
-          >
-            {course.title}
-          </Link>
+      {/* Content */}
+      <div className="flex flex-1 flex-col p-5">
+        <h3 className="font-bold text-slate-900 text-lg line-clamp-2 leading-tight mb-2">
+          {course.title}
         </h3>
-        {course.instructorName && (
-          <p className="mt-1 text-sm text-slate-500">{course.instructorName}</p>
-        )}
+        
+        <p className="text-sm text-slate-500 mb-4 line-clamp-2">
+          {course.description}
+        </p>
 
-        {/* Rating Meta (No fabricated duration or difficulty badges) */}
-        <div className="mt-3 flex items-center gap-2 text-sm text-slate-600">
-          <span className="font-semibold text-amber-500">
-            ★ {course.averageRating ? course.averageRating.toFixed(1) : "New"}
-          </span>
-          {course.reviewCount !== undefined && (
-            <span className="text-slate-400">
-              ({course.reviewCount.toLocaleString()})
+        <div className="mt-auto pt-4 border-t border-slate-100 flex flex-col gap-4">
+          
+          {/* Price & Instructor */}
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-medium text-slate-500">
+              By {course.instructor?.fullName || "MechSpec Staff"}
             </span>
-          )}
+            <span className={`font-bold ${isFree ? 'text-emerald-600' : 'text-slate-900 text-lg'}`}>
+              {isFree ? "FREE" : `GH₵ ${course.price.toFixed(2)}`}
+            </span>
+          </div>
+
+          {/* Intelligent Button Logic */}
+          <div className="flex gap-2">
+            {isEnrolled ? (
+              // Enrolled State
+              <Link
+                href={`/learn/${course.id}`}
+                className="w-full rounded-lg bg-slate-900 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                Go to Course
+              </Link>
+            ) : isFree ? (
+              // Free Course State
+              <button
+                onClick={() => onEnrollFree(course.id)}
+                className="w-full rounded-lg bg-emerald-600 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-emerald-700 shadow-sm"
+              >
+                Enroll for Free
+              </button>
+            ) : (
+              // Premium Course State (The Dual Buttons)
+              <>
+                <button
+                  onClick={() => onAddToCart(course.id)}
+                  className="flex-1 rounded-lg border border-slate-300 bg-white py-2.5 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50 hover:border-slate-400"
+                  title="Add to cart and keep browsing"
+                >
+                  Add to Cart
+                </button>
+                <button
+                  onClick={() => onBuyNow(course.id)}
+                  className="flex-1 rounded-lg bg-blue-600 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-blue-700 shadow-sm"
+                  title="Buy instantly"
+                >
+                  Buy Now
+                </button>
+              </>
+            )}
+          </div>
+
         </div>
       </div>
-
-      {/* Footer Price & Dynamic Action Button */}
-      <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
-        <span className="text-xl font-extrabold text-slate-900">
-          {formattedPrice}
-        </span>
-
-        {/* Proactive Enrollment State: Swap CTA entirely if already enrolled */}
-        {isEnrolled ? (
-          <Link
-            href={`/student/courses/${course.id}`}
-            className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
-          >
-            Continue Learning
-          </Link>
-        ) : (
-          <button
-            onClick={handleActionClick}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            {isFree ? "Enroll Free" : "Add to Cart"}
-          </button>
-        )}
-      </div>
-    </article>
+    </div>
   );
-};
+}
