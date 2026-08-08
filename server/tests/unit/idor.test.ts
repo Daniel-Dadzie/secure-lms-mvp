@@ -58,14 +58,30 @@ describe("IDOR Prevention — requireOwnership", () => {
 
   });
 
-  beforeEach(async () => {
-    // Recreate database fixtures because the global setup removes test data
-    // after every individual test.
-    studentA = await createTestUser({ email: "studenta-idor@test.com", role: "STUDENT" });
-    studentB = await createTestUser({ email: "studentb-idor@test.com", role: "STUDENT" });
-    instructorA = await createTestUser({ email: "instructora-idor@test.com", role: "INSTRUCTOR" });
-    instructorB = await createTestUser({ email: "instructorb-idor@test.com", role: "INSTRUCTOR" });
-    admin = await createTestUser({ email: "admin-idor@test.com", role: "ADMIN" });
+    beforeEach(async () => {
+        // 1. Clean up old test data to prevent unique constraint conflicts (409)
+        await prisma.user.deleteMany({
+          where: {
+            email: {
+              in: [
+                "studenta-idor@test.com",
+                "studentb-idor@test.com",
+                "instructora-idor@test.com",
+                "instructorb-idor@test.com",
+                "admin-idor@test.com",
+              ],
+            },
+          },
+        });
+
+        // 2. Recreate database fixtures safely
+        studentA = await createTestUser({ email: "studenta-idor@test.com", role: "STUDENT" });
+        studentB = await createTestUser({ email: "studentb-idor@test.com", role: "STUDENT" });
+        instructorA = await createTestUser({ email: "instructora-idor@test.com", role: "INSTRUCTOR" });
+        instructorB = await createTestUser({ email: "instructorb-idor@test.com", role: "INSTRUCTOR" });
+        admin = await createTestUser({ email: "admin-idor@test.com", role: "ADMIN" });
+
+ 
 
     // Create courses
     courseA = await prisma.course.create({
