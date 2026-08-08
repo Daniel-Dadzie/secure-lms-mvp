@@ -17,8 +17,10 @@ import progressRouter from "./modules/progress/progress.routes";
 import supportRouter from "./modules/support/support.routes";
 import adminRouter from "./modules/admin/admin.routes";
 import quizzesRouter from "./modules/quizzes/quizzes.routes";
+import instructorRoutes from './modules/instructors/instructors.routes';
 import instructorAnalyticsRouter from "./modules/instructor-analytics/instructor-analytics.routes";
 import notificationsRouter from "./modules/notifications/notifications.routes";
+import studentRoutes from "./modules/students/student.routes";
 
 export const app = express();
 
@@ -63,8 +65,10 @@ app.use("/api/enrolments", enrolmentsRouter);
 app.use("/api/progress", progressRouter);
 app.use("/api/support", supportRouter);
 app.use("/api/admin", adminRouter);
+app.use('/api/instructors', instructorRoutes);
 app.use("/api/instructor/analytics", instructorAnalyticsRouter);
 app.use("/api/notifications", notificationsRouter);
+app.use("/api/student", studentRoutes);
 
 // ----------------------------------------------------------------------------
 // Health check

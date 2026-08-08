@@ -18,12 +18,12 @@ export async function sendVerificationEmail(
   await transporter.sendMail({
     from: FROM,
     to: email,
-    subject: "Verify your Mech Spec LMS account",
+    subject: "Verify your Mech Spec Technologies account",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #1a1a2e;">Welcome to Mech Spec LMS, ${fullName}!</h2>
+        <h2 style="color: #1a1a2e;">Welcome to Mech Spec Technologies, ${fullName}!</h2>
         <p>Please verify your email address to activate your account.</p>
-        
+        <a
           href="${verifyUrl}"
           style="
             display: inline-block;
@@ -69,13 +69,13 @@ export async function sendForgotPasswordEmail(
   await transporter.sendMail({
     from: FROM,
     to: email,
-    subject: "Reset your Mech Spec LMS password",
+    subject: "Reset your Mech Spec Technologies password",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #1a1a2e;">Password Reset Request</h2>
         <p>Hi ${fullName},</p>
         <p>We received a request to reset your password. Click the button below to choose a new one:</p>
-        
+        <a
           href="${resetUrl}"
           style="
             display: inline-block;
@@ -111,10 +111,10 @@ export async function sendPasswordResetEmail(
   await transporter.sendMail({
     from: FROM,
     to: email,
-    subject: "Your Mech Spec LMS password has been reset",
+    subject: "Your Mech Spec Technologies password has been reset",
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #1a1a2e;">Password Reset — Mech Spec LMS</h2>
+        <h2 style="color: #1a1a2e;">Password Reset — Mech Spec Technologies</h2>
         <p>Hi ${fullName},</p>
         <p>An administrator has reset your password. Your temporary password is:</p>
         <div style="
@@ -130,7 +130,7 @@ export async function sendPasswordResetEmail(
           ${tempPassword}
         </div>
         <p>Please log in and change your password immediately.</p>
-        
+        <a
           href="${CLIENT_URL}/login"
           style="
             display: inline-block;
@@ -168,7 +168,7 @@ export async function sendEnrollmentConfirmationEmail(
         <h2 style="color: #1a1a2e;">Enrollment Confirmed!</h2>
         <p>Hi ${fullName},</p>
         <p>You have successfully enrolled in <strong>${courseTitle}</strong>.</p>
-        
+        <a
           href="${courseUrl}"
           style="
             display: inline-block;
@@ -213,7 +213,7 @@ export async function sendCertificateEmail(
         <p style="font-size: 14px; color: #666;">
           Certificate Number: <strong>${certificateNumber}</strong>
         </p>
-        
+        <a
           href="${certificateUrl}"
           style="
             display: inline-block;

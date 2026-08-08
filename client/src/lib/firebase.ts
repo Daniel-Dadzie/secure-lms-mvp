@@ -19,3 +19,4 @@ export const getFirebaseMessaging = () => {
   if (typeof window === "undefined") return null;
   return getMessaging(app);
 };
+

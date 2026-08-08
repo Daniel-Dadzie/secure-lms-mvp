@@ -7,7 +7,7 @@ export default function HomePage() {
   return (
     <div className="w-full bg-[#F4F9F7]">
       
-      {/* 1. HERO SECTION (CSS Pattern - No Timeout Risk) */}
+      {/* 1. HERO SECTION */}
       <section className="relative min-h-[90vh] flex items-center pt-24 pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden bg-[#0A4A3A]">
         
         <div className="absolute inset-0 z-0 opacity-20">
@@ -139,7 +139,7 @@ export default function HomePage() {
           ].map((cat, i) => (
             <Link key={i} href="#" className={`group rounded-2xl p-6 ${cat.bg} hover:shadow-lg transition-all border border-transparent hover:border-[#196A54]/20 cursor-pointer`}>
               <div className={`mb-4 w-10 h-10 ${cat.text}`}>
-                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="transform group-hover:scale-110 group-hover:-translate-y-1 transition-all duration-300">
                   {cat.icon}
                   {cat.title === "Mechanical Engineering" && <circle cx="12" cy="12" r="3" />}
                 </svg>
@@ -154,8 +154,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 3. FEATURED COURSES (Added sizes prop to prevent timeouts) */}
-       {/* 3. FEATURED COURSES (With Skeleton Loading) */}
+      {/* 3. FEATURED COURSES */}
       <section className="bg-white py-24 px-4 sm:px-6 lg:px-8 border-y border-slate-100">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-end mb-12">
@@ -178,7 +177,6 @@ export default function HomePage() {
               { img: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80", tag: "Robotics", title: "Industrial Robotics & Automation", prof: "Dr. Kwame Osei", rating: "4.8", students: "1,960", hours: "48h", level: "Advanced", price: "$199" },
             ].map((course, i) => (
               <div key={i} className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl transition-shadow flex flex-col group cursor-pointer">
-                {/* SKELETON LOADER WRAPPER ADDED HERE */}
                 <div className="relative h-48 overflow-hidden animate-pulse bg-slate-200">
                   <Image 
                     src={course.img} 
@@ -187,7 +185,6 @@ export default function HomePage() {
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
                     className="object-cover group-hover:scale-105 transition-transform duration-500"
                     onLoad={(e) => {
-                      // Removes the pulse animation once the image actually loads
                       const target = e.target as HTMLElement;
                       target.parentElement?.classList.remove('animate-pulse');
                     }}
@@ -267,9 +264,9 @@ export default function HomePage() {
               desc: "Join thousands of engineers in our forums to collaborate and share projects." 
             }
           ].map((feature, i) => (
-            <div key={i} className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow cursor-default">
-              <div className="bg-[#F4F9F7] text-[#196A54] w-14 h-14 rounded-xl flex items-center justify-center mb-6">
-                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div key={i} className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all group cursor-default">
+              <div className="bg-[#F4F9F7] text-[#196A54] w-14 h-14 rounded-xl flex items-center justify-center mb-6 group-hover:bg-[#196A54] group-hover:text-white transition-colors duration-300">
+                <svg className="w-7 h-7 transform group-hover:scale-110 transition-transform duration-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   {feature.icon}
                 </svg>
               </div>
@@ -280,8 +277,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 5. POPULAR INSTRUCTORS (Added sizes prop to prevent timeouts) */}
-       {/* 5. POPULAR INSTRUCTORS (With Skeleton Loading) */}
+      {/* 5. POPULAR INSTRUCTORS */}
       <section className="bg-white py-24 px-4 sm:px-6 lg:px-8 border-t border-slate-100">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-end mb-12">
@@ -298,13 +294,12 @@ export default function HomePage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80", name: "Dr. James Walker", role: "Mechanical Systems", exp: "15 yrs", rating: "4.9", students: "12.4k" },
-              { img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80", name: "Prof. Sarah Chen", role: "CAD / CAM Specialist", exp: "12 yrs", rating: "4.8", students: "9.8k" },
-              { img: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80", name: "Emily Torres", role: "CNC & Robotics", exp: "10 yrs", rating: "4.9", students: "8.2k" },
-              { img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80", name: "Dr. Kwame Osei", role: "Industrial Automation", exp: "18 yrs", rating: "4.8", students: "6.5k" },
+              { id: "james-walker", img: "https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&q=80", name: "Dr. James Walker", role: "Mechanical Systems", exp: "15 yrs", rating: "4.9", students: "12.4k" },
+              { id: "sarah-chen", img: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80", name: "Prof. Sarah Chen", role: "CAD / CAM Specialist", exp: "12 yrs", rating: "4.8", students: "9.8k" },
+              { id: "emily-torres", img: "https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&q=80", name: "Emily Torres", role: "CNC & Robotics", exp: "10 yrs", rating: "4.9", students: "8.2k" },
+              { id: "kwame-osei", img: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80", name: "Dr. Kwame Osei", role: "Industrial Automation", exp: "18 yrs", rating: "4.8", students: "6.5k" },
             ].map((instructor, i) => (
               <div key={i} className="bg-white rounded-2xl border border-slate-200 p-6 text-center hover:shadow-xl transition-shadow group">
-                {/* SKELETON LOADER WRAPPER ADDED HERE */}
                 <div className="relative w-24 h-24 mx-auto rounded-full overflow-hidden mb-4 border-4 border-[#F4F9F7] animate-pulse bg-slate-200">
                   <Image 
                     src={instructor.img} 
@@ -320,6 +315,7 @@ export default function HomePage() {
                 </div>
                 <h3 className="font-bold text-slate-900 text-lg">{instructor.name}</h3>
                 <p className="text-sm text-slate-500 mb-4">{instructor.role}</p>
+                
                 <div className="flex items-center justify-center gap-3 text-xs font-semibold text-slate-600 mb-6">
                   <span>{instructor.exp}</span>
                   <span className="text-slate-300">•</span>
@@ -330,9 +326,14 @@ export default function HomePage() {
                   <span className="text-slate-300">•</span>
                   <span>{instructor.students}</span>
                 </div>
-                <button className="w-full py-2.5 border-2 border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:border-[#196A54] hover:text-[#196A54] transition-colors">
+                
+                {/* Updated to Link targeting the instructor profile */}
+                <Link 
+                  href={`/instructors/${instructor.id}`}
+                  className="block w-full text-center py-2.5 border-2 border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:border-[#196A54] hover:text-[#196A54] transition-colors"
+                >
                   View Profile
-                </button>
+                </Link>
               </div>
             ))}
           </div>
@@ -379,7 +380,8 @@ export default function HomePage() {
       </section>
 
       {/* 7. CTA & LOGOS SECTION */}
-      <section className="bg-[#0A4A3A] relative overflow-hidden py-24 border-t-8 border-[#C2F25B]">
+      {/* Removed the border-t-8 border-[#C2F25B] from the section container */}
+      <section className="bg-[#0A4A3A] relative overflow-hidden py-24">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#196A54]/40 via-transparent to-transparent"></div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">

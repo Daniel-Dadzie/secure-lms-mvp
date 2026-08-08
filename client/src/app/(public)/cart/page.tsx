@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
@@ -36,11 +35,10 @@ interface Cart {
 }
 
 export default function CartPage() {
-  const router = useRouter();
   const { isAuthenticated } = useAuthStore();
 
   const [cart, setCart] = useState<Cart | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isCartLoading, setIsCartLoading] = useState(false);
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -52,24 +50,33 @@ export default function CartPage() {
   };
 
   const fetchCart = async () => {
+    setIsCartLoading(true);
+
     try {
       const res = await api.get("/cart");
       const data = res.data;
+
       setCart(data.cart || data);
     } catch {
       setError("Failed to load your cart. Please refresh the page.");
     } finally {
-      setIsLoading(false);
+      setIsCartLoading(false);
     }
   };
 
   useEffect(() => {
-    if (isAuthenticated) fetchCart();
-    else setIsLoading(false);
+    if (!isAuthenticated) return;
+
+    const timer = window.setTimeout(() => {
+      void fetchCart();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [isAuthenticated]);
 
   const handleRemove = async (courseId: string) => {
     setRemovingId(courseId);
+
     try {
       await api.delete(`/cart/items/${courseId}`);
       await fetchCart();
@@ -83,18 +90,22 @@ export default function CartPage() {
 
   const handleCheckout = async () => {
     if (!cart || cart.items.length === 0) return;
+
     setIsCheckingOut(true);
+
     try {
-      // Cart checkout — one Paystack transaction covering all items
+      // Cart checkout — one Paystack transaction covering all items.
       const res = await api.post("/payments/checkout/cart");
+
       if (res.data.authorizationUrl) {
-        // Redirect the browser to Paystack's hosted payment page.
-        // We use window.location.href (not router.push) because this is
-        // an external URL, not a Next.js route.
+        // External Paystack URL — use browser navigation rather than router.push.
         window.location.href = res.data.authorizationUrl;
       }
     } catch (err: any) {
-      showToast(err?.response?.data?.message || "Could not start checkout. Please try again.");
+      showToast(
+        err?.response?.data?.message ||
+          "Could not start checkout. Please try again."
+      );
       setIsCheckingOut(false);
     }
   };
@@ -111,18 +122,26 @@ export default function CartPage() {
 
   return (
     <ProtectedRoute allowedRoles={["STUDENT"]}>
-      <div className="min-h-[calc(100vh-4rem)] bg-slate-50 pb-20">
+      <div className="min-h-screen bg-slate-50">
         {toast && (
-          <div className="fixed top-20 left-1/2 z-50 -translate-x-1/2 w-full max-w-sm px-4">
-            <div className="flex items-center justify-between rounded-lg bg-slate-900 px-4 py-3 text-sm text-white shadow-xl">
-              <span>{toast}</span>
-              <button type="button" onClick={() => setToast(null)} className="ml-4 text-blue-400 font-bold">✕</button>
-            </div>
+          <div className="fixed top-4 left-1/2 z-50 flex -translate-x-1/2 items-center rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-xl">
+            <span>{toast}</span>
+
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              className="ml-4 font-bold text-slate-300 hover:text-white"
+              aria-label="Close notification"
+            >
+              ✕
+            </button>
           </div>
         )}
 
         <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-extrabold text-slate-900 mb-2">Your Cart</h1>
+          <h1 className="mb-2 text-3xl font-extrabold text-slate-900">
+            Your Cart
+          </h1>
 
           {error && (
             <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -130,24 +149,36 @@ export default function CartPage() {
             </div>
           )}
 
-          {isLoading && (
+          {isCartLoading && (
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 animate-pulse">
-              <div className="lg:col-span-2 space-y-4">
-                {[1, 2].map((i) => (
-                  <div key={i} className="h-32 rounded-xl bg-slate-200" />
+              <div className="space-y-4 lg:col-span-2">
+                {[1, 2].map((item) => (
+                  <div
+                    key={item}
+                    className="h-32 rounded-xl bg-slate-200"
+                  />
                 ))}
               </div>
+
               <div className="h-48 rounded-xl bg-slate-200" />
             </div>
           )}
 
-          {!isLoading && (!cart || cart.items.length === 0) && (
+          {!isCartLoading && (!cart || cart.items.length === 0) && (
             <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-white p-16 text-center">
-              <span className="text-5xl mb-4">🛒</span>
-              <h2 className="text-xl font-bold text-slate-900 mb-2">Your cart is empty</h2>
-              <p className="text-sm text-slate-500 mb-8 max-w-sm">
-                Looks like you haven&apos;t added any courses yet. Browse our catalog to find something you&apos;ll love.
+              <span className="mb-4 text-5xl" aria-hidden="true">
+                🛒
+              </span>
+
+              <h2 className="mb-2 text-xl font-bold text-slate-900">
+                Your cart is empty
+              </h2>
+
+              <p className="mb-8 max-w-sm text-sm text-slate-500">
+                Looks like you haven&apos;t added any courses yet. Browse our
+                catalog to find something you&apos;ll love.
               </p>
+
               <Link
                 href="/courses"
                 className="rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-700"
@@ -157,14 +188,16 @@ export default function CartPage() {
             </div>
           )}
 
-          {!isLoading && cart && cart.items.length > 0 && (
+          {!isCartLoading && cart && cart.items.length > 0 && (
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
               {/* Cart items */}
-              <div className="lg:col-span-2 space-y-4">
-                <div className="flex items-center justify-between mb-2">
+              <div className="space-y-4 lg:col-span-2">
+                <div className="mb-2 flex items-center justify-between">
                   <p className="text-sm text-slate-500">
-                    {cart.summary.itemCount} course{cart.summary.itemCount !== 1 ? "s" : ""} in your cart
+                    {cart.summary.itemCount} course
+                    {cart.summary.itemCount !== 1 ? "s" : ""} in your cart
                   </p>
+
                   <button
                     type="button"
                     onClick={handleClearCart}
@@ -184,7 +217,7 @@ export default function CartPage() {
                         src={item.course.thumbnailUrl || FALLBACK_IMAGE}
                         alt={item.course.title}
                         fill
-                        sizes="160" 
+                        sizes="128px"
                         className="object-cover"
                       />
                     </div>
@@ -193,12 +226,13 @@ export default function CartPage() {
                       <div>
                         <Link
                           href={`/courses/${item.course.id}`}
-                          className="font-bold text-slate-900 hover:text-blue-700 transition line-clamp-2"
+                          className="line-clamp-2 font-bold text-slate-900 transition hover:text-blue-700"
                         >
                           {item.course.title}
                         </Link>
+
                         {item.course.instructor && (
-                          <p className="text-xs text-slate-500 mt-0.5">
+                          <p className="mt-0.5 text-xs text-slate-500">
                             {item.course.instructor.fullName}
                           </p>
                         )}
@@ -208,9 +242,11 @@ export default function CartPage() {
                         type="button"
                         onClick={() => handleRemove(item.courseId)}
                         disabled={removingId === item.courseId}
-                        className="mt-2 self-start text-xs font-semibold text-red-500 hover:text-red-700 transition disabled:opacity-50"
+                        className="mt-2 self-start text-xs font-semibold text-red-500 transition hover:text-red-700 disabled:opacity-50"
                       >
-                        {removingId === item.courseId ? "Removing..." : "Remove"}
+                        {removingId === item.courseId
+                          ? "Removing..."
+                          : "Remove"}
                       </button>
                     </div>
 
@@ -226,35 +262,47 @@ export default function CartPage() {
               </div>
 
               {/* Order summary */}
-              <div className="h-fit rounded-2xl border border-slate-200 bg-white p-6 shadow-sm sticky top-24">
-                <h2 className="text-lg font-bold text-slate-900 mb-6">Order Summary</h2>
+              <div className="sticky top-24 h-fit rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="mb-6 text-lg font-bold text-slate-900">
+                  Order Summary
+                </h2>
 
-                <div className="space-y-3 text-sm border-b border-slate-100 pb-4 mb-4">
+                <div className="mb-4 space-y-3 border-b border-slate-100 pb-4 text-sm">
                   <div className="flex justify-between text-slate-600">
-                    <span>Subtotal ({cart.summary.itemCount} items)</span>
-                    <span>₵{(cart.summary.subtotalCents / 100).toFixed(2)}</span>
+                    <span>
+                      Subtotal ({cart.summary.itemCount} items)
+                    </span>
+
+                    <span>
+                      ₵{(cart.summary.subtotalCents / 100).toFixed(2)}
+                    </span>
                   </div>
                 </div>
 
-                <div className="flex justify-between font-bold text-slate-900 text-base mb-6">
+                <div className="mb-6 flex justify-between text-base font-bold text-slate-900">
                   <span>Total</span>
-                  <span>₵{(cart.summary.totalCents / 100).toFixed(2)}</span>
+
+                  <span>
+                    ₵{(cart.summary.totalCents / 100).toFixed(2)}
+                  </span>
                 </div>
 
                 <button
                   type="button"
                   onClick={handleCheckout}
                   disabled={isCheckingOut}
-                  className="w-full rounded-xl bg-blue-600 py-3.5 font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed"
+                  className="w-full rounded-xl bg-blue-600 py-3.5 font-bold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-300"
                 >
-                  {isCheckingOut ? "Redirecting to payment..." : "Checkout Now"}
+                  {isCheckingOut
+                    ? "Redirecting to payment..."
+                    : "Checkout Now"}
                 </button>
 
                 <p className="mt-4 text-center text-xs text-slate-400">
                   Secured by Paystack
                 </p>
 
-                <div className="mt-6 pt-4 border-t border-slate-100">
+                <div className="mt-6 border-t border-slate-100 pt-4">
                   <Link
                     href="/courses"
                     className="block text-center text-sm font-semibold text-blue-600 hover:underline"

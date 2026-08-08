@@ -64,3 +64,4 @@ export default function CheckoutButton({ total, onSuccessCallback }: Props) {
     </button>
   );
 }
+

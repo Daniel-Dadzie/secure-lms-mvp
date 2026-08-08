@@ -57,38 +57,59 @@ export default function StudentCourseDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchEnrollment = useCallback(async () => {
-    try {
-      const res = await api.get("/enrolments");
-      const rawData = res.data;
-      const enrolledList = Array.isArray(rawData)
-        ? rawData
-        : Array.isArray(rawData?.enrollments)
+  try {
+    const res = await api.get("/enrollments");
+    const rawData = res.data;
+
+    const enrolledList = Array.isArray(rawData)
+      ? rawData
+      : Array.isArray(rawData?.enrollments)
         ? rawData.enrollments
         : [];
 
-      const match = enrolledList.find(
-        (e: any) => (e.course?.id || e.courseId) === courseId
-      );
+    const match = enrolledList.find(
+      (e: any) => (e.course?.id || e.courseId) === courseId
+    );
 
-      if (!match) {
-        // Not enrolled — send to the public course page
-        router.replace(`/courses/${courseId}`);
-        return;
-      }
-
-      // Fetch full detail with per-lesson progress
-      const detailRes = await api.get(`/enrolments/${match.id}`);
-      setEnrollment(detailRes.data.enrollment || detailRes.data);
-    } catch (err: any) {
-      setError("Failed to load course details. Please try again.");
-    } finally {
-      setIsLoading(false);
+    if (!match) {
+      router.replace(`/courses/${courseId}`);
+      return;
     }
-  }, [courseId, router]);
 
-  useEffect(() => {
-    fetchEnrollment();
-  }, [fetchEnrollment]);
+    const detailRes = await api.get(`/enrollments/${match.id}`);
+    return detailRes.data.enrollment || detailRes.data;
+  } catch {
+    throw new Error("Failed to load course details. Please try again.");
+  }
+}, [courseId, router]);
+
+useEffect(() => {
+  let cancelled = false;
+
+  const loadEnrollment = async () => {
+    try {
+      const data = await fetchEnrollment();
+
+      if (cancelled || !data) return;
+
+      setEnrollment(data);
+    } catch {
+      if (!cancelled) {
+        setError("Failed to load course details. Please try again.");
+      }
+    } finally {
+      if (!cancelled) {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  void loadEnrollment();
+
+  return () => {
+    cancelled = true;
+  };
+}, [fetchEnrollment]);
 
   if (isLoading) {
     return (

@@ -60,7 +60,7 @@ export default function ClassroomPage() {
   const fetchEnrollment = useCallback(async () => {
     try {
       // Get all enrollments, find the one matching this course
-      const res = await api.get("/enrolments");
+      const res = await api.get("/enrollments");
       const rawData = res.data;
       const enrolledList = Array.isArray(rawData)
         ? rawData
@@ -79,7 +79,7 @@ export default function ClassroomPage() {
       }
 
       // Fetch full enrollment detail (includes per-lesson progress array)
-      const detailRes = await api.get(`/enrolments/${match.id}`);
+      const detailRes = await api.get(`/enrollments/${match.id}`);
       const detail = detailRes.data.enrollment || detailRes.data;
       setEnrollment(detail);
 
@@ -103,6 +103,9 @@ export default function ClassroomPage() {
 
   useEffect(() => {
     if (isAuthenticated) {
+      // This effect intentionally starts an async data fetch.
+      // The fetch function updates component state when the request completes.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchEnrollment();
     }
   }, [isAuthenticated, fetchEnrollment]);

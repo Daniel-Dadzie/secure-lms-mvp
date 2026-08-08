@@ -66,7 +66,8 @@ export async function getStudentEnrollments(userId: string) {
 
       return {
         ...enrollment,
-        progress: {
+        progress: progressPercent,
+        progressDetails: {
           completedLessons,
           totalLessons,
           progressPercent,

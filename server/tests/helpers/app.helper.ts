@@ -1,5 +1,6 @@
 import { app } from "../../src/app";
 import supertest from "supertest";
+import { prisma } from "../../src/config/prisma";
 
 // Single supertest instance shared across all test files
 export const request = supertest(app);
@@ -18,10 +19,18 @@ export async function createTestUser(overrides?: {
     role: overrides?.role || "STUDENT",
   };
 
+  // Clean up any existing user with this email first to prevent 409 conflicts and foreign key deadlocks
+  const existingUser = await prisma.user.findUnique({ where: { email: payload.email } });
+  if (existingUser) {
+    await prisma.emailVerification.deleteMany({ where: { userId: existingUser.id } }).catch(() => {});
+    await prisma.auditEvent.deleteMany({ where: { userId: existingUser.id } }).catch(() => {});
+    await prisma.refreshToken.deleteMany({ where: { userId: existingUser.id } }).catch(() => {});
+    await prisma.user.delete({ where: { id: existingUser.id } }).catch(() => {});
+  }
+
   // ADMIN and INSTRUCTOR can't self-register — create via Prisma directly
   if (payload.role === "ADMIN" || payload.role === "INSTRUCTOR") {
     const bcrypt = await import("bcryptjs");
-    const { prisma } = await import("../../src/config/prisma");
     const user = await prisma.user.create({
       data: {
         email: payload.email,
