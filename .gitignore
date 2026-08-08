@@ -38,3 +38,4 @@ restructure.ps1
 cleanup-routes.ps1
 
 apiContract
+audit.json

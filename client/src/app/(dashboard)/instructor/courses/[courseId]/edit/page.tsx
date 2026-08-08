@@ -78,15 +78,59 @@ export default function EditCoursePage() {
     }
   }, [courseId]);
 
-  useEffect(() => {
-    fetchCourse();
-    api.get("/categories").then((res) => {
-      const data = res.data;
-      setCategories(
-        Array.isArray(data) ? data : Array.isArray(data?.categories) ? data.categories : []
+useEffect(() => {
+  let cancelled = false;
+
+  const loadCourseData = async () => {
+    try {
+      const [courseRes, categoriesRes] = await Promise.all([
+        api.get(`/courses/${courseId}`),
+        api.get("/categories"),
+      ]);
+
+      if (cancelled) return;
+
+      const data = courseRes.data.course || courseRes.data;
+
+      setCourse(data);
+      setTitle(data.title || "");
+      setDescription(data.description || "");
+      setPriceInput(
+        data.priceCents ? (data.priceCents / 100).toFixed(2) : ""
       );
-    }).catch(() => {});
-  }, [fetchCourse]);
+      setCategoryId(data.categoryId || "");
+      setThumbnailPreview(data.thumbnailUrl || null);
+
+      const categoriesData = categoriesRes.data;
+
+      setCategories(
+        Array.isArray(categoriesData)
+          ? categoriesData
+          : Array.isArray(categoriesData?.categories)
+            ? categoriesData.categories
+            : []
+      );
+    } catch (err: any) {
+      if (cancelled) return;
+
+      if (err?.response?.status === 404) {
+        setError("Course not found.");
+      } else {
+        setError("Failed to load course details.");
+      }
+    } finally {
+      if (!cancelled) {
+        setIsLoading(false);
+      }
+    }
+  };
+
+  void loadCourseData();
+
+  return () => {
+    cancelled = true;
+  };
+}, [courseId]);
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

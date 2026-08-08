@@ -26,3 +26,4 @@ export function getDashboardPath(role: Role): string {
       return APP_ROUTES.HOME;
   }
 }
+

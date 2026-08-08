@@ -20,7 +20,7 @@ export default function UnauthorizedPage() {
     <main className="flex flex-col items-center justify-center min-h-screen gap-4">
       <h1 className="text-2xl font-bold">Access Denied</h1>
       <p className="text-gray-500">
-        You don't have permission to view this page.
+        You don&apos;t have permission to access this page.
       </p>
       <button
         onClick={handleRedirect}
@@ -31,3 +31,4 @@ export default function UnauthorizedPage() {
     </main>
   );
 }
+

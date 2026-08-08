@@ -1,4 +1,4 @@
-﻿import Navbar from "@/components/layout/Navbar";
+import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import FloatingAssistant from "@/components/ui/FloatingAssistant"; // Import it here
 
@@ -12,3 +12,4 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
     </div>
   );
 }
+
