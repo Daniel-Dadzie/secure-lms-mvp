@@ -75,9 +75,11 @@ jobs:
         run: npx prisma generate --config prisma.config.ts
         working-directory: server
 
-      - name: Run database migrations
-        run: npx prisma migrate deploy --config prisma.config.ts
+      - name: Sync Database Schema
+        run: npx prisma db push
         working-directory: server
+        env:
+          DATABASE_URL: postgresql://postgres:password@localhost:5432/secure_lms_test
 
       - name: Build
         run: npm run build --workspaces --if-present
