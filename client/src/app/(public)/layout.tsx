@@ -1,6 +1,6 @@
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import FloatingAssistant from "@/components/ui/FloatingAssistant"; // Import it here
+import { FloatingFAQAssistant } from "@/components/shared/FloatingFAQAssistant"; // Import it here
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -8,7 +8,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
       <Navbar />
       <main className="flex-1">{children}</main>
       <Footer />
-      <FloatingAssistant /> {/* Add it here */}
+      <FloatingFAQAssistant /> {/* Add it here */}
     </div>
   );
 }

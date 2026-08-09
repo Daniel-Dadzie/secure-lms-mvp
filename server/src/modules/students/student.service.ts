@@ -24,7 +24,7 @@ export async function getStudentDashboardData(userId: string) {
   const activeCoursesCount = enrollments.length;
   const avgProgress = activeCoursesCount > 0 ? 68 : 0; 
 
-  // Format active courses optimized for quick-resume action
+  // 2. Format active courses optimized for quick-resume action
   const activeCourses = enrollments.map((enrollment, index) => {
     const mockProgressValues = [68, 34, 91];
     const currentProgress = mockProgressValues[index % mockProgressValues.length];
@@ -40,17 +40,43 @@ export async function getStudentDashboardData(userId: string) {
     };
   });
 
-  // Fetch recommended catalog courses (Discovery)
-  const allCourses = await prisma.course.findMany({ take: 3, include: { instructor: true } });
-  const recommendedCourses = allCourses.map(c => ({
+  // 3. Fetch Recommended Courses (Excluding already enrolled courses)
+  const recommendedCoursesData = await prisma.course.findMany({
+    where: {
+      NOT: {
+        enrollments: {
+          some: { userId: userId }
+        }
+      }
+    },
+    take: 3,
+    orderBy: { averageRating: 'desc' },
+    include: { instructor: true }
+  });
+
+  const recommendedCourses = recommendedCoursesData.map(c => ({
     id: c.id,
     title: c.title,
-    instructor: c.instructor?.fullName || "Expert Instructor",
-    rating: 4.8,
+    thumbnailUrl: c.thumbnailUrl,
+    instructorName: c.instructor?.fullName || "Expert Instructor",
+    rating: c.averageRating || 4.8,
+    reviewsCount: c.reviewCount || 0,
     duration: c.duration || "35h",
-    level: c.level || "Intermediate",
-    thumbnailUrl: c.thumbnailUrl
+    price: c.priceCents ? c.priceCents / 100 : null
   }));
+
+  // 4. Fetch Recent Activities Feed
+  const activities = await prisma.activity.findMany({
+    where: { userId },
+    orderBy: { createdAt: 'desc' },
+    take: 4,
+    select: {
+      id: true,
+      title: true,
+      iconType: true,
+      createdAt: true,
+    }
+  });
 
   return {
     stats: {
@@ -62,6 +88,7 @@ export async function getStudentDashboardData(userId: string) {
     },
     activeCourses,
     recommendedCourses,
+    activities, // Added to the returned payload
     weeklyGoal: {
       completed: 5,
       total: 7,

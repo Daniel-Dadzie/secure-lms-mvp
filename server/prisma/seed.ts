@@ -295,7 +295,7 @@ async function main() {
     },
   });
 
-  // 6. Student Enrollments (Now safely inside main())
+ // 6. Student Enrollments (Now safely inside main())
   console.log('Seeding student enrollments...');
   
   const testStudent = await prisma.user.findUnique({
@@ -307,7 +307,7 @@ async function main() {
   });
 
   if (testStudent && availableCourses.length >= 3) {
-    const mockProgress = [68, 34, 91];
+    // Seed Enrollments
     for (let i = 0; i < 3; i++) {
       await prisma.enrollment.upsert({
         where: {
@@ -321,18 +321,45 @@ async function main() {
           userId: testStudent.id,
           courseId: availableCourses[i].id,
           status: 'ACTIVE',
-          // progress: mockProgress[i], 
         }
       });
     }
     console.log('✅ Student enrollments successfully seeded!');
+
+    // Seed Activities (Moved safely inside main block!)
+    console.log("Seeding student activities...");
+    await prisma.activity.createMany({
+      data: [
+        {
+          userId: testStudent.id, // Fixed: Using testStudent.id
+          title: 'Completed "Gear Train Analysis" lesson',
+          iconType: 'completed',
+          createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), 
+        },
+        {
+          userId: testStudent.id,
+          title: 'Earned badge: "3-Day Streak"',
+          iconType: 'badge',
+          createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000), 
+        },
+        {
+          userId: testStudent.id,
+          title: 'Enrolled in CNC Programming Fundamentals',
+          iconType: 'enrolled',
+          createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), 
+        },
+      ],
+    });
+    console.log("✅ Student activities successfully seeded!");
+
   } else {
     console.log('⚠️ Could not seed enrollments: Missing student or insufficient courses.');
   }
 
-  console.log("Database successfully seeded with full course catalogue and modules!");
-}
+  console.log("Database successfully seeded with full course catalogue and modules!"); 
+} // <-- This correctly closes the main() function
 
+// Execute the main function
 main()
   .catch((e) => {
     console.error("Seeding failed:", e);
