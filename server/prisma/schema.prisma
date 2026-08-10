@@ -40,7 +40,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-    
 }
 
 // ----------------------------------------------------------------------------
@@ -95,15 +94,15 @@ model User {
   updatedAt       DateTime @updatedAt
 
   // Relations
-  coursesTaught    Course[]         @relation("InstructorCourses")
-  purchases        Purchase[]
-  enrollments      Enrollment[]
-  lessonProgress   LessonProgress[]
-  refreshTokens    RefreshToken[]
-  auditEvents      AuditEvent[]
-  certificates     Certificate[]
-  cart             Cart?
-  reviews          Review[]
+  coursesTaught       Course[]              @relation("InstructorCourses")
+  purchases           Purchase[]
+  enrollments         Enrollment[]
+  lessonProgress      LessonProgress[]
+  refreshTokens       RefreshToken[]
+  auditEvents         AuditEvent[]
+  certificates        Certificate[]
+  cart                Cart?
+  reviews             Review[]
   savedCourses        SavedCourse[]
   quizAttempts        QuizAttempt[]
   couponUsages        CouponUsage[]
@@ -111,32 +110,33 @@ model User {
   passwordResets      PasswordReset[]
   instructorAnalytics InstructorAnalytics[]
   notifications       Notification[]
+  activities          Activity[]
 
-  specialization      String?
-  credentials         String?
-  avatarUrl           String?
-  experienceYears     String?
-  instructorCategory  String? // e.g., "Mechanical", "CAD", etc
+  specialization     String?
+  credentials        String?
+  avatarUrl          String?
+  experienceYears    String?
+  instructorCategory String? // e.g., "Mechanical", "CAD", etc
 
   // bio
-  shortBio    String?   @db.Text // For the hero section under the name
-  bio         String?   @db.Text // For the long "About" section
-  expertise   String[]  // Postgres array to store ["CNC Milling", "G-Code", ...]
+  shortBio  String?  @db.Text // For the hero section under the name
+  bio       String?  @db.Text // For the long "About" section
+  expertise String[] // Postgres array to store ["CNC Milling", "G-Code", ...]
 
   @@index([role])
   @@map("users")
 }
 
 model RefreshToken {
-  id          String    @id @default(uuid())
-  tokenHash   String    @unique
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  family      String    // groups tokens for reuse detection — revoke whole family on replay
-  expiresAt   DateTime
-  revokedAt   DateTime?
-  lastUsedAt  DateTime?
-  createdAt   DateTime  @default(now())
+  id         String    @id @default(uuid())
+  tokenHash  String    @unique
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  family     String // groups tokens for reuse detection — revoke whole family on replay
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  lastUsedAt DateTime?
+  createdAt  DateTime  @default(now())
 
   @@index([userId])
   @@index([family])
@@ -148,11 +148,11 @@ model RefreshToken {
 // ----------------------------------------------------------------------------
 
 model Category {
-  id        String   @id @default(uuid())
-  name      String   @unique
-  slug      String   @unique
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
   description String?
-  createdAt DateTime @default(now())
+  createdAt   DateTime @default(now())
 
   courses Course[]
 
@@ -160,82 +160,81 @@ model Category {
 }
 
 model RatingAggregate {
-  id          String   @id @default(uuid())
-  courseId    String   @unique
-  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  oneStar     Int      @default(0)
-  twoStar     Int      @default(0)
-  threeStar   Int      @default(0)
-  fourStar    Int      @default(0)
-  fiveStar    Int      @default(0)
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(uuid())
+  courseId  String   @unique
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  oneStar   Int      @default(0)
+  twoStar   Int      @default(0)
+  threeStar Int      @default(0)
+  fourStar  Int      @default(0)
+  fiveStar  Int      @default(0)
+  updatedAt DateTime @updatedAt
 
   @@map("rating_aggregates")
 }
+
 model Course {
-  id           String       @id @default(uuid())
-  title        String
-  slug         String       @unique
-  description  String
+  id          String @id @default(uuid())
+  title       String
+  slug        String @unique
+  description String
 
-  longDescription    String?      @db.Text 
-  duration           String?
-  level              String?
-  highlights         String[]
-
+  longDescription String?  @db.Text
+  duration        String?
+  level           String?
+  highlights      String[]
 
   learningObjectives String[]
-// Stored as a Postgres array of strings.
-// e.g. ["Understand AutoCAD interface", "Create 2D drawings"]
-// Array type avoids a separate CourseObjective join table for MVP
-// while remaining queryable and extendable.
-  thumbnailUrl String? // Firebase Storage reference — see header note
-  priceCents   Int          @default(0) // stored in cents; see header note
-  currency   String       @default("USD")
-  status       CourseStatus @default(DRAFT)
-  isActive     Boolean      @default(true) // soft delete flag
-  averageRating  Float    @default(0)
-  reviewCount    Int      @default(0)
-
-  
+  // Stored as a Postgres array of strings.
+  // e.g. ["Understand AutoCAD interface", "Create 2D drawings"]
+  // Array type avoids a separate CourseObjective join table for MVP
+  // while remaining queryable and extendable.
+  thumbnailUrl       String? // Firebase Storage reference — see header note
+  priceCents         Int          @default(0) // stored in cents; see header note
+  currency           String       @default("USD")
+  status             CourseStatus @default(DRAFT)
+  isActive           Boolean      @default(true) // soft delete flag
+  averageRating      Float        @default(0)
+  reviewCount        Int          @default(0)
 
   instructorId String
   instructor   User   @relation("InstructorCourses", fields: [instructorId], references: [id], onDelete: Restrict)
   // Restrict, not Cascade: an instructor cannot be hard-deleted while they
   // still own courses with purchase/enrollment history attached.
 
-  categoryId String?
-  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  categoryId      String?
+  category        Category?        @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   ratingAggregate RatingAggregate?
-  cartItems CartItem[]
-  
+  cartItems       CartItem[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  modules     Module[]
-  purchases   Purchase[]
-  enrollments Enrollment[]
-  certificates Certificate[]
-  reviews      Review[]
+  modules             Module[]
+  purchases           Purchase[]
+  enrollments         Enrollment[]
+  certificates        Certificate[]
+  reviews             Review[]
   savedBy             SavedCourse[]
   quizzes             Quiz[]
   couponUsages        CouponUsage[]
   instructorAnalytics InstructorAnalytics[]
 
+  // activities          Activity[]
   @@index([instructorId])
   @@index([status])
   @@map("courses")
 }
 
 model Module {
-  id        String   @id @default(uuid())
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  id       String  @id @default(uuid())
+  courseId String
+  course   Course  @relation(fields: [courseId], references: [id], onDelete: Cascade)
   // Cascade is correct here: a module has no meaning or audit weight
   // independent of its parent course.
-  title     String
-  order     Int
-  duration  String?
+  title    String
+  order    Int
+  duration String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -258,7 +257,7 @@ model Lesson {
   updatedAt       DateTime @updatedAt
 
   progress LessonProgress[]
-  quizzes Quiz[]
+  quizzes  Quiz[]
 
   @@index([moduleId])
   @@map("lessons")
@@ -269,26 +268,26 @@ model Lesson {
 // ----------------------------------------------------------------------------
 
 model Purchase {
-  id           String         @id @default(uuid())
-  userId       String
-  user         User           @relation(fields: [userId], references: [id], onDelete: Restrict)
-  courseId     String
-  course       Course         @relation(fields: [courseId], references: [id], onDelete: Restrict)
-  amountCents  Int
-  currency     String         @default("USD")
-  status       PurchaseStatus @default(PENDING)
-  provider     String         @default("PAYSTACK")
+  id                String         @id @default(uuid())
+  userId            String
+  user              User           @relation(fields: [userId], references: [id], onDelete: Restrict)
+  courseId          String
+  course            Course         @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  amountCents       Int
+  currency          String         @default("USD")
+  status            PurchaseStatus @default(PENDING)
+  provider          String         @default("PAYSTACK")
   providerReference String?
   // Not unique — cart checkout creates multiple Purchase rows sharing one
   // Paystack reference (one payment, several courses). Indexed for the
   // webhook lookup, which queries "all purchases with this reference".
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
 
-  enrollment Enrollment?
-  couponUsage CouponUsage?
+  enrollment       Enrollment?
+  couponUsage      CouponUsage?
   couponId         String?
-  discountCents    Int     @default(0)
+  discountCents    Int          @default(0)
   finalAmountCents Int
 
   @@index([userId])
@@ -298,11 +297,11 @@ model Purchase {
 }
 
 model Cart {
-  id        String     @id @default(uuid())
-  userId    String     @unique
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   items CartItem[]
 
@@ -324,15 +323,15 @@ model CartItem {
 }
 
 model Enrollment {
-  id         String           @id @default(uuid())
-  userId     String
-  user       User             @relation(fields: [userId], references: [id], onDelete: Restrict)
-  courseId   String
-  course     Course           @relation(fields: [courseId], references: [id], onDelete: Restrict)
-  purchaseId String?          @unique // nullable: free-course enrollment has no purchase
-  purchase   Purchase?        @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
-  status     EnrollmentStatus @default(ACTIVE)
-  enrolledAt DateTime         @default(now())
+  id          String           @id @default(uuid())
+  userId      String
+  user        User             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  courseId    String
+  course      Course           @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  purchaseId  String?          @unique // nullable: free-course enrollment has no purchase
+  purchase    Purchase?        @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
+  status      EnrollmentStatus @default(ACTIVE)
+  enrolledAt  DateTime         @default(now())
   completedAt DateTime?
 
   progress LessonProgress[]
@@ -349,17 +348,17 @@ model Enrollment {
 // ----------------------------------------------------------------------------
 
 model LessonProgress {
-  id              String                @id @default(uuid())
+  id              String               @id @default(uuid())
   userId          String
-  user            User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   lessonId        String
-  lesson          Lesson                @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lesson          Lesson               @relation(fields: [lessonId], references: [id], onDelete: Cascade)
   enrollmentId    String
-  enrollment      Enrollment            @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  status          LessonProgressStatus  @default(NOT_STARTED)
-  progressSeconds Int                   @default(0)
+  enrollment      Enrollment           @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  status          LessonProgressStatus @default(NOT_STARTED)
+  progressSeconds Int                  @default(0)
   completedAt     DateTime?
-  updatedAt       DateTime              @updatedAt
+  updatedAt       DateTime             @updatedAt
 
   @@unique([userId, lessonId])
   @@index([enrollmentId])
@@ -367,19 +366,19 @@ model LessonProgress {
 }
 
 model Certificate {
-  id           String   @id @default(uuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  id                String   @id @default(uuid())
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Restrict)
   // Restrict: certificate records must survive even if user is deactivated —
   // they're proof of achievement and may be referenced externally.
-  courseId     String
-  course       Course   @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  courseId          String
+  course            Course   @relation(fields: [courseId], references: [id], onDelete: Restrict)
   // Restrict: same reason — a certificate can't silently disappear because
   // a course was archived after the student completed it.
-  certificateNumber String @unique @default(cuid())
+  certificateNumber String   @unique @default(cuid())
   // Human-readable unique ID printed on the certificate itself.
   // cuid() gives a collision-resistant, URL-safe string.
-  issuedAt     DateTime @default(now())
+  issuedAt          DateTime @default(now())
 
   // A student earns one certificate per course — no duplicates.
   @@unique([userId, courseId])
@@ -388,23 +387,23 @@ model Certificate {
 }
 
 model Review {
-  id           String   @id @default(uuid())
-  userId       String
-  user         User     @relation(fields: [userId], references: [id], onDelete: Restrict)
-  courseId     String
-  course       Course   @relation(fields: [courseId], references: [id], onDelete: Restrict)
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Restrict)
   // Restrict on both sides: reviews are permanent records of student feedback.
   // A deleted/archived course or deactivated user must not silently erase reviews.
-  rating       Int
+  rating    Int
   // Rating stored as integer 1-5. Enforced at application layer via Zod (min 1, max 5).
   // DB-level check constraint added in migration for extra safety.
-  comment      String?
+  comment   String?
   // Comment is optional — a student can leave a star rating without written feedback.
-  isVisible    Boolean  @default(true)
+  isVisible Boolean  @default(true)
   // Soft hide: admin can hide inappropriate reviews without deleting them.
   // Audit trail preserved.
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // A student can only review a course once — enforced at DB level.
   // Must be enrolled to review (enforced at application layer).
@@ -476,7 +475,6 @@ enum QuizAttemptStatus {
   EXPIRED
 }
 
-
 model QuizAttempt {
   id          String            @id @default(uuid())
   quizId      String
@@ -544,17 +542,15 @@ model CouponUsage {
 
 // email verification
 model EmailVerification {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String   @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique
   // Token is a random UUID — hashed before storage
-  tokenHash String   @unique
+  tokenHash String    @unique
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
-   
-  
+  createdAt DateTime  @default(now())
 
   @@index([userId])
   @@map("email_verifications")
@@ -562,14 +558,14 @@ model EmailVerification {
 
 // password reset
 model PasswordReset {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  token     String   @unique
-  tokenHash String   @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique
+  tokenHash String    @unique
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   @@index([userId])
   @@map("password_resets")
@@ -577,18 +573,18 @@ model PasswordReset {
 
 // instructor Analytics
 model InstructorAnalytics {
-  id               String   @id @default(uuid())
-  instructorId     String
-  instructor       User     @relation(fields: [instructorId], references: [id], onDelete: Cascade)
-  courseId         String
-  course           Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  date             DateTime @db.Date
+  id              String   @id @default(uuid())
+  instructorId    String
+  instructor      User     @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+  courseId        String
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  date            DateTime @db.Date
   // Snapshot date — one row per instructor per course per day
-  enrollmentCount  Int      @default(0)
-  completionCount  Int      @default(0)
-  revenuecents     Int      @default(0)
-  averageProgress  Float    @default(0)
-  createdAt        DateTime @default(now())
+  enrollmentCount Int      @default(0)
+  completionCount Int      @default(0)
+  revenuecents    Int      @default(0)
+  averageProgress Float    @default(0)
+  createdAt       DateTime @default(now())
 
   @@unique([instructorId, courseId, date])
   @@index([instructorId])
@@ -613,8 +609,6 @@ model HelpArticle {
   @@map("help_articles")
 }
 
-
-
 // ----------------------------------------------------------------------------
 // Audit trail — append-only. See header note #3.
 // ----------------------------------------------------------------------------
@@ -638,7 +632,6 @@ model AuditEvent {
   @@map("audit_events")
 }
 
-
 enum NotificationType {
   ENROLLMENT_CONFIRMED
   CERTIFICATE_ISSUED
@@ -659,4 +652,15 @@ model Notification {
   @@index([userId])
   @@index([userId, isRead])
   @@map("notifications")
+}
+
+// Activity
+model Activity {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  iconType    String // Values like: 'completed', 'badge', 'enrolled', 'certificate'
+  createdAt   DateTime @default(now())
 }

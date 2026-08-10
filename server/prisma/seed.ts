@@ -6,12 +6,14 @@ import bcrypt from "bcryptjs";
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
 });
+
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
   console.log("Seeding database with full catalogue and course modules...");
+  
   const passwordHash = await bcrypt.hash("Password123!", 10);
-
+  
   // 1. Core Users (Admin & Student)
   const admin = await prisma.user.upsert({
     where: { email: "admin@mechlms.test" },
@@ -24,7 +26,7 @@ async function main() {
       isEmailVerified: true,
     },
   });
-
+  
   const student = await prisma.user.upsert({
     where: { email: "student@mechlms.test" },
     update: {},
@@ -128,7 +130,7 @@ async function main() {
       expertise: ["Six Sigma Black Belt", "GD&T", "Lean Manufacturing", "Quality Management Systems"]
     },
   ];
-
+  
   const createdInstructors: Record<string, any> = {};
   for (const inst of instructorData) {
     const userRecord = await prisma.user.upsert({
@@ -167,7 +169,7 @@ async function main() {
     { name: "Electrical Engineering", slug: "electrical-engineering", description: "Circuits, power systems & electronics for MEs" },
     { name: "Welding Technology", slug: "welding-technology", description: "MIG, TIG, arc welding & weld inspection" },
   ];
-
+  
   const createdCategories: Record<string, any> = {};
   for (const cat of categoriesData) {
     const catRecord = await prisma.category.upsert({
@@ -241,10 +243,11 @@ async function main() {
       ]
     },
   ];
-
+  
   for (const c of coursesData) {
     const instRecord = createdInstructors[c.instructor];
     const catRecord = createdCategories[c.categorySlug];
+    
     await prisma.course.upsert({
       where: { slug: c.slug },
       update: {
@@ -272,10 +275,17 @@ async function main() {
         thumbnailUrl: c.thumbnailUrl,
         highlights: c.highlights,
         modules: {
+          // MODIFIED: Included lessons for accurate progress tracking
           create: c.modules.map(m => ({
             title: m.title,
             duration: m.duration,
-            order: m.order
+            order: m.order,
+            lessons: {
+              create: [
+                { title: m.title + " - Part 1", order: 1, durationSeconds: 1200 },
+                { title: m.title + " - Part 2", order: 2, durationSeconds: 1500 }
+              ]
+            }
           }))
         }
       },
@@ -295,44 +305,99 @@ async function main() {
     },
   });
 
-  // 6. Student Enrollments (Now safely inside main())
-  console.log('Seeding student enrollments...');
+  // 6. Student Enrollments & Progress Data (REPLACED)
+  console.log('Seeding student enrollments and progress...');
   
   const testStudent = await prisma.user.findUnique({
     where: { email: 'student@mechlms.test' }
   });
   
+  // Fetch courses explicitly including modules and lessons
   const availableCourses = await prisma.course.findMany({
-    take: 3
+    take: 3,
+    include: {
+      modules: {
+        include: { lessons: true }
+      }
+    }
   });
 
   if (testStudent && availableCourses.length >= 3) {
-    const mockProgress = [68, 34, 91];
+    // Defined completion targets for the 3 courses: 100%, 91%, 34%
+    const completionRates = [1.0, 0.91, 0.34]; 
+    
+    // FIX 1: Cast as any[] so TypeScript accepts it as a valid Prisma Enum
+    const statuses: any[] = ['COMPLETED', 'ACTIVE', 'ACTIVE'];
+
     for (let i = 0; i < 3; i++) {
+      const course = availableCourses[i];
+      const allLessons = course.modules.flatMap(m => m.lessons);
+      
+      const targetCompletedCount = Math.floor(allLessons.length * completionRates[i]);
+
       await prisma.enrollment.upsert({
         where: {
           userId_courseId: {
             userId: testStudent.id,
-            courseId: availableCourses[i].id
+            courseId: course.id
           }
         },
         update: {},
         create: {
           userId: testStudent.id,
-          courseId: availableCourses[i].id,
-          status: 'ACTIVE',
-          // progress: mockProgress[i], 
+          courseId: course.id,
+          status: statuses[i], // The red underline here will vanish
+          // lastAccessedAt: new Date(),
+        progress: {
+                  create: allLessons.map((lesson, index) => ({
+                    // Explicitly connect the required User and Lesson relations
+                    user: { connect: { id: testStudent.id } },
+                    lesson: { connect: { id: lesson.id } },
+                    
+                    status: (index < targetCompletedCount ? 'COMPLETED' : 'NOT_STARTED') as any,
+                    completedAt: index < targetCompletedCount ? new Date() : null
+                  }))
+                }
         }
       });
     }
-    console.log('✅ Student enrollments successfully seeded!');
+    console.log('✅ Student enrollments and progress successfully seeded!');
+    
+     
+
+    // Seed Activities
+    console.log("Seeding student activities...");
+    await prisma.activity.createMany({
+      data: [
+        {
+          userId: testStudent.id,
+          title: 'Completed "Gear Train Analysis" lesson',
+          iconType: 'completed',
+          createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), 
+        },
+        {
+          userId: testStudent.id,
+          title: 'Earned badge: "3-Day Streak"',
+          iconType: 'badge',
+          createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000), 
+        },
+        {
+          userId: testStudent.id,
+          title: 'Enrolled in CNC Programming Fundamentals',
+          iconType: 'enrolled',
+          createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), 
+        },
+      ],
+    });
+    console.log("✅ Student activities successfully seeded!");
   } else {
     console.log('⚠️ Could not seed enrollments: Missing student or insufficient courses.');
   }
 
-  console.log("Database successfully seeded with full course catalogue and modules!");
+  console.log("Database successfully seeded with full course catalogue and modules!"); 
 }
 
+// Execute the main function
 main()
   .catch((e) => {
     console.error("Seeding failed:", e);

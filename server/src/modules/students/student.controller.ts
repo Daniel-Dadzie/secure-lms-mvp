@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { getStudentDashboardData } from "./student.service";
 
-export async function getDashboardHandler(req: Request, res: Response) {
+ export async function getDashboardHandler(req: Request, res: Response) {
   try {
-    // Assuming your auth middleware attaches the user object to req.user
-    const userId = (req as any).user?.id || (req as any).userId;
+    // FIXED: Extracting 'sub' from the JwtPayload
+    const userId = (req as any).user?.sub;
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized access" });
