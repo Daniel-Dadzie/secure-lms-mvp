@@ -61,7 +61,7 @@ app.use("/api/quizzes", quizzesRouter);
 app.use("/api/categories", categoriesRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/payments", paymentsRouter);
-app.use("/api/enrolments", enrolmentsRouter);
+app.use("/api/enrollments", enrolmentsRouter);
 app.use("/api/progress", progressRouter);
 app.use("/api/support", supportRouter);
 app.use("/api/admin", adminRouter);

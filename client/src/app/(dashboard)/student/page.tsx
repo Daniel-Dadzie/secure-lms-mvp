@@ -129,7 +129,7 @@ export default function StudentDashboard() {
               <div key={course.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col">
                 <div className="flex gap-4 mb-6">
                   <div className="w-16 h-16 rounded-xl overflow-hidden relative shrink-0 bg-slate-100">
-                    <Image src={course.thumbnailUrl || "https://images.unsplash.com/photo-1537462715879-360eeb61a0ad?auto=format&fit=crop&q=80"} alt={course.title} fill className="object-cover" />
+                    <Image src={course.thumbnailUrl || "https://images.unsplash.com/photo-1537462715879-360eeb61a0ad?auto=format&fit=crop&q=80"} alt={course.title} fill priority className="object-cover" />
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900 leading-tight mb-1 text-sm line-clamp-2">{course.title}</h3>
