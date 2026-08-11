@@ -1,0 +1,593 @@
+Step: npm-ci
+Started: 2026-08-11T08:42:19Z
+
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@paystack/inline-js@2.24.0',
+npm warn EBADENGINE   required: { node: '>= 22.0.0' },
+npm warn EBADENGINE   current: { node: 'v20.20.2', npm: '10.8.2' }
+npm warn EBADENGINE }
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: '@prisma/streams-local@0.1.11',
+npm warn EBADENGINE   required: { bun: '>=1.2.0', node: '>=22.0.0' },
+npm warn EBADENGINE   current: { node: 'v20.20.2', npm: '10.8.2' }
+npm warn EBADENGINE }
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: 'firebase-admin@14.2.0',
+npm warn EBADENGINE   required: { node: '>=22' },
+npm warn EBADENGINE   current: { node: 'v20.20.2', npm: '10.8.2' }
+npm warn EBADENGINE }
+npm warn deprecated node-domexception@1.0.0: Use your platform's native DOMException instead
+npm warn deprecated uuid@9.0.1: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
+npm warn deprecated glob@10.5.0: Old versions of glob are not supported, and contain widely publicized security vulnerabilities, which have been fixed in the current version. Please update. Support for old versions may be purchased (at exorbitant rates) by contacting i@izs.me
+
+added 966 packages, and audited 970 packages in 4m
+
+230 packages are looking for funding
+  run `npm fund` for details
+
+6 moderate severity vulnerabilities
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
+
+Finished: 2026-08-11T08:46:43Z
+Exit code: 0
+Step: prisma-generate
+Started: 2026-08-11T08:46:43Z
+
+◇ injected env (0) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+Failed to load config file "/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server" as a TypeScript/JavaScript module. Error: PrismaConfigEnvError: Cannot resolve environment variable: DATABASE_URL.
+
+Finished: 2026-08-11T08:46:46Z
+Exit code: 1
+Step: prisma-migrate-deploy
+Started: 2026-08-11T08:46:46Z
+
+◇ injected env (0) from .env // tip: ⌘ override existing { override: true }
+Failed to load config file "/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server" as a TypeScript/JavaScript module. Error: PrismaConfigEnvError: Cannot resolve environment variable: DATABASE_URL.
+
+Finished: 2026-08-11T08:46:48Z
+Exit code: 1
+Step: lint
+Started: 2026-08-11T08:46:48Z
+
+
+> client@0.1.0 lint
+> eslint
+
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/client/src/app/(dashboard)/student/profile/page.tsx
+  138:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+✖ 1 problem (0 errors, 1 warning)
+
+
+> secure-lms-server@1.0.0 lint
+> eslint .
+
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/prisma/seed.ts
+    1:16  warning  'uuidv4' is defined but never used            @typescript-eslint/no-unused-vars
+   18:9   warning  'admin' is assigned a value but never used    @typescript-eslint/no-unused-vars
+   30:9   warning  'student' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  134:44  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  173:43  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  335:21  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+  358:87  warning  Unexpected any. Specify a different type      @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/app.ts
+  43:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  86:12  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  99:8   warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/middleware/requireOwnership.ts
+  39:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/middleware/requireRole.ts
+  17:26  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/middleware/upload.ts
+  13:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/admin/admin.controller.ts
+  57:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  60:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/admin/admin.service.ts
+  141:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/auth/auth.controller.ts
+   56:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  100:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  122:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  176:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  185:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  245:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/auth/auth.routes.ts
+  57:30  warning  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  60:21  warning  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+  73:20  warning  'next' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  82:21  warning  Unexpected any. Specify a different type                                @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/auth/auth.service.ts
+   48:48  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   62:49  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  110:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  164:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  223:20  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  372:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/auth/email-verification.service.ts
+  54:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  60:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  66:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/auth/password-reset.service.ts
+  66:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  72:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  78:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/cart/cart.controller.ts
+  13:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  28:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  31:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  42:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  52:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/cart/cart.service.ts
+   34:37  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   84:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   95:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  106:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  121:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  142:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/categories/categories.controller.ts
+  29:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/categories/categories.service.ts
+  46:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  49:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/courses/courses.controller.ts
+  21:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  34:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  47:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  55:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  63:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  71:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  79:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/courses/courses.service.ts
+  101:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/courses/courses.upload.controller.ts
+   5:11  warning  'MulterRequest' is defined but never used  @typescript-eslint/no-unused-vars
+  49:25  warning  Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/courses/lessons.controller.ts
+   7:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   8:30  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  11:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  27:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  40:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  48:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  61:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/courses/lessons.service.ts
+  38:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/courses/modules.controller.ts
+  19:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  32:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  40:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/courses/modules.service.ts
+  55:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/enrolments/enrolments.controller.ts
+  13:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  23:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  28:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  43:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  48:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/enrolments/enrolments.service.ts
+  104:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  110:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  139:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  149:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/instructor-analytics/instructor-analytics.controller.ts
+  10:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  20:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  23:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/instructor-analytics/instructor-analytics.service.ts
+  30:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/notifications/notifications.controller.ts
+  19:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  31:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  34:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  44:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/notifications/notifications.service.ts
+  66:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/payments/payments.controller.ts
+  18:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  21:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  32:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  35:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  49:27  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  73:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  76:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  84:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  92:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  95:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/payments/payments.service.ts
+   25:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   35:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   45:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   58:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   63:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   68:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   77:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  142:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  149:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  173:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  333:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  377:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  382:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/progress/progress.controller.ts
+  19:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  27:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  38:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  43:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  53:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/progress/progress.service.ts
+   31:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   44:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  156:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/quizzes/quizzes.controller.ts
+   21:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   31:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   34:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   50:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   57:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   68:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   84:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   89:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  104:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  109:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  119:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  131:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/quizzes/quizzes.service.ts
+   54:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   91:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  125:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  188:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  194:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  292:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  304:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  371:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  405:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  438:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/reviews/reviews.controller.ts
+  38:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  43:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  59:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  64:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  74:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  77:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  87:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  90:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/reviews/reviews.service.ts
+  113:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  156:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  159:17  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  193:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  199:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  238:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  271:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/students/student.controller.ts
+  7:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/support/support.controller.ts
+  26:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/users/users.controller.ts
+   13:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   16:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   31:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   68:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   79:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   94:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  105:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  120:29  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  141:19  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  157:28  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/users/users.service.ts
+    4:10  warning  'sendPasswordResetEmail' is defined but never used  @typescript-eslint/no-unused-vars
+   38:15  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+   96:15  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  141:15  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+  177:15  warning  Unexpected any. Specify a different type            @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/services/upload.service.ts
+   18:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   56:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   88:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  120:15  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/tests/helpers/security.helper.ts
+   19:46  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   97:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  116:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  136:10  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/tests/setup.ts
+  25:34  warning  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/tests/unit/auth.test.ts
+  266:21  warning  'cookie' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/tests/unit/idor.test.ts
+   8:10  warning  'generateAccessToken' is defined but never used  @typescript-eslint/no-unused-vars
+  15:17  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  15:32  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  16:20  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  16:38  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  17:14  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  19:16  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  19:30  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  20:16  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  20:30  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  21:16  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  21:30  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  22:18  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  22:23  warning  'progressB' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  22:34  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  23:14  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  23:19  warning  'certB' is assigned a value but never used       @typescript-eslint/no-unused-vars
+  23:26  warning  Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+
+✖ 210 problems (0 errors, 210 warnings)
+
+
+Finished: 2026-08-11T08:47:17Z
+Exit code: 0
+Step: build
+Started: 2026-08-11T08:47:17Z
+
+
+> client@0.1.0 build
+> next build
+
+▲ Next.js 16.3.0 (Turbopack)
+✓ Running next.config.mjs took 46ms
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 19.1s
+  Running TypeScript ...
+.next/dev/types/validator.ts(69,39): error TS2307: Cannot find module '../../../src/app/admin/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(78,39): error TS2307: Cannot find module '../../../src/app/health/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(87,39): error TS2307: Cannot find module '../../../src/app/instructor/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(96,39): error TS2307: Cannot find module '../../../src/app/page.js' or its corresponding type declarations.
+.next/dev/types/validator.ts(105,39): error TS2307: Cannot find module '../../../src/app/student/page.js' or its corresponding type declarations.
+Failed to type check.
+
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/client
+npm error workspace client@0.1.0
+npm error location /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/client
+npm error command failed
+npm error command sh -c next build
+
+
+> secure-lms-server@1.0.0 build
+> npx dotenv-cli -e .env -- prisma generate && tsc
+
+◇ injected env (0) from .env // tip: ⌁ auth for agents [www.vestauth.com]
+Failed to load config file "/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server" as a TypeScript/JavaScript module. Error: PrismaConfigEnvError: Cannot resolve environment variable: DATABASE_URL.
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server
+npm error workspace secure-lms-server@1.0.0
+npm error location /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server
+npm error command failed
+npm error command sh -c npx dotenv-cli -e .env -- prisma generate && tsc
+
+
+Finished: 2026-08-11T08:48:01Z
+Exit code: 1
+Step: tests
+Started: 2026-08-11T08:48:01Z
+
+
+> secure-lms-server@1.0.0 test
+> npx dotenv-cli -e .env.test -- vitest run --fileParallelism=false
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server[39m
+
+ [31m❯[39m tests/unit/auth.test.ts [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m tests/unit/idor.test.ts [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m tests/unit/rbac.test.ts [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m tests/integration/content-authorization.test.ts [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m tests/unit/db.test.ts [2m([22m[2m0 test[22m[2m)[22m
+ [31m❯[39m tests/integration/security.test.ts [2m([22m[2m0 test[22m[2m)[22m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Suites 6 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m tests/integration/content-authorization.test.ts[2m [ tests/integration/content-authorization.test.ts ][22m
+[41m[1m FAIL [22m[49m tests/integration/security.test.ts[2m [ tests/integration/security.test.ts ][22m
+[41m[1m FAIL [22m[49m tests/unit/auth.test.ts[2m [ tests/unit/auth.test.ts ][22m
+[41m[1m FAIL [22m[49m tests/unit/db.test.ts[2m [ tests/unit/db.test.ts ][22m
+[41m[1m FAIL [22m[49m tests/unit/idor.test.ts[2m [ tests/unit/idor.test.ts ][22m
+[41m[1m FAIL [22m[49m tests/unit/rbac.test.ts[2m [ tests/unit/rbac.test.ts ][22m
+[31m[1mError[22m: Cannot find module '.prisma/client/default'
+Require stack:
+- /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/@prisma/client/default.js[39m
+[90m [2m❯[22m Object.<anonymous> ../node_modules/@prisma/client/default.js:[2m2:6[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/6]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m6 failed[39m[22m[90m (6)[39m
+[2m      Tests [22m [2mno tests[22m
+[2m   Start at [22m 09:48:05
+[2m   Duration [22m 2.67s[2m (transform 223ms, setup 0ms, import 0ms, tests 0ms, environment 2ms)[22m
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server
+npm error workspace secure-lms-server@1.0.0
+npm error location /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server
+npm error command failed
+npm error command sh -c npx dotenv-cli -e .env.test -- vitest run --fileParallelism=false
+
+
+Finished: 2026-08-11T08:48:08Z
+Exit code: 1
+Step: gitleaks
+Started: 2026-08-11T08:48:08Z
+
+
+    ○
+    │╲
+    │ ○
+    ○ ░
+    ░    gitleaks
+
+[90m9:48AM[0m [32mINF[0m [1m94 commits scanned.[0m
+[90m9:48AM[0m [32mINF[0m [1mscanned ~3853655 bytes (3.85 MB) in 1.03s[0m
+[90m9:48AM[0m [32mINF[0m [1mno leaks found[0m
+
+Finished: 2026-08-11T08:48:09Z
+Exit code: 0
+Step: npm-audit-client
+Started: 2026-08-11T08:48:09Z
+
+found 0 vulnerabilities
+
+Finished: 2026-08-11T08:48:12Z
+Exit code: 0
+Step: npm-audit-server
+Started: 2026-08-11T08:48:12Z
+
+# npm audit report
+
+uuid  <11.1.1
+Severity: moderate
+uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided - https://github.com/advisories/GHSA-w5hq-g745-h8pq
+fix available via `npm audit fix --force`
+Will install uuid@14.0.1, which is a breaking change
+node_modules/uuid
+  gaxios  6.4.0 - 6.7.1
+  Depends on vulnerable versions of uuid
+  node_modules/gaxios
+  teeny-request  3.9.1 - 9.0.0
+  Depends on vulnerable versions of uuid
+  node_modules/teeny-request
+    @google-cloud/storage  2.2.0 - 2.5.0 || >=5.19.0
+    Depends on vulnerable versions of retry-request
+    Depends on vulnerable versions of teeny-request
+    node_modules/@google-cloud/storage
+      firebase-admin  7.0.0 - 8.2.0 || >=11.0.0
+      Depends on vulnerable versions of @google-cloud/storage
+      node_modules/firebase-admin
+    retry-request  7.0.0 - 7.0.2
+    Depends on vulnerable versions of teeny-request
+    node_modules/retry-request
+
+6 moderate severity vulnerabilities
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Finished: 2026-08-11T08:48:17Z
+Exit code: 0
+Step: npm-audit-packages-shared
+Started: 2026-08-11T08:48:17Z
+
+found 0 vulnerabilities
+
+Finished: 2026-08-11T08:48:19Z
+Exit code: 0
+Step: semgrep
+Started: 2026-08-11T08:48:19Z
+
+
+
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+  Scanning 331 files tracked by git with 565 Code rules:
+
+  Language      Rules   Files          Origin      Rules
+ ─────────────────────────────        ───────────────────
+  <multilang>       6     331          Community     565
+  ts               76     161
+  json              3       9
+  yaml             25       6
+  js               70       4
+  bash              1       2
+  dockerfile        4       1
+
+
+
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 115
+ • Targets scanned: 331
+ • Parsed lines: ~99.9%
+ • Scan skipped:
+   ◦ Files larger than  files 1.0 MB: 1
+   ◦ Files matching .semgrepignore patterns: 12
+ • Scan was limited to files tracked by git
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 115 rules on 331 files: 0 findings.
+(need more rules? `semgrep login` for additional free Semgrep Registry rules)
+
+If Semgrep missed a finding, please send us feedback to let us know!
+See https://semgrep.dev/docs/reporting-false-negatives/
+
+Finished: 2026-08-11T08:48:34Z
+Exit code: 0
+PASS: Validation left the repository working state unchanged.
+PASS: Strict evidence sanitisation verification passed
+
+Evidence directory: .ci-evidence/pr-validation/local-1-all-2026-08-11T08-42-18Z
+PR validation result: FAIL
