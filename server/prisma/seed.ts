@@ -2,13 +2,10 @@ import { v4 as uuidv4 } from "uuid";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
-
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
 });
-
 const prisma = new PrismaClient({ adapter });
-
 async function main() {
   console.log("Seeding database with full catalogue and course modules...");
   
@@ -16,10 +13,10 @@ async function main() {
   
   // 1. Core Users (Admin & Student)
   const admin = await prisma.user.upsert({
-    where: { email: "admin@mechlms.test" },
+    where: { email: "admin@mechlms.com" },
     update: {},
     create: {
-      email: "admin@mechlms.test",
+      email: "admin@mechlms.com",
       passwordHash,
       fullName: "Admin User",
       role: "ADMIN",
@@ -28,21 +25,20 @@ async function main() {
   });
   
   const student = await prisma.user.upsert({
-    where: { email: "student@mechlms.test" },
+    where: { email: "student@mechlms.com" },
     update: {},
     create: {
-      email: "student@mechlms.test",
+      email: "student@mechlms.com",
       passwordHash,
       fullName: "Student User",
       role: "STUDENT",
       isEmailVerified: true,
     },
   });
-
   // 2. Expert Instructors
   const instructorData = [
     { 
-      email: "james.walker@mechlms.test", 
+      email: "james.walker@mechlms.com", 
       fullName: "Dr. James Walker", 
       specialization: "Mechanical Systems Expert", 
       credentials: "MIT-trained | Ex-Boeing", 
@@ -53,18 +49,18 @@ async function main() {
       expertise: ["Aerospace Structures", "Mechanical Design", "Systems Engineering"]
     },
     { 
-      email: "sarah.chen@mechlms.test", 
+      email: "sarah.chen@mechlms.com", 
       fullName: "Prof. Sarah Chen", 
       specialization: "CAD / CAM Specialist", 
       credentials: "Stanford ME | Ex-Lockheed", 
       avatarUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=400&auto=format&fit=crop", 
       experienceYears: "12 yrs",
       shortBio: "Manufacturing engineer at Stanford University with deep expertise in CNC programming, precision machining, and CAM software.",
-      bio: "Prof. Sarah Chen has 16 years of combined industry and academic experience in precision manufacturing. She has collaborated with Siemens, Fanuc, and Haas Automation on next-generation machine tool development, contributing to controller firmware optimisation and toolpath algorithms. At Stanford, she directs the Advanced Manufacturing Lab and teaches graduate courses in computational manufacturing. She has trained over 18,000 students globally in CNC programming, helping machinists, engineers, and product designers bridge the gap between design intent and workshop reality.",
+      bio: "Prof. Sarah Chen has 16 years of combined industry and academic experience in precision manufacturing. She has collaborated with Siemens, Fanuc, and Haas Automation on next-generation machine tool development, contributing to controller firmware optimisation and toolpath algorithms. At Stanford, she directs the Advanced Manufacturing Lab and teaches graduate courses in computational manufacturing.",
       expertise: ["CNC Milling & Turning", "G-Code Programming", "CAM Software (Fusion 360)", "Precision Metrology", "Cutting Tool Selection"]
     },
     { 
-      email: "emily.torres@mechlms.test", 
+      email: "emily.torres@mechlms.com", 
       fullName: "Emily Torres", 
       specialization: "CNC & Robotics Engineer", 
       credentials: "Georgia Tech | Fanuc Certified", 
@@ -75,7 +71,7 @@ async function main() {
       expertise: ["Fanuc Robotics", "Assembly Automation", "PLC Integration", "Kinematics"]
     },
     { 
-      email: "kwame.osei@mechlms.test", 
+      email: "kwame.osei@mechlms.com", 
       fullName: "Dr. Kwame Osei", 
       specialization: "Industrial Automation Lead", 
       credentials: "Delft | Ex-ABB & Siemens", 
@@ -86,7 +82,7 @@ async function main() {
       expertise: ["SCADA Systems", "PLC Programming", "Industrial IoT", "Process Automation"]
     },
     { 
-      email: "marcus.hill@mechlms.test", 
+      email: "marcus.hill@mechlms.com", 
       fullName: "Dr. Marcus Hill", 
       specialization: "Fluid Dynamics Researcher", 
       credentials: "Caltech | Ex-NASA JPL", 
@@ -97,7 +93,7 @@ async function main() {
       expertise: ["CFD Analysis", "Propulsion Systems", "Hydraulics", "Aerodynamics"]
     },
     { 
-      email: "liu.wei@mechlms.test", 
+      email: "liu.wei@mechlms.com", 
       fullName: "Prof. Liu Wei", 
       specialization: "Thermodynamics & Energy", 
       credentials: "Tsinghua | Ex-GE Energy", 
@@ -108,7 +104,7 @@ async function main() {
       expertise: ["Heat Transfer", "Thermal Cycles", "Energy Systems", "Turbomachinery"]
     },
     { 
-      email: "nina.patel@mechlms.test", 
+      email: "nina.patel@mechlms.com", 
       fullName: "Dr. Nina Patel", 
       specialization: "Electrical Systems Engineer", 
       credentials: "IIT Delhi | Ex-Honeywell", 
@@ -119,7 +115,7 @@ async function main() {
       expertise: ["Circuit Design", "Power Systems", "Avionics", "Electromechanics"]
     },
     { 
-      email: "mark.sullivan@mechlms.test", 
+      email: "mark.sullivan@mechlms.com", 
       fullName: "Mark Sullivan", 
       specialization: "Quality & Six Sigma Master", 
       credentials: "Black Belt | Ex-Caterpillar", 
@@ -153,7 +149,6 @@ async function main() {
     });
     createdInstructors[inst.fullName] = userRecord;
   }
-
   // 3. Engineering Categories
   const categoriesData = [
     { name: "Mechanical Engineering", slug: "mechanical-engineering", description: "Core systems, statics, dynamics & machine design" },
@@ -179,8 +174,7 @@ async function main() {
     });
     createdCategories[cat.slug] = catRecord;
   }
-
-  // 4. Catalogue Courses with Rich Curriculum Data & Seeded Videos
+  // 4. Catalogue Courses (12 Unique Courses with full data and pictures)
   const coursesData = [
     {
       title: "Quality Control & Six Sigma Green Belt",
@@ -242,6 +236,186 @@ async function main() {
         { title: "Cutter Compensation & Subroutines", duration: "1 hr 15 mins", order: 3 },
       ]
     },
+    {
+      title: "Advanced SolidWorks Parametric Design",
+      slug: "advanced-solidworks-parametric-design",
+      description: "Master complex surface modeling, configurations, and large assembly assemblies.",
+      longDescription: "Take your CAD skills beyond basics. Learn advanced surfacing, top-down assembly modeling, and automated design tables.",
+      priceCents: 12900,
+      averageRating: 4.9,
+      reviewCount: 3410,
+      duration: "8 Weeks",
+      level: "Advanced",
+      instructor: "Prof. Sarah Chen",
+      categorySlug: "solidworks",
+      thumbnailUrl: "https://images.unsplash.com/photo-1581092335397-9583fe92d232?q=80&w=600&auto=format&fit=crop",
+      highlights: ["Complex loft and boundary surfaces", "Top-down assembly management", "Design tables & configurations"],
+      modules: [
+        { title: "Advanced Surfacing & Patching", duration: "1 hr", order: 1 },
+        { title: "Top-Down Assembly Modeling Techniques", duration: "1 hr 30 mins", order: 2 },
+        { title: "Configurations & Design Tables", duration: "45 mins", order: 3 },
+      ]
+    },
+    {
+      title: "Aerospace Structural Engineering & Analysis",
+      slug: "aerospace-structural-engineering-analysis",
+      description: "Analyze aircraft frames, stress concentrations, and finite element verification.",
+      longDescription: "Explore the rigorous engineering standards behind aircraft and spacecraft structural integrity, fatigue analysis, and load paths.",
+      priceCents: 21900,
+      averageRating: 4.9,
+      reviewCount: 1120,
+      duration: "14 Weeks",
+      level: "Advanced",
+      instructor: "Dr. James Walker",
+      categorySlug: "mechanical-engineering",
+      thumbnailUrl: "https://images.unsplash.com/photo-1517976487504-55447fb4e365?q=80&w=600&auto=format&fit=crop",
+      highlights: ["Airframe load distribution analysis", "Fatigue and fracture mechanics", "FEA validation best practices"],
+      modules: [
+        { title: "Introduction to Airframe Loads & Criteria", duration: "1 hr 15 mins", order: 1 },
+        { title: "Thin-Walled Structures & Shear Flow", duration: "1 hr 45 mins", order: 2 },
+        { title: "Fatigue Life Prediction Models", duration: "1 hr 30 mins", order: 3 },
+      ]
+    },
+    {
+      title: "Computational Fluid Dynamics (CFD) Mastery",
+      slug: "computational-fluid-dynamics-cfd-mastery",
+      description: "Simulate fluid flow, turbulence, and thermal transfer using professional CFD software.",
+      longDescription: "Learn boundary layer meshing, turbulence models (RANS, LES), and post-processing visualization for aerodynamic optimization.",
+      priceCents: 18900,
+      averageRating: 4.8,
+      reviewCount: 1840,
+      duration: "10 Weeks",
+      level: "Intermediate",
+      instructor: "Dr. Marcus Hill",
+      categorySlug: "fluid-mechanics",
+      thumbnailUrl: "https://images.unsplash.com/photo-1517048676732-d65bc937f952?q=80&w=600&auto=format&fit=crop",
+      highlights: ["Mesh convergence verification", "Turbulence closure modeling", "External aerodynamics simulations"],
+      modules: [
+        { title: "Discretization & Navier-Stokes Solvers", duration: "1 hr", order: 1 },
+        { title: "Boundary Layer Setup & Wall Y+ Tuning", duration: "1 hr 20 mins", order: 2 },
+        { title: "Post-Processing & Flow Visualization", duration: "1 hr", order: 3 },
+      ]
+    },
+    {
+      title: "Industrial Welding Technology & Inspection",
+      slug: "industrial-welding-technology-inspection",
+      description: "Understand MIG, TIG, arc welding standards, and non-destructive testing (NDT).",
+      longDescription: "A comprehensive guide to modern metal joining processes, metallurgy changes during welding, and structural weld inspection criteria.",
+      priceCents: 10900,
+      averageRating: 4.7,
+      reviewCount: 950,
+      duration: "6 Weeks",
+      level: "Beginner to Intermediate",
+      instructor: "Emily Torres",
+      categorySlug: "welding-technology",
+      thumbnailUrl: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=600&auto=format&fit=crop",
+      highlights: ["AWS welding code standards", "Non-destructive evaluation (NDT/UT/RT)", "Metallurgical defect analysis"],
+      modules: [
+        { title: "Arc Physics & Shielding Gas Selection", duration: "45 mins", order: 1 },
+        { title: "Welding Metallurgy & Heat-Affected Zones", duration: "1 hr", order: 2 },
+        { title: "Weld Discontinuities & Inspection Methods", duration: "1 hr 15 mins", order: 3 },
+      ]
+    },
+    {
+      title: "Applied Thermodynamics & Power Cycles",
+      slug: "applied-thermodynamics-power-cycles",
+      description: "Analyze power plants, internal combustion engines, and thermal efficiency loops.",
+      longDescription: "An in-depth study of energy conversion systems, Rankine/Brayton cycles, and thermodynamic loss reduction for sustainable power generation.",
+      priceCents: 13900,
+      averageRating: 4.7,
+      reviewCount: 980,
+      duration: "9 Weeks",
+      level: "Intermediate",
+      instructor: "Prof. Liu Wei",
+      categorySlug: "thermodynamics",
+      thumbnailUrl: "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?q=80&w=600&auto=format&fit=crop",
+      highlights: ["Thermal efficiency optimization", "Cogeneration plant design", "Exergy analysis principles"],
+      modules: [
+        { title: "First & Second Law Analysis of Systems", duration: "50 mins", order: 1 },
+        { title: "Vapor and Gas Power Cycles", duration: "1 hr 20 mins", order: 2 },
+        { title: "Refrigeration & Heat Pump Systems", duration: "1 hr 10 mins", order: 3 },
+      ]
+    },
+    {
+      title: "Electrical Systems for Mechanical Engineers",
+      slug: "electrical-systems-for-mechanical-engineers",
+      description: "Bridge the gap between mechanics and electronics with circuit and power training.",
+      longDescription: "Designed specifically for mechanical professionals, this course covers DC/AC circuits, electromechanical actuators, motor drives, and sensor interfacing.",
+      priceCents: 11900,
+      averageRating: 4.9,
+      reviewCount: 3100,
+      duration: "7 Weeks",
+      level: "Beginner",
+      instructor: "Dr. Nina Patel",
+      categorySlug: "electrical-engineering",
+      thumbnailUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=600&auto=format&fit=crop",
+      highlights: ["Motor selection & drive integration", "Microcontroller & sensor wiring", "PCB layout fundamentals"],
+      modules: [
+        { title: "Circuit Fundamentals & Ohm's Law in Practice", duration: "45 mins", order: 1 },
+        { title: "AC Motors, Drives & Inverters", duration: "1 hr 15 mins", order: 2 },
+        { title: "Actuators & Industrial Sensor Interfacing", duration: "1 hr", order: 3 },
+      ]
+    },
+    {
+      title: "PLC Programming & SCADA Integration",
+      slug: "plc-programming-scada-integration",
+      description: "Program programmable logic controllers and build custom supervisory control screens.",
+      longDescription: "Learn IEC 61131-3 languages (Ladder Logic, Structured Text), HMI panel creation, and SCADA communication protocols for modern manufacturing.",
+      priceCents: 16900,
+      averageRating: 4.8,
+      reviewCount: 1540,
+      duration: "10 Weeks",
+      level: "Intermediate",
+      instructor: "Dr. Kwame Osei",
+      categorySlug: "industrial-automation",
+      thumbnailUrl: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=600&auto=format&fit=crop",
+      highlights: ["Ladder logic & structured text coding", "Modbus & OPC UA protocol configuration", "HMI screen UI/UX design"],
+      modules: [
+        { title: "Introduction to PLC Architecture & Ladder Logic", duration: "1 hr", order: 1 },
+        { title: "Timers, Counters & Advanced Instructions", duration: "1 hr 30 mins", order: 2 },
+        { title: "SCADA Tag Database & Alarm Management", duration: "1 hr 15 mins", order: 3 },
+      ]
+    },
+    {
+      title: "AutoCAD 2D & 3D Engineering Drafting",
+      slug: "autocad-2d-3d-engineering-drafting",
+      description: "Master technical drawing standards, orthographic projections, and 3D modeling blocks.",
+      longDescription: "A thorough introduction to professional CAD documentation, dimensioning rules, and efficient workspace workflows using AutoCAD.",
+      priceCents: 7900,
+      averageRating: 4.6,
+      reviewCount: 4210,
+      duration: "6 Weeks",
+      level: "Beginner",
+      instructor: "Prof. Sarah Chen",
+      categorySlug: "autocad",
+      thumbnailUrl: "https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=600&auto=format&fit=crop",
+      highlights: ["Orthographic projection standards", "Layer management & annotation styles", "Parametric blocks & attributes"],
+      modules: [
+        { title: "Basic Drawing Tools & Coordinate Systems", duration: "45 mins", order: 1 },
+        { title: "Dimensioning & Geometric Tolerancing", duration: "1 hr", order: 2 },
+        { title: "3D Wireframe & Solid Modeling Basics", duration: "1 hr 15 mins", order: 3 },
+      ]
+    },
+    {
+      title: "Lean Manufacturing & Plant Optimization",
+      slug: "lean-manufacturing-plant-optimization",
+      description: "Eliminate waste, reduce cycle times, and optimize plant floor layouts using 5S and Kanban.",
+      longDescription: "Learn core operational excellence tools to streamline production flow, minimize inventory costs, and establish robust continuous improvement culture.",
+      priceCents: 14900,
+      averageRating: 4.8,
+      reviewCount: 1320,
+      duration: "8 Weeks",
+      level: "Intermediate",
+      instructor: "Mark Sullivan",
+      categorySlug: "manufacturing",
+      thumbnailUrl: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?q=80&w=600&auto=format&fit=crop",
+      highlights: ["Value Stream Mapping (VSM)", "5S workplace organization implementation", "Pull systems & Kanban design"],
+      modules: [
+        { title: "The 8 Wastes of Lean Manufacturing", duration: "50 mins", order: 1 },
+        { title: "Value Stream Mapping Current & Future States", duration: "1 hr 20 mins", order: 2 },
+        { title: "SMED (Single-Minute Exchange of Die)", duration: "1 hr", order: 3 },
+      ]
+    },
   ];
   
   for (const c of coursesData) {
@@ -300,7 +474,6 @@ async function main() {
       },
     });
   }
-
   // 5. Test Coupon
   await prisma.coupon.upsert({
     where: { code: "TEST20" },
@@ -313,7 +486,6 @@ async function main() {
       isActive: true,
     },
   });
-
   // 6. Student Enrollments & Progress Data
   console.log('Seeding student enrollments and progress...');
   
@@ -329,16 +501,13 @@ async function main() {
       }
     }
   });
-
   if (testStudent && availableCourses.length >= 3) {
     const completionRates = [1.0, 0.91, 0.34]; 
     const statuses: any[] = ['COMPLETED', 'ACTIVE', 'ACTIVE'];
-
     for (let i = 0; i < 3; i++) {
       const course = availableCourses[i];
       const allLessons = course.modules.flatMap(m => m.lessons);
       const targetCompletedCount = Math.floor(allLessons.length * completionRates[i]);
-
       await prisma.enrollment.upsert({
         where: {
           userId_courseId: {
@@ -367,9 +536,8 @@ async function main() {
     console.log('⚠️ Could not seed enrollments: Missing student or insufficient courses.');
   }
   
-  console.log("Database successfully seeded with full course catalogue, modules, and video streams!"); 
+  console.log("Database successfully seeded with 12 courses, modules, and video streams!"); 
 }
-
 main()
   .catch((e) => {
     console.error("Seeding failed:", e);

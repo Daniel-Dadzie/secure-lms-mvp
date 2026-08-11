@@ -8,6 +8,7 @@ export async function getPublishedCourses(req: Request, res: Response, next: Nex
     if (!parsed.success) {
       res.status(400).json({ message: "Invalid filters", errors: parsed.error.flatten().fieldErrors });
       return;
+      
     }
     const result = await coursesService.getPublishedCourses(parsed.data);
     res.status(200).json(result);
