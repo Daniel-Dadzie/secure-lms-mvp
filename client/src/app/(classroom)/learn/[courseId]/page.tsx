@@ -1,17 +1,37 @@
 "use client";
-
-import { useEffect, useState, useCallback } from "react";
+import React, { useState, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
-import ProtectedRoute from "@/components/shared/ProtectedRoute";
+
+// --- Inline Icons ---
+const CheckCircleIcon = ({ className = "" }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <polyline points="22 4 12 14.01 9 11.01" />
+  </svg>
+);
+
+const CircleIcon = ({ className = "" }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <circle cx="12" cy="12" r="10" />
+  </svg>
+);
+
+const ArrowLeftIcon = ({ className = "" }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <line x1="19" y1="12" x2="5" y2="12" />
+    <polyline points="12 19 5 12 12 5" />
+  </svg>
+);
 
 interface Lesson {
   id: string;
   title: string;
+  contentUrl: string | null;
+  durationSeconds: number;
   order: number;
-  durationSeconds?: number;
 }
 
 interface Module {
@@ -21,304 +41,232 @@ interface Module {
   lessons: Lesson[];
 }
 
-interface LessonProgressItem {
-  lessonId: string;
-  status: "NOT_STARTED" | "IN_PROGRESS" | "COMPLETED";
-  progressSeconds: number;
-  completedAt: string | null;
-}
-
-interface EnrollmentDetail {
+interface CourseData {
   id: string;
-  status: string;
-  course: {
-    id: string;
-    title: string;
-    modules: Module[];
-  };
-  progress: LessonProgressItem[];
+  title: string;
+  modules: Module[];
 }
 
-export default function ClassroomPage() {
-  const params = useParams();
+interface LessonProgressMap {
+  [lessonId: string]: string; // "COMPLETED" | "NOT_STARTED" | "IN_PROGRESS"
+}
+
+export default function CoursePlayerPage({ params }: { params: Promise<{ courseId: string }> }) {
+  const resolvedParams = use(params);
+  const courseId = resolvedParams.courseId;
   const router = useRouter();
-  const courseId = params.courseId as string;
   const { isAuthenticated } = useAuthStore();
 
-  const [enrollment, setEnrollment] = useState<EnrollmentDetail | null>(null);
-  const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
+  const [course, setCourse] = useState<CourseData | null>(null);
+  const [currentLesson, setCurrentLesson] = useState<Lesson | null>(null);
+  const [progressMap, setProgressMap] = useState<LessonProgressMap>({});
   const [isLoading, setIsLoading] = useState(true);
-  const [isMarkingComplete, setIsMarkingComplete] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
 
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 3500);
-  };
-
-  const fetchEnrollment = useCallback(async () => {
-    try {
-      // Get all enrollments, find the one matching this course
-      const res = await api.get("/enrollments");
-      const rawData = res.data;
-      const enrolledList = Array.isArray(rawData)
-        ? rawData
-        : Array.isArray(rawData?.enrollments)
-        ? rawData.enrollments
-        : [];
-
-      const match = enrolledList.find(
-        (e: any) => (e.course?.id || e.courseId) === courseId
-      );
-
-      if (!match) {
-        // Not enrolled — redirect to the course detail page
-        router.replace(`/courses/${courseId}`);
-        return;
-      }
-
-      // Fetch full enrollment detail (includes per-lesson progress array)
-      const detailRes = await api.get(`/enrollments/${match.id}`);
-      const detail = detailRes.data.enrollment || detailRes.data;
-      setEnrollment(detail);
-
-      // Auto-select first incomplete lesson, or first lesson if all done
-      const allLessons = detail.course?.modules?.flatMap((m: Module) => m.lessons) ?? [];
-      const progressMap: Record<string, string> = {};
-      (detail.progress as LessonProgressItem[]).forEach((p) => {
-        progressMap[p.lessonId] = p.status;
-      });
-
-      const firstIncomplete = allLessons.find(
-        (l: Lesson) => progressMap[l.id] !== "COMPLETED"
-      );
-      setActiveLessonId(firstIncomplete?.id ?? allLessons[0]?.id ?? null);
-    } catch (err: any) {
-      setError("Could not load your course. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  }, [courseId, router]);
-
+  // Fetch course catalogue, modules, lessons, and student progress
   useEffect(() => {
-    if (isAuthenticated) {
-      // This effect intentionally starts an async data fetch.
-      // The fetch function updates component state when the request completes.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      fetchEnrollment();
-    }
-  }, [isAuthenticated, fetchEnrollment]);
+    if (!isAuthenticated) return;
 
-  const handleMarkComplete = async () => {
-    if (!activeLessonId) return;
-    setIsMarkingComplete(true);
+    const fetchCourseData = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch course structure
+        const courseRes = await api.get(`/courses/${courseId}`);
+        const courseData = courseRes.data?.course || courseRes.data;
+        setCourse(courseData);
+
+        // Fetch student enrollment/progress for this course
+        const enrollmentsRes = await api.get("/enrollments");
+        const enrollments = Array.isArray(enrollmentsRes.data) ? enrollmentsRes.data : enrollmentsRes.data?.enrollments || [];
+        const currentEnrollment = enrollments.find((e: any) => e.courseId === courseId || e.course?.id === courseId);
+
+        let pMap: LessonProgressMap = {};
+        if (currentEnrollment && Array.isArray(currentEnrollment.progress)) {
+          currentEnrollment.progress.forEach((p: any) => {
+            pMap[p.lessonId] = p.status;
+          });
+        }
+        setProgressMap(pMap);
+
+        // Auto-select the first lesson if modules exist
+        if (courseData?.modules && courseData.modules.length > 0) {
+          const firstModule = courseData.modules[0];
+          if (firstModule.lessons && firstModule.lessons.length > 0) {
+            setCurrentLesson(firstModule.lessons[0]);
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load course player:", err);
+        setError("Failed to load course content. Please try again.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCourseData();
+  }, [courseId, isAuthenticated]);
+
+  // Handle marking a lesson as complete & advancing progress
+  const handleToggleComplete = async (lessonId: string) => {
+    if (isUpdating) return;
+    setIsUpdating(true);
+
+    const currentStatus = progressMap[lessonId];
+    const newStatus = currentStatus === "COMPLETED" ? "NOT_STARTED" : "COMPLETED";
+
+    // Optimistic UI Update
+    setProgressMap((prev) => ({ ...prev, [lessonId]: newStatus }));
+
     try {
-      // Correct endpoint: PATCH /progress/lessons/:lessonId
-      // with status and progressSeconds in the body
-      await api.patch(`/progress/lessons/${activeLessonId}`, {
-        status: "COMPLETED",
+      // Fixed endpoint route matching backend progress controller architecture
+      await api.patch(`/progress/lessons/${lessonId}`, {
+        status: newStatus,
         progressSeconds: 0,
       });
-      showToast("Lesson marked as complete ✓");
-      // Refresh enrollment data so progress updates immediately
-      await fetchEnrollment();
-    } catch (err: any) {
-      showToast(err?.response?.data?.message || "Could not mark lesson complete.");
+    } catch (err) {
+      console.error("Failed to update lesson progress:", err);
+      // Revert on failure
+      setProgressMap((prev) => ({ ...prev, [lessonId]: currentStatus }));
     } finally {
-      setIsMarkingComplete(false);
-    }
-  };
-
-  const handleMarkInProgress = async () => {
-    if (!activeLessonId) return;
-    try {
-      await api.patch(`/progress/lessons/${activeLessonId}`, {
-        status: "IN_PROGRESS",
-        progressSeconds: 0,
-      });
-    } catch {
-      // Non-critical, don't show error for this
+      setIsUpdating(false);
     }
   };
 
   if (isLoading) {
     return (
-      <ProtectedRoute allowedRoles={["STUDENT"]}>
-        <div className="flex min-h-screen items-center justify-center bg-slate-900">
-          <p className="text-slate-400 animate-pulse">Loading your course...</p>
-        </div>
-      </ProtectedRoute>
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-teal-400"></div>
+      </div>
     );
   }
 
-  if (error || !enrollment) {
+  if (error || !course) {
     return (
-      <ProtectedRoute allowedRoles={["STUDENT"]}>
-        <div className="flex min-h-screen flex-col items-center justify-center bg-slate-900 text-white px-4">
-          <p className="text-red-400 mb-6">{error || "Course not found."}</p>
-          <Link href="/student" className="text-blue-400 hover:underline">
-            Back to Dashboard
-          </Link>
-        </div>
-      </ProtectedRoute>
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white p-6">
+        <p className="text-red-400 mb-4">{error || "Course not found."}</p>
+        <Link href="/student/my-learning" className="px-4 py-2 bg-teal-600 rounded-lg text-sm font-semibold hover:bg-teal-700 transition">
+          Return to My Learning
+        </Link>
+      </div>
     );
   }
-
-  const allLessons = enrollment.course.modules.flatMap((m) => m.lessons);
-  const progressMap: Record<string, LessonProgressItem> = {};
-  enrollment.progress.forEach((p) => { progressMap[p.lessonId] = p; });
-
-  const completedCount = allLessons.filter(
-    (l) => progressMap[l.id]?.status === "COMPLETED"
-  ).length;
-  const totalLessons = allLessons.length;
-  // Compute progress client-side from real data, not a field that doesn't exist
-  const progressPercent = totalLessons > 0
-    ? Math.round((completedCount / totalLessons) * 100)
-    : 0;
-
-  const activeLesson = allLessons.find((l) => l.id === activeLessonId);
-  const activeLessonProgress = activeLessonId ? progressMap[activeLessonId] : null;
-  const isActiveComplete = activeLessonProgress?.status === "COMPLETED";
 
   return (
-    <ProtectedRoute allowedRoles={["STUDENT"]}>
-      <div className="flex min-h-screen flex-col bg-slate-900 text-white">
-        {toast && (
-          <div className="fixed top-4 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-green-600 px-5 py-3 text-sm font-semibold text-white shadow-xl">
-            {toast}
-          </div>
-        )}
-
-        {/* Top bar */}
-        <header className="flex items-center justify-between border-b border-slate-700 bg-slate-900 px-4 py-3 shrink-0">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+      {/* Top Navigation Bar */}
+      <header className="h-16 border-b border-slate-800 bg-slate-900 px-6 flex items-center justify-between shrink-0">
+        <div className="flex items-center gap-4">
           <Link
-            href="/student"
-            className="text-sm text-slate-400 hover:text-white transition flex items-center gap-2"
+            href="/student/my-learning"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors flex items-center gap-2 text-sm font-medium"
           >
-            ← Dashboard
+            <ArrowLeftIcon className="w-4 h-4" /> Back to Dashboard
           </Link>
-          <h1 className="text-sm font-bold text-white truncate max-w-xs sm:max-w-md">
-            {enrollment.course.title}
-          </h1>
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-400">
-              {completedCount}/{totalLessons} lessons
-            </span>
-            <div className="hidden sm:flex items-center gap-2">
-              <div className="h-1.5 w-24 overflow-hidden rounded-full bg-slate-700">
-                <div
-                  className="h-full rounded-full bg-blue-500 transition-all"
-                  style={{ width: `${progressPercent}%` }}
-                />
-              </div>
-              <span className="text-xs text-slate-400">{progressPercent}%</span>
-            </div>
-          </div>
-        </header>
+          <span className="text-slate-700">|</span>
+          <h1 className="text-base font-bold text-white truncate max-w-md">{course.title}</h1>
+        </div>
+      </header>
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar — lesson list */}
-          <aside className="hidden w-72 shrink-0 flex-col overflow-y-auto border-r border-slate-700 bg-slate-800 lg:flex">
-            {enrollment.course.modules.map((module) => (
-              <div key={module.id} className="border-b border-slate-700">
-                <div className="px-4 py-3 text-xs font-bold uppercase tracking-widest text-slate-400">
-                  {module.title}
+      {/* Main Workspace Grid */}
+      <div className="flex-1 grid grid-cols-1 lg:grid-cols-4 overflow-hidden">
+        
+        {/* Left Column: Video Player & Details (3 Columns wide) */}
+        <div className="lg:col-span-3 flex flex-col overflow-y-auto bg-slate-950 p-6">
+          <div className="w-full max-w-4xl mx-auto flex flex-col gap-6">
+            
+            {/* Video Container */}
+            <div className="relative aspect-video w-full bg-black rounded-xl overflow-hidden shadow-2xl border border-slate-800 flex items-center justify-center">
+              {currentLesson?.contentUrl ? (
+                <video
+                  key={currentLesson.id}
+                  controls
+                  autoPlay
+                  className="w-full h-full object-contain"
+                  src={currentLesson.contentUrl}
+                >
+                  Your browser does not support the video tag.
+                </video>
+              ) : (
+                <div className="text-center p-6 text-slate-400">
+                  <p className="text-lg font-medium">No video content uploaded for this lesson yet.</p>
+                  <p className="text-sm text-slate-500 mt-1">Please select another lesson or check back later.</p>
                 </div>
-                {module.lessons.map((lesson) => {
-                  const lessonProgress = progressMap[lesson.id];
-                  const isDone = lessonProgress?.status === "COMPLETED";
-                  const isActive = lesson.id === activeLessonId;
+              )}
+            </div>
 
-                  return (
-                    <button
-                      key={lesson.id}
-                      onClick={() => {
-                        setActiveLessonId(lesson.id);
-                        if (!isDone) handleMarkInProgress();
-                      }}
-                      className={`flex w-full items-center gap-3 px-4 py-3 text-left text-sm transition-colors ${
-                        isActive
-                          ? "bg-blue-600/20 text-blue-300"
-                          : "text-slate-300 hover:bg-slate-700/50"
-                      }`}
-                    >
-                      <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                        isDone
-                          ? "bg-green-500 text-white"
-                          : isActive
-                          ? "bg-blue-500 text-white"
-                          : "bg-slate-600 text-slate-300"
-                      }`}>
-                        {isDone ? "✓" : lesson.order}
-                      </span>
-                      <span className="line-clamp-2">{lesson.title}</span>
-                    </button>
-                  );
-                })}
+            {/* Lesson Title & Action Toolbar */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-xl">
+              <div>
+                <span className="text-xs font-semibold uppercase tracking-wider text-teal-400">Current Lesson</span>
+                <h2 className="text-xl font-bold text-white mt-1">{currentLesson?.title || "Select a lesson"}</h2>
+              </div>
+
+              {currentLesson && (
+                <button
+                  onClick={() => handleToggleComplete(currentLesson.id)}
+                  disabled={isUpdating}
+                  className={`inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold transition shadow-sm ${
+                    progressMap[currentLesson.id] === "COMPLETED"
+                      ? "bg-teal-950 text-teal-300 border border-teal-800 hover:bg-teal-900"
+                      : "bg-[#115e59] text-white hover:bg-teal-700"
+                  }`}
+                >
+                  <CheckCircleIcon className="w-4 h-4" />
+                  {progressMap[currentLesson.id] === "COMPLETED" ? "Completed" : "Mark as Complete"}
+                </button>
+              )}
+            </div>
+
+          </div>
+        </div>
+
+        {/* Right Column: Course Curriculum Sidebar (1 Column wide) */}
+        <div className="bg-slate-900 border-l border-slate-800 flex flex-col h-[calc(100vh-4rem)] overflow-y-auto">
+          <div className="p-4 border-b border-slate-800 bg-slate-900 sticky top-0 z-10">
+            <h3 className="font-bold text-white text-sm tracking-wide uppercase">Course Content</h3>
+          </div>
+
+          <div className="flex flex-col divide-y divide-slate-800">
+            {course.modules?.map((module, mIndex) => (
+              <div key={module.id} className="p-4">
+                <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">
+                  Module {mIndex + 1}: {module.title}
+                </h4>
+
+                <div className="flex flex-col gap-1">
+                  {module.lessons?.map((lesson) => {
+                    const isSelected = currentLesson?.id === lesson.id;
+                    const isCompleted = progressMap[lesson.id] === "COMPLETED";
+
+                    return (
+                      <button
+                        key={lesson.id}
+                        onClick={() => setCurrentLesson(lesson)}
+                        className={`w-full text-left px-3 py-2.5 rounded-lg flex items-center gap-3 transition-colors text-sm ${
+                          isSelected
+                            ? "bg-teal-950/60 text-teal-300 font-medium border border-teal-800/50"
+                            : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                        }`}
+                      >
+                        <span className="shrink-0">
+                          {isCompleted ? (
+                            <CheckCircleIcon className="w-4 h-4 text-teal-400" />
+                          ) : (
+                            <CircleIcon className="w-4 h-4 text-slate-600" />
+                          )}
+                        </span>
+                        <span className="truncate flex-1">{lesson.title}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             ))}
-          </aside>
-
-          {/* Main content area */}
-          <main className="flex flex-1 flex-col overflow-y-auto">
-            {activeLesson ? (
-              <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-8">
-                <div className="mb-6">
-                  <h2 className="text-2xl font-bold text-white">
-                    {activeLesson.title}
-                  </h2>
-                  {activeLesson.durationSeconds && (
-                    <p className="mt-1 text-sm text-slate-400">
-                      {Math.round(activeLesson.durationSeconds / 60)} min
-                    </p>
-                  )}
-                </div>
-
-                {/* Video/content placeholder — replace with real video player
-                    once videoUrl is available on the lesson from the backend */}
-                <div className="mb-8 flex aspect-video w-full items-center justify-center rounded-xl bg-slate-800 border border-slate-700">
-                  <div className="text-center text-slate-500">
-                    <div className="text-5xl mb-3">▶</div>
-                    <p className="text-sm">Video content coming soon</p>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between">
-                  {isActiveComplete ? (
-                    <div className="flex items-center gap-2 text-green-400 font-semibold">
-                      <span>✓</span>
-                      <span>Lesson completed</span>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={handleMarkComplete}
-                      disabled={isMarkingComplete}
-                      className="rounded-lg bg-blue-600 px-6 py-3 font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:opacity-70"
-                    >
-                      {isMarkingComplete ? "Marking..." : "Mark as Complete"}
-                    </button>
-                  )}
-
-                  {enrollment.status === "COMPLETED" && (
-                    <Link
-                      href="/student/certificates"
-                      className="rounded-lg border border-green-500 px-5 py-3 text-sm font-semibold text-green-400 transition hover:bg-green-500/10"
-                    >
-                      View Certificate 🏆
-                    </Link>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-1 items-center justify-center text-slate-500">
-                <p>Select a lesson to begin.</p>
-              </div>
-            )}
-          </main>
+          </div>
         </div>
+
       </div>
-    </ProtectedRoute>
+    </div>
   );
 }

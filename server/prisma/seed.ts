@@ -180,7 +180,7 @@ async function main() {
     createdCategories[cat.slug] = catRecord;
   }
 
-  // 4. Catalogue Courses with Rich Curriculum Data
+  // 4. Catalogue Courses with Rich Curriculum Data & Seeded Videos
   const coursesData = [
     {
       title: "Quality Control & Six Sigma Green Belt",
@@ -275,15 +275,24 @@ async function main() {
         thumbnailUrl: c.thumbnailUrl,
         highlights: c.highlights,
         modules: {
-          // MODIFIED: Included lessons for accurate progress tracking
           create: c.modules.map(m => ({
             title: m.title,
             duration: m.duration,
             order: m.order,
             lessons: {
               create: [
-                { title: m.title + " - Part 1", order: 1, durationSeconds: 1200 },
-                { title: m.title + " - Part 2", order: 2, durationSeconds: 1500 }
+                { 
+                  title: m.title + " - Part 1", 
+                  order: 1, 
+                  durationSeconds: 1200, 
+                  contentUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" 
+                },
+                { 
+                  title: m.title + " - Part 2", 
+                  order: 2, 
+                  durationSeconds: 1500, 
+                  contentUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" 
+                }
               ]
             }
           }))
@@ -305,14 +314,13 @@ async function main() {
     },
   });
 
-  // 6. Student Enrollments & Progress Data (REPLACED)
+  // 6. Student Enrollments & Progress Data
   console.log('Seeding student enrollments and progress...');
   
   const testStudent = await prisma.user.findUnique({
     where: { email: 'student@mechlms.test' }
   });
   
-  // Fetch courses explicitly including modules and lessons
   const availableCourses = await prisma.course.findMany({
     take: 3,
     include: {
@@ -323,16 +331,12 @@ async function main() {
   });
 
   if (testStudent && availableCourses.length >= 3) {
-    // Defined completion targets for the 3 courses: 100%, 91%, 34%
     const completionRates = [1.0, 0.91, 0.34]; 
-    
-    // FIX 1: Cast as any[] so TypeScript accepts it as a valid Prisma Enum
     const statuses: any[] = ['COMPLETED', 'ACTIVE', 'ACTIVE'];
 
     for (let i = 0; i < 3; i++) {
       const course = availableCourses[i];
       const allLessons = course.modules.flatMap(m => m.lessons);
-      
       const targetCompletedCount = Math.floor(allLessons.length * completionRates[i]);
 
       await prisma.enrollment.upsert({
@@ -346,58 +350,26 @@ async function main() {
         create: {
           userId: testStudent.id,
           courseId: course.id,
-          status: statuses[i], // The red underline here will vanish
-          // lastAccessedAt: new Date(),
-        progress: {
-                  create: allLessons.map((lesson, index) => ({
-                    // Explicitly connect the required User and Lesson relations
-                    user: { connect: { id: testStudent.id } },
-                    lesson: { connect: { id: lesson.id } },
-                    
-                    status: (index < targetCompletedCount ? 'COMPLETED' : 'NOT_STARTED') as any,
-                    completedAt: index < targetCompletedCount ? new Date() : null
-                  }))
-                }
+          status: statuses[i],
+          progress: {
+            create: allLessons.map((lesson, index) => ({
+              user: { connect: { id: testStudent.id } },
+              lesson: { connect: { id: lesson.id } },
+              status: (index < targetCompletedCount ? 'COMPLETED' : 'NOT_STARTED') as any,
+              completedAt: index < targetCompletedCount ? new Date() : null
+            }))
+          }
         }
       });
     }
     console.log('✅ Student enrollments and progress successfully seeded!');
-    
-     
-
-    // Seed Activities
-    console.log("Seeding student activities...");
-    await prisma.activity.createMany({
-      data: [
-        {
-          userId: testStudent.id,
-          title: 'Completed "Gear Train Analysis" lesson',
-          iconType: 'completed',
-          createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000), 
-        },
-        {
-          userId: testStudent.id,
-          title: 'Earned badge: "3-Day Streak"',
-          iconType: 'badge',
-          createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000), 
-        },
-        {
-          userId: testStudent.id,
-          title: 'Enrolled in CNC Programming Fundamentals',
-          iconType: 'enrolled',
-          createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), 
-        },
-      ],
-    });
-    console.log("✅ Student activities successfully seeded!");
   } else {
     console.log('⚠️ Could not seed enrollments: Missing student or insufficient courses.');
   }
-
-  console.log("Database successfully seeded with full course catalogue and modules!"); 
+  
+  console.log("Database successfully seeded with full course catalogue, modules, and video streams!"); 
 }
 
-// Execute the main function
 main()
   .catch((e) => {
     console.error("Seeding failed:", e);

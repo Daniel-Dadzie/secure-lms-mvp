@@ -108,3 +108,33 @@ export async function deleteThumbnail(thumbnailUrl: string): Promise<void> {
   const publicId = publicIdWithExt.replace(/\.[^.]+$/, ""); // remove extension
   await cloudinary.uploader.destroy(publicId);
 }
+
+
+export async function uploadAvatar(
+  fileBuffer: Buffer,
+  mimeType: string
+): Promise<string> {
+  const allowedMimes = ["image/jpeg", "image/png", "image/webp"];
+  if (!allowedMimes.includes(mimeType)) {
+    const error = new Error("Invalid file type. Only JPG, PNG and WebP allowed.");
+    (error as any).statusCode = 400;
+    throw error;
+  }
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: "secure-lms/avatars",
+        resource_type: "image",
+        transformation: [
+          { width: 400, height: 400, crop: "fill" }, // square avatar crop
+          { quality: "auto", fetch_format: "auto" },
+        ],
+      },
+      (error, result) => {
+        if (error || !result) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+    uploadStream.end(fileBuffer);
+  });
+}

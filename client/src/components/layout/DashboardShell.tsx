@@ -1,5 +1,6 @@
+// client/src/components/layout/DashboardShell.tsx
 "use client";
-
+import { useState } from "react";
 import { Sidebar, NavItem } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
 
@@ -18,12 +19,23 @@ export function DashboardShell({
   topBarTitle,
   breadcrumb,
 }: DashboardShellProps) {
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
   return (
-    // Updated background from bg-slate-50 to the brand's custom mint tint
     <div className="flex h-screen overflow-hidden bg-[#F4F9F7]">
-      <Sidebar navItems={navItems} portalLabel={portalLabel} />
+      <Sidebar 
+        navItems={navItems} 
+        portalLabel={portalLabel} 
+        isOpen={isMobileSidebarOpen}
+        onClose={() => setIsMobileSidebarOpen(false)}
+      />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <TopBar title={topBarTitle} breadcrumb={breadcrumb} />
+        {/* Pass mobile toggle trigger handler down to TopBar */}
+        <TopBar 
+          title={topBarTitle} 
+          breadcrumb={breadcrumb} 
+          onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+        />
         <main className="flex-1 overflow-y-auto">
           {children}
         </main>

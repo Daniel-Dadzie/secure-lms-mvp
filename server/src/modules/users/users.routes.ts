@@ -9,7 +9,7 @@ const router = Router();
 // ----------------------------------------------------------------------------
 router.get("/profile", authenticate, usersController.getProfile);
 router.patch("/profile", authenticate, usersController.updateProfile);
-
+router.post("/change-password", authenticate, usersController.changePassword); 
 // ----------------------------------------------------------------------------
 // Admin routes — ADMIN role only
 // ----------------------------------------------------------------------------
