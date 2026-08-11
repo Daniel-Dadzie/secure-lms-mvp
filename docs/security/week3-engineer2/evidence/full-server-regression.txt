@@ -1,0 +1,238 @@
+
+> secure-lms-server@1.0.0 test
+> npx dotenv-cli -e .env.test -- vitest run --fileParallelism=false
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server[39m
+
+[90mstdout[2m | tests/unit/idor.test.ts
+[22m[39mCloudinary config: { cloud_name: [90mundefined[39m, api_key: [90mundefined[39m, api_secret: [32m'MISSING'[39m }
+
+ [32m✓[39m tests/unit/idor.test.ts [2m([22m[2m11 tests[22m[2m)[22m[33m 41507[2mms[22m[39m
+       [33m[2m✓[22m[39m allows a student to read their own lesson progress [33m 4225[2mms[22m[39m
+       [33m[2m✓[22m[39m denies student B from reading student A's lesson progress (returns 404) [33m 3725[2mms[22m[39m
+       [33m[2m✓[22m[39m allows Admin to bypass and access student A's lesson progress [33m 3280[2mms[22m[39m
+       [33m[2m✓[22m[39m denies unauthenticated requests [33m 3466[2mms[22m[39m
+       [33m[2m✓[22m[39m allows instructor A to read module of course A (which they teach) [33m 3411[2mms[22m[39m
+       [33m[2m✓[22m[39m denies instructor B from reading module A (returns 404) [33m 3370[2mms[22m[39m
+       [33m[2m✓[22m[39m denies student A from reading module A via instructor ownership middleware (returns 404) [33m 4001[2mms[22m[39m
+       [33m[2m✓[22m[39m allows Admin to bypass and access module A [33m 3916[2mms[22m[39m
+       [33m[2m✓[22m[39m allows student A to read their own certificate [33m 3935[2mms[22m[39m
+       [33m[2m✓[22m[39m denies student B from reading student A's certificate (returns 404) [33m 4051[2mms[22m[39m
+       [33m[2m✓[22m[39m allows Admin to bypass and access student A's certificate [33m 3931[2mms[22m[39m
+[90mstdout[2m | tests/unit/auth.test.ts
+[22m[39mCloudinary config: { cloud_name: [90mundefined[39m, api_key: [90mundefined[39m, api_secret: [32m'MISSING'[39m }
+
+ [32m✓[39m tests/unit/auth.test.ts [2m([22m[2m23 tests[22m[2m)[22m[33m 10595[2mms[22m[39m
+     [33m[2m✓[22m[39m registers a new student and returns accessToken + user [33m 855[2mms[22m[39m
+     [33m[2m✓[22m[39m returns 409 on duplicate email without revealing which condition failed [33m 543[2mms[22m[39m
+     [33m[2m✓[22m[39m allows INSTRUCTOR role self-assignment [33m 461[2mms[22m[39m
+     [33m[2m✓[22m[39m logs in with correct credentials and returns accessToken [33m 853[2mms[22m[39m
+     [33m[2m✓[22m[39m returns 401 on wrong password with generic message [33m 816[2mms[22m[39m
+     [33m[2m✓[22m[39m sets httpOnly cookie on login [33m 859[2mms[22m[39m
+     [33m[2m✓[22m[39m issues a new accessToken using the refresh cookie [33m 463[2mms[22m[39m
+     [33m[2m✓[22m[39m refresh token rotation is atomic - transaction rollback on user inactivation [33m 450[2mms[22m[39m
+     [33m[2m✓[22m[39m clears the refresh cookie on logout [33m 486[2mms[22m[39m
+     [33m[2m✓[22m[39m revokes all tokens in the same family on logout [33m 504[2mms[22m[39m
+     [33m[2m✓[22m[39m returns current user with valid token [33m 847[2mms[22m[39m
+     [33m[2m✓[22m[39m rejects replay of a revoked refresh token after rotation [33m 461[2mms[22m[39m
+     [33m[2m✓[22m[39m rejects expired refresh token [33m 459[2mms[22m[39m
+     [33m[2m✓[22m[39m creates independent token families for separate logins [33m 1274[2mms[22m[39m
+     [33m[2m✓[22m[39m writes audit event on logout [33m 438[2mms[22m[39m
+     [33m[2m✓[22m[39m writes audit event on token refresh [33m 452[2mms[22m[39m
+[90mstdout[2m | tests/integration/security.test.ts
+[22m[39mCloudinary config: { cloud_name: [90mundefined[39m, api_key: [90mundefined[39m, api_secret: [32m'MISSING'[39m }
+
+[90mstderr[2m | tests/integration/security.test.ts[2m > [22m[2mSecurity — HTTP hardening[2m > [22m[2mrejects oversized JSON payloads with 413
+[22m[39mPayloadTooLargeError: request entity too large
+    at readStream (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mraw-body[24m/index.js:163:17)
+    at getRawBody (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mraw-body[24m/index.js:116:12)
+    at read (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mbody-parser[24m/lib/read.js:79:3)
+    at jsonParser (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mbody-parser[24m/lib/types/json.js:142:5)
+    at Layer.handle [as handle_request] (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mexpress[24m/lib/router/layer.js:95:5)
+    at trim_prefix (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mexpress[24m/lib/router/index.js:328:13)
+    at /home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mexpress[24m/lib/router/index.js:286:9
+    at Function.process_params (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mexpress[24m/lib/router/index.js:346:12)
+    at next (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mexpress[24m/lib/router/index.js:280:10)
+    at cors (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4mcors[24m/lib/index.js:188:7) {
+  expected: [33m11275[39m,
+  length: [33m11275[39m,
+  limit: [33m10240[39m,
+  type: [32m'entity.too.large'[39m
+}
+
+[90mstderr[2m | tests/integration/security.test.ts[2m > [22m[2mSecurity — Audit log immutability[2m > [22m[2mcreates audit events for admin activation and deactivation
+[22m[39mFailed to send verification email: PrismaClientKnownRequestError:
+Invalid `prisma.auditEvent.create()` invocation in
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/auth/email-verification.service.ts:31:27
+
+  28
+  29 await sendVerificationEmail(user.email, user.fullName, token);
+  30
+→ 31 await prisma.auditEvent.create(
+Foreign key constraint violated on the constraint: `audit_events_userId_fkey`
+    at Jr.handleRequestError (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:65:8286)
+    at Jr.handleAndLogRequestError (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:65:7581)
+    at Jr.request (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:65:7288)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at a (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:99:6862)
+    at sendVerification [90m(/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/[39msrc/modules/auth/email-verification.service.ts:31:3[90m)[39m {
+  code: [32m'P2003'[39m,
+  meta: {
+    modelName: [32m'AuditEvent'[39m,
+    driverAdapterError: DriverAdapterError: ForeignKeyConstraintViolation
+        at PrismaPgAdapter.onError [90m(file:///home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/[39mnode_modules/[4m@prisma/adapter-pg[24m/dist/index.mjs:642:11[90m)[39m
+        at PrismaPgAdapter.performIO [90m(file:///home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/[39mnode_modules/[4m@prisma/adapter-pg[24m/dist/index.mjs:637:12[90m)[39m
+    [90m    at processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+        at PrismaPgAdapter.queryRaw [90m(file:///home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/[39mnode_modules/[4m@prisma/adapter-pg[24m/dist/index.mjs:568:30[90m)[39m
+        at e.interpretNode (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:11:44895)
+        at e.interpretNode (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:11:45339)
+        at e.interpretNode (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:11:46559)
+        at e.run (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:11:43609)
+        at execute (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:57:815)
+        at Ut.request (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:58:2421) {
+      cause: [36m[Object][39m
+    }
+  },
+  clientVersion: [32m'7.9.1'[39m
+}
+
+ [32m✓[39m tests/integration/security.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 2285[2mms[22m[39m
+     [33m[2m✓[22m[39m does not expose audit event modification endpoints [33m 634[2mms[22m[39m
+     [33m[2m✓[22m[39m creates audit events for admin activation and deactivation [33m 1345[2mms[22m[39m
+[90mstdout[2m | tests/unit/db.test.ts
+[22m[39mCloudinary config: { cloud_name: [90mundefined[39m, api_key: [90mundefined[39m, api_secret: [32m'MISSING'[39m }
+
+[90mstderr[2m | tests/unit/db.test.ts[2m > [22m[2mDB constraints[2m > [22m[2maudit events are written on register
+[22m[39mFailed to send verification email: PrismaClientKnownRequestError:
+Invalid `prisma.emailVerification.create()` invocation in
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/auth/email-verification.service.ts:25:34
+
+  22 const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  23 const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+  24
+→ 25 await prisma.emailVerification.create(
+Foreign key constraint violated on the constraint: `email_verifications_userId_fkey`
+    at Jr.handleRequestError (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:65:8286)
+    at Jr.handleAndLogRequestError (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:65:7581)
+    at Jr.request (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:65:7288)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at a (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:99:6862)
+    at sendVerification [90m(/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/[39msrc/modules/auth/email-verification.service.ts:25:3[90m)[39m {
+  code: [32m'P2003'[39m,
+  meta: {
+    modelName: [32m'EmailVerification'[39m,
+    driverAdapterError: DriverAdapterError: ForeignKeyConstraintViolation
+        at PrismaPgAdapter.onError [90m(file:///home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/[39mnode_modules/[4m@prisma/adapter-pg[24m/dist/index.mjs:642:11[90m)[39m
+        at PrismaPgAdapter.performIO [90m(file:///home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/[39mnode_modules/[4m@prisma/adapter-pg[24m/dist/index.mjs:637:12[90m)[39m
+    [90m    at processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+        at PrismaPgAdapter.queryRaw [90m(file:///home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/[39mnode_modules/[4m@prisma/adapter-pg[24m/dist/index.mjs:568:30[90m)[39m
+        at e.interpretNode (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:11:44895)
+        at e.interpretNode (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:11:45339)
+        at e.interpretNode (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:11:46559)
+        at e.run (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:11:43609)
+        at execute (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:57:815)
+        at Ut.request (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:58:2421) {
+      cause: [36m[Object][39m
+    }
+  },
+  clientVersion: [32m'7.9.1'[39m
+}
+
+[90mstderr[2m | tests/unit/db.test.ts[2m > [22m[2mDB constraints[2m > [22m[2maudit events are written on login
+[22m[39mFailed to send verification email: PrismaClientKnownRequestError:
+Invalid `prisma.emailVerification.create()` invocation in
+/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/src/modules/auth/email-verification.service.ts:25:34
+
+  22 const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+  23 const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+  24
+→ 25 await prisma.emailVerification.create(
+Foreign key constraint violated on the constraint: `email_verifications_userId_fkey`
+    at Jr.handleRequestError (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:65:8286)
+    at Jr.handleAndLogRequestError (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:65:7581)
+    at Jr.request (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:65:7288)
+[90m    at processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at a (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:99:6862)
+    at sendVerification [90m(/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/[39msrc/modules/auth/email-verification.service.ts:25:3[90m)[39m {
+  code: [32m'P2003'[39m,
+  meta: {
+    modelName: [32m'EmailVerification'[39m,
+    driverAdapterError: DriverAdapterError: ForeignKeyConstraintViolation
+        at PrismaPgAdapter.onError [90m(file:///home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/[39mnode_modules/[4m@prisma/adapter-pg[24m/dist/index.mjs:642:11[90m)[39m
+        at PrismaPgAdapter.performIO [90m(file:///home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/[39mnode_modules/[4m@prisma/adapter-pg[24m/dist/index.mjs:637:12[90m)[39m
+    [90m    at processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+        at PrismaPgAdapter.queryRaw [90m(file:///home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/[39mnode_modules/[4m@prisma/adapter-pg[24m/dist/index.mjs:568:30[90m)[39m
+        at e.interpretNode (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:11:44895)
+        at e.interpretNode (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:11:45339)
+        at e.interpretNode (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:11:46559)
+        at e.run (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:11:43609)
+        at execute (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:57:815)
+        at Ut.request (/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/node_modules/[4m@prisma/client[24m/runtime/client.js:58:2421) {
+      cause: [36m[Object][39m
+    }
+  },
+  clientVersion: [32m'7.9.1'[39m
+}
+
+ [32m✓[39m tests/unit/db.test.ts [2m([22m[2m5 tests[22m[2m)[22m[33m 3312[2mms[22m[39m
+     [33m[2m✓[22m[39m prevents duplicate email registration at DB level [33m 792[2mms[22m[39m
+     [33m[2m✓[22m[39m prevents duplicate enrollment at DB level [33m 540[2mms[22m[39m
+     [33m[2m✓[22m[39m passwordHash is never returned in API responses [33m 457[2mms[22m[39m
+     [33m[2m✓[22m[39m audit events are written on register [33m 446[2mms[22m[39m
+     [33m[2m✓[22m[39m audit events are written on login [33m 880[2mms[22m[39m
+[90mstdout[2m | tests/unit/rbac.test.ts
+[22m[39mCloudinary config: { cloud_name: [90mundefined[39m, api_key: [90mundefined[39m, api_secret: [32m'MISSING'[39m }
+
+[90mstderr[2m | tests/unit/rbac.test.ts[2m > [22m[2mRBAC — Role enforcement[2m > [22m[2mdenies student access to admin user list
+[22m[39m{"level":"warn","event":"auth.permission_denied","userId":"34c884f1-88ba-453d-8f00-b54674ff3ed1","role":"STUDENT","requiredRoles":["ADMIN"],"method":"GET","path":"/api/users/admin/users","ip":"::ffff:127.0.0.1","timestamp":"2026-08-11T08:27:46.374Z"}
+
+[90mstderr[2m | tests/unit/rbac.test.ts[2m > [22m[2mRBAC — Role enforcement[2m > [22m[2mdenies instructor access to admin user list
+[22m[39m{"level":"warn","event":"auth.permission_denied","userId":"a60718a8-42c7-4e68-852b-83162d94613a","role":"INSTRUCTOR","requiredRoles":["ADMIN"],"method":"GET","path":"/api/users/admin/users","ip":"::ffff:127.0.0.1","timestamp":"2026-08-11T08:27:47.503Z"}
+
+[90mstderr[2m | tests/unit/rbac.test.ts[2m > [22m[2mRBAC — Role enforcement[2m > [22m[2mdenies student from deactivating a user
+[22m[39m{"level":"warn","event":"auth.permission_denied","userId":"6047dcf7-d3bd-40d2-9fdf-36f7aa83713b","role":"STUDENT","requiredRoles":["ADMIN"],"method":"POST","path":"/api/users/admin/users/some-user-id/deactivate","ip":"::ffff:127.0.0.1","timestamp":"2026-08-11T08:27:48.982Z"}
+
+[90mstderr[2m | tests/unit/rbac.test.ts[2m > [22m[2mRBAC — Deny by default[2m > [22m[2mnever returns 200 on admin route for non-admin roles
+[22m[39m{"level":"warn","event":"auth.permission_denied","userId":"c0e674fe-25b7-4034-b725-381196c45781","role":"STUDENT","requiredRoles":["ADMIN"],"method":"GET","path":"/api/users/admin/users","ip":"::ffff:127.0.0.1","timestamp":"2026-08-11T08:27:49.507Z"}
+
+[90mstderr[2m | tests/unit/rbac.test.ts[2m > [22m[2mRBAC — Deny by default[2m > [22m[2mnever returns 200 on admin route for non-admin roles
+[22m[39m{"level":"warn","event":"auth.permission_denied","userId":"bf02d81c-91f4-438d-a8a9-b34bc0590495","role":"INSTRUCTOR","requiredRoles":["ADMIN"],"method":"GET","path":"/api/users/admin/users","ip":"::ffff:127.0.0.1","timestamp":"2026-08-11T08:27:50.357Z"}
+
+[90mstderr[2m | tests/unit/rbac.test.ts[2m > [22m[2mRBAC — Role Escalation Restrictions[2m > [22m[2mprevents student from accessing instructor routes (conceptually, or any admin routes)
+[22m[39m{"level":"warn","event":"auth.permission_denied","userId":"0906a657-3c80-40b5-96d7-97585e461e4b","role":"STUDENT","requiredRoles":["ADMIN"],"method":"GET","path":"/api/users/admin/users","ip":"::ffff:127.0.0.1","timestamp":"2026-08-11T08:27:51.853Z"}
+
+ [32m✓[39m tests/unit/rbac.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 6926[2mms[22m[39m
+     [33m[2m✓[22m[39m denies student access to admin user list [33m 940[2mms[22m[39m
+     [33m[2m✓[22m[39m denies instructor access to admin user list [33m 1003[2mms[22m[39m
+     [33m[2m✓[22m[39m allows admin access to admin user list [33m 965[2mms[22m[39m
+     [33m[2m✓[22m[39m denies student from deactivating a user [33m 493[2mms[22m[39m
+     [33m[2m✓[22m[39m never returns 200 on admin route for non-admin roles [33m 1345[2mms[22m[39m
+     [33m[2m✓[22m[39m denies access with expired bearer token [33m 541[2mms[22m[39m
+     [33m[2m✓[22m[39m denies access with token signed with wrong secret [33m 435[2mms[22m[39m
+     [33m[2m✓[22m[39m prevents student from accessing instructor routes (conceptually, or any admin routes) [33m 463[2mms[22m[39m
+     [33m[2m✓[22m[39m emits a structured stdout JSON log on 403, but does NOT write to AuditEvent table [33m 459[2mms[22m[39m
+[90mstdout[2m | tests/integration/content-authorization.test.ts
+[22m[39mCloudinary config: { cloud_name: [90mundefined[39m, api_key: [90mundefined[39m, api_secret: [32m'MISSING'[39m }
+
+[90mstderr[2m | tests/integration/content-authorization.test.ts[2m > [22m[2mSecurity — Course content authorization[2m > [22m[2mdoes not expose modules belonging to a draft course
+[22m[39mError: Course not found
+    at Module.getModulesByCourse [90m(/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/[39msrc/modules/courses/modules.service.ts:54:19[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at getModulesByCourse [90m(/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/[39msrc/modules/courses/modules.controller.ts:7:21[90m)[39m {
+  statusCode: [33m404[39m
+}
+
+ [32m✓[39m tests/integration/content-authorization.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 5005[2mms[22m[39m
+     [33m[2m✓[22m[39m does not expose lesson contentUrl through the public modules endpoint [33m 1102[2mms[22m[39m
+     [33m[2m✓[22m[39m does not expose modules belonging to a draft course [33m 888[2mms[22m[39m
+     [33m[2m✓[22m[39m hides lesson contentUrl from a non-enrolled student [33m 1434[2mms[22m[39m
+     [33m[2m✓[22m[39m returns lesson contentUrl to an actively enrolled student [33m 1413[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m6 passed[39m[22m[90m (6)[39m
+[2m      Tests [22m [1m[32m61 passed[39m[22m[90m (61)[39m
+[2m   Start at [22m 09:26:33
+[2m   Duration [22m 77.14s[2m (transform 1.05s, setup 1.08s, import 5.10s, tests 69.63s, environment 1ms)[22m

@@ -20,11 +20,50 @@ const moduleSelect = {
   },
 } as const;
 
+const publicModuleSelect = {
+  id: true,
+  courseId: true,
+  title: true,
+  order: true,
+  createdAt: true,
+  updatedAt: true,
+  lessons: {
+    select: {
+      id: true,
+      title: true,
+      order: true,
+      durationSeconds: true,
+    },
+    orderBy: { order: "asc" as const },
+  },
+} as const;
+
 export async function getModulesByCourse(courseId: string) {
+  const course = await prisma.course.findFirst({
+    where: {
+      id: courseId,
+      status: "PUBLISHED",
+      isActive: true,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  if (!course) {
+    const error = new Error("Course not found");
+    (error as any).statusCode = 404;
+    throw error;
+  }
+
   return prisma.module.findMany({
-    where: { courseId },
-    select: moduleSelect,
-    orderBy: { order: "asc" },
+    where: {
+      courseId,
+    },
+    select: publicModuleSelect,
+    orderBy: {
+      order: "asc",
+    },
   });
 }
 
