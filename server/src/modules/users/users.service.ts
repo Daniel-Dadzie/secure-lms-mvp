@@ -182,7 +182,7 @@ export async function resetUserPassword(
 
   await prisma.user.update({
     where: { id: targetUserId },
-    data: { passwordHash },
+    data: { passwordHash: passwordHash },
   });
 
   // Revoke all sessions — user must log in with new password
