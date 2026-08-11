@@ -1,9 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Avatar } from "@/components/ui/Avatar";
 import { useAuthStore } from "@/store/auth.store";
+import { Bell, Check, CheckCheck, Clock, ExternalLink } from "lucide-react";
+import api from "@/lib/api";
 
 interface TopBarProps {
   title?: string;
@@ -11,11 +13,90 @@ interface TopBarProps {
   onOpenMobileSidebar?: () => void;
 }
 
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
 export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) {
   const router = useRouter();
-  const { user, logout } = useAuthStore();
+  const { user, logout } = useAuthStore() as { user: any; logout: () => void };
   const [searchQuery, setSearchQuery] = useState("");
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  
+  // Notification Dropdown States
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch notifications for the dropdown
+const fetchNotifications = async () => {
+    try {
+    
+      const res = await api.get("/notifications");
+      setNotifications(res.data.notifications || []);
+      setUnreadCount(res.data.unreadCount || 0);
+    } catch (err) {
+      console.error("Failed to fetch notifications", err);
+    } finally {
+       // Silently catch if unauthenticated; no need for loading state in a dropdown
+    }
+  };
+
+useEffect(() => {
+    // Define the async function inside the effect
+    const loadData = async () => {
+      try {
+        const res = await api.get("/notifications?limit=5");
+        // These calls are fine here because they are inside an async flow
+        setNotifications(res.data.notifications || []);
+        setUnreadCount(res.data.unreadCount || 0);
+      } catch (err) {
+        console.error("Failed to fetch notifications", err);
+      }
+    };
+
+    loadData();
+  }, []); // Empty dependency array ensures this runs only once on mount
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleMarkAsRead = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await api.patch(`/notifications/${id}/read`);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error("Failed to mark as read", err);
+    }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await api.patch("/notifications/read-all");
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.error("Failed to mark all as read", err);
+    }
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,9 +113,8 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8 shadow-sm">
       
-      {/* Left — Hamburger Trigger (Mobile) & Breadcrumb/Title (Desktop) */}
+      {/* Left — Hamburger Trigger & Breadcrumb */}
       <div className="flex items-center gap-3">
-        {/* Mobile Hamburger Button */}
         <button
           onClick={onOpenMobileSidebar}
           className="md:hidden flex h-10 w-10 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors focus:outline-none"
@@ -45,7 +125,6 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
           </svg>
         </button>
 
-        {/* Desktop Breadcrumb & Title */}
         <div className="hidden md:flex flex-col flex-shrink-0 mr-8">
           {title && (
             <h1 className="text-lg font-extrabold text-slate-900 leading-tight">{title}</h1>
@@ -69,10 +148,8 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
         </div>
       </div>
 
-      {/* Right Content Wrapper (Search + Actions) */}
+      {/* Right Content Wrapper */}
       <div className="flex flex-1 items-center justify-end gap-6">
-        
-        {/* Search */}
         <form onSubmit={handleSearch} className="w-full max-w-[320px] hidden sm:block">
           <div className="relative group">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-[#196A54] transition-colors">
@@ -91,24 +168,109 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
           </div>
         </form>
 
-        {/* Divider */}
         <div className="hidden sm:block w-px h-8 bg-slate-200"></div>
 
         <div className="flex items-center gap-4">
-          {/* Notification bell */}
-          <Link
-            href="/student/notifications"
-            className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-            aria-label="Notifications"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-            {/* Topbar Notification Dot */}
-            <span className="absolute top-2 right-2.5 flex h-2.5 w-2.5 items-center justify-center rounded-full bg-red-500 border-2 border-white"></span>
-          </Link>
+          
+          {/* INTERACTIVE NOTIFICATION BELL & DROPDOWN */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => {
+                setShowNotifications((prev) => !prev);
+                if (!showNotifications) fetchNotifications();
+              }}
+              className="relative flex h-10 w-10 items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 hover:text-slate-900 transition-colors focus:outline-none"
+              aria-label="Notifications"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
 
-          {/* Avatar + dropdown */}
+            {showNotifications && (
+              <div className="absolute right-0 z-30 mt-2 w-80 sm:w-96 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl ring-1 ring-black/5">
+                
+                {/* Dropdown Header */}
+                <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-bold text-slate-900">Notifications</h3>
+                    {unreadCount > 0 && (
+                      <span className="bg-red-100 text-red-700 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                        {unreadCount} unread
+                      </span>
+                    )}
+                  </div>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={handleMarkAllAsRead}
+                      className="text-xs font-bold text-[#196A54] hover:underline flex items-center gap-1"
+                    >
+                      <CheckCheck className="w-3.5 h-3.5" /> Mark all read
+                    </button>
+                  )}
+                </div>
+
+                {/* Dropdown Notification List */}
+                <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+                  {notifications.length === 0 ? (
+                    <div className="p-8 text-center text-slate-400 text-xs font-medium">
+                      No notifications right now.
+                    </div>
+                  ) : (
+                    notifications.map((notif) => (
+                      <div
+                        key={notif.id}
+                        className={`p-3.5 transition-colors flex items-start gap-3 ${
+                          notif.isRead ? "bg-white text-slate-600" : "bg-emerald-50/40 text-slate-900 font-semibold"
+                        }`}
+                      >
+                        <div className="flex-1 min-w-0 space-y-0.5">
+                          <p className="text-xs font-bold text-slate-900 truncate">{notif.title}</p>
+                          <p className="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">{notif.message}</p>
+                          <span className="text-[10px] text-slate-400 flex items-center gap-1 pt-1 font-medium">
+                            <Clock className="w-3 h-3" />
+                            {new Date(notif.createdAt).toLocaleDateString(undefined, {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </div>
+
+                        {!notif.isRead && (
+                          <button
+                            onClick={(e) => handleMarkAsRead(notif.id, e)}
+                            title="Mark as read"
+                            className="p-1.5 text-emerald-700 hover:bg-emerald-100 rounded-lg transition-all shrink-0 self-center"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* Dropdown Footer Link */}
+                <div className="border-t border-slate-100 bg-slate-50 p-2 text-center">
+                  <Link
+                    href="/student/notifications"
+                    onClick={() => setShowNotifications(false)}
+                    className="text-xs font-bold text-[#196A54] hover:underline flex items-center justify-center gap-1.5 py-1"
+                  >
+                    View all notifications <ExternalLink className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+
+              </div>
+            )}
+          </div>
+
+          {/* Avatar + Profile Dropdown Menu */}
           <div className="relative">
             <button
               onClick={() => setShowProfileMenu((s) => !s)}
@@ -145,23 +307,13 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
                       onClick={() => setShowProfileMenu(false)}
                       className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-[#196A54] transition-colors"
                     >
-                      <svg className="w-4 h-4 opacity-70 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                       My Profile
-                    </Link>
-                    <Link
-                      href="/student/profile"
-                      onClick={() => setShowProfileMenu(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-[#196A54] transition-colors"
-                    >
-                      <svg className="w-4 h-4 opacity-70 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                      Account Settings
                     </Link>
                     <Link
                       href="/student/help-center"
                       onClick={() => setShowProfileMenu(false)}
                       className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-[#196A54] transition-colors"
                     >
-                      <svg className="w-4 h-4 opacity-70 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       Help Center
                     </Link>
                   </div>
@@ -170,8 +322,7 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
                       onClick={handleLogout}
                       className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-bold text-red-600 hover:bg-red-50 transition-colors"
                     >
-                      <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                      Sign Out
+                      Log Out
                     </button>
                   </div>
                 </div>
@@ -182,4 +333,4 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
       </div>
     </header>
   );
-}
+}   
