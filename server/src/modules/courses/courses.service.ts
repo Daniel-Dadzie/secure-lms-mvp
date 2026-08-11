@@ -22,6 +22,21 @@ const courseSelect = {
   category: {
     select: { id: true, name: true, slug: true },
   },
+  modules: {
+    orderBy: { order: "asc" as const },
+    include: {
+      lessons: {
+        orderBy: { order: "asc" as const },
+        select: {
+          id: true,
+          title: true,
+          contentUrl: true,
+          durationSeconds: true,
+          order: true,
+        },
+      },
+    },
+  },
   createdAt: true,
   updatedAt: true,
 } as const;

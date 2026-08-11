@@ -182,8 +182,14 @@ export default function CoursePlayerPage({ params }: { params: Promise<{ courseI
                   key={currentLesson.id}
                   controls
                   autoPlay
+                  playsInline
                   className="w-full h-full object-contain"
                   src={currentLesson.contentUrl}
+                  ref={(videoNode) => {
+                    if (videoNode) {
+                      videoNode.load(); // Forces the browser to fetch and initialize the new video stream immediately
+                    }
+                  }}
                 >
                   Your browser does not support the video tag.
                 </video>
@@ -194,7 +200,6 @@ export default function CoursePlayerPage({ params }: { params: Promise<{ courseI
                 </div>
               )}
             </div>
-
             {/* Lesson Title & Action Toolbar */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-xl">
               <div>
