@@ -4,6 +4,7 @@ import type { SafeUser } from "../auth/auth.types";
 import { sendPasswordResetEmail } from "../../services/email.service";
 import type { UpdateProfileInput, AdminResetPasswordInput } from "./users.schemas";
 
+
 function toSafeUser(user: {
   id: string;
   email: string;
@@ -181,7 +182,7 @@ export async function resetUserPassword(
 
   await prisma.user.update({
     where: { id: targetUserId },
-    data: { passwordHash },
+    data: { passwordHash: passwordHash },
   });
 
   // Revoke all sessions — user must log in with new password

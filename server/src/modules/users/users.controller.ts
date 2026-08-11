@@ -1,6 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
+import bcrypt from "bcrypt";
 import { updateProfileSchema, adminResetPasswordSchema } from "./users.schemas";
 import * as usersService from "./users.service";
+import { prisma } from "../../config/prisma";
 
 export async function getProfile(
   req: Request,
@@ -141,6 +143,45 @@ export async function resetUserPassword(
       res.status(404).json({ message: "User not found" });
       return;
     }
+    next(error);
+  }
+}
+
+
+export async function changePassword(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const userId = (req as any).user?.sub;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      res.status(400).json({ message: "Current and new passwords are required" });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isMatch) {
+      res.status(400).json({ message: "Incorrect current password" });
+      return;
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: hashedPassword },
+    });
+
+    res.status(200).json({ message: "Password updated successfully" });
+  } catch (error) {
     next(error);
   }
 }

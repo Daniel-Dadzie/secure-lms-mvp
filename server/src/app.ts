@@ -21,6 +21,7 @@ import instructorRoutes from './modules/instructors/instructors.routes';
 import instructorAnalyticsRouter from "./modules/instructor-analytics/instructor-analytics.routes";
 import notificationsRouter from "./modules/notifications/notifications.routes";
 import studentRoutes from "./modules/students/student.routes";
+import uploadRouter from "./modules/uploads/upload.router"; // or check your relative path to the upload router file
 
 export const app = express();
 
@@ -69,6 +70,7 @@ app.use('/api/instructors', instructorRoutes);
 app.use("/api/instructor/analytics", instructorAnalyticsRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/student", studentRoutes);
+app.use("/api/uploads", uploadRouter);
 
 // ----------------------------------------------------------------------------
 // Health check

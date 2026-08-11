@@ -1,5 +1,5 @@
+// client/src/components/layout/Sidebar.tsx
 "use client";
-
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Avatar } from "@/components/ui/Avatar";
@@ -15,9 +15,11 @@ export interface NavItem {
 interface SidebarProps {
   navItems: NavItem[];
   portalLabel: string;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
-export function Sidebar({ navItems, portalLabel }: SidebarProps) {
+export function Sidebar({ navItems, portalLabel, isOpen = false, onClose }: SidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
@@ -27,9 +29,8 @@ export function Sidebar({ navItems, portalLabel }: SidebarProps) {
     router.push("/login");
   };
 
-  return (
-    <aside className="hidden w-64 shrink-0 flex-col border-r border-[#0A4A3A] bg-[#0A4A3A] text-white md:flex">
-      
+  const sidebarContent = (
+    <div className="flex h-full w-64 shrink-0 flex-col bg-[#0A4A3A] text-white">
       {/* Brand & SVG Logo */}
       <div className="flex items-center gap-3 border-b border-[#196A54]/50 px-5 py-5">
         <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#F4F9F7] text-[#0A4A3A]">
@@ -52,7 +53,7 @@ export function Sidebar({ navItems, portalLabel }: SidebarProps) {
       </div>
 
       {/* Nav links */}
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <nav className="flex-1 space-y-1 px-3 py-4 overflow-y-auto">
         {navItems.map((item) => {
           const isActive =
             item.href === "/student" || item.href === "/instructor" || item.href === "/admin"
@@ -63,6 +64,7 @@ export function Sidebar({ navItems, portalLabel }: SidebarProps) {
             <Link
               key={item.name}
               href={item.href}
+              onClick={onClose}
               className={`group flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-semibold transition-all ${
                 isActive
                   ? "bg-[#196A54] text-white shadow-md border-l-4 border-[#C2F25B]"
@@ -75,8 +77,6 @@ export function Sidebar({ navItems, portalLabel }: SidebarProps) {
                 </span>
                 {item.name}
               </div>
-              
-              {/* Notification Badge Renderer */}
               {item.badge !== undefined && item.badge > 0 && (
                 <span className="flex h-5 min-w-[20px] items-center justify-center rounded-full bg-red-500 px-1.5 text-[10px] font-bold text-white shadow-sm">
                   {item.badge}
@@ -87,7 +87,7 @@ export function Sidebar({ navItems, portalLabel }: SidebarProps) {
         })}
       </nav>
 
-      {/* User + logout at bottom (Reordered) */}
+      {/* User + logout at bottom */}
       <div className="mt-auto border-t border-[#196A54]/50 p-4">
         <button
           onClick={handleLogout}
@@ -99,16 +99,14 @@ export function Sidebar({ navItems, portalLabel }: SidebarProps) {
           Logout
         </button>
         
-        {/* Linked directly to the Profile Settings */}
         <Link 
           href="/student/profile" 
+          onClick={onClose}
           className="flex items-center gap-3 rounded-xl bg-[#196A54]/30 px-3 py-3 border border-[#196A54]/40 cursor-pointer hover:bg-[#196A54]/50 transition-colors"
         >
           <Avatar name={user?.fullName} size="sm" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-bold text-white">
-              {user?.fullName}
-            </p>
+            <p className="truncate text-sm font-bold text-white">{user?.fullName}</p>
             <p className="truncate text-[11px] font-medium text-teal-100/60">{user?.email}</p>
           </div>
           <svg className="w-4 h-4 text-teal-100/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -116,6 +114,37 @@ export function Sidebar({ navItems, portalLabel }: SidebarProps) {
           </svg>
         </Link>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop Permanent Sidebar */}
+      <aside className="hidden md:flex h-full border-r border-[#0A4A3A]">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile Drawer Overlay */}
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          {/* Backdrop blur */}
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity" 
+            onClick={onClose} 
+          />
+          {/* Drawer Slide-in */}
+          <div className="relative flex w-full max-w-xs flex-1 flex-col bg-[#0A4A3A] z-10 animate-in slide-in-from-left duration-300">
+            <button 
+              onClick={onClose} 
+              className="absolute top-4 right-4 text-white/70 hover:text-white p-2"
+              aria-label="Close sidebar"
+            >
+              ✕
+            </button>
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

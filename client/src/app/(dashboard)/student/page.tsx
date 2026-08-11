@@ -141,7 +141,7 @@ export default function StudentDashboard() {
                   <p className="text-xs text-slate-500 mt-3 mb-4">Next: {course.nextLesson}</p>
                   {/* Fixed: Replaced <button> with <Link> */}
                   <Link 
-                    href={`/student/my-learning/${course.id}`}
+                    href={`/learn/${course.id}`}
                     className="block text-center w-full py-2.5 bg-[#0A4A3A] text-white rounded-lg text-sm font-bold hover:bg-[#12503F] transition-colors"
                   >
                     Continue
