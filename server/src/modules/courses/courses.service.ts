@@ -41,6 +41,46 @@ const courseSelect = {
   updatedAt: true,
 } as const;
 
+// ----------------------------------------------------------------------------
+// Public course selector
+// Lesson metadata may be shown publicly, but protected lesson content URLs
+// must never be returned through catalogue or public course-detail endpoints.
+// Full lesson content is retrieved through the authenticated lesson endpoint.
+// ----------------------------------------------------------------------------
+const publicCourseSelect = {
+  id: true,
+  title: true,
+  slug: true,
+  description: true,
+  thumbnailUrl: true,
+  priceCents: true,
+  status: true,
+  instructorId: true,
+  instructor: {
+    select: { id: true, fullName: true, email: true },
+  },
+  categoryId: true,
+  category: {
+    select: { id: true, name: true, slug: true },
+  },
+  modules: {
+    orderBy: { order: "asc" as const },
+    include: {
+      lessons: {
+        orderBy: { order: "asc" as const },
+        select: {
+          id: true,
+          title: true,
+          durationSeconds: true,
+          order: true,
+        },
+      },
+    },
+  },
+  createdAt: true,
+  updatedAt: true,
+} as const;
+
 async function generateUniqueSlug(title: string, excludeId?: string): Promise<string> {
   const base = slugify(title, { lower: true, strict: true });
   let slug = base;
@@ -79,7 +119,7 @@ export async function getPublishedCourses(filters: CourseFilters): Promise<Pagin
   const [courses, total] = await Promise.all([
     prisma.course.findMany({
       where,
-      select: courseSelect,
+      select: publicCourseSelect,
       orderBy: { createdAt: "desc" },
       skip,
       take: limit,
@@ -108,7 +148,7 @@ export async function getPublishedCourseById(courseId: string): Promise<CourseRe
       status: "PUBLISHED",
       isActive: true,
     },
-    select: courseSelect,
+    select: publicCourseSelect,
   });
 
   if (!course) {
