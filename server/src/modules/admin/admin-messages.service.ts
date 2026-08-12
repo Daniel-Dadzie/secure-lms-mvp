@@ -1,3 +1,4 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../../config/prisma";
 
 type SupportMetadata = {
@@ -87,19 +88,21 @@ export async function resolveSupportMessage(
     throw error;
   }
 
+  const sourceMetadata = event.metadata as SupportMetadata | null;
+  const metadata: Prisma.InputJsonValue = {
+    resolution: note ?? "Resolved by admin",
+    ...(typeof sourceMetadata?.question === "string"
+      ? { question: sourceMetadata.question }
+      : {}),
+  };
+
   await prisma.auditEvent.create({
     data: {
       userId: adminId,
       action: "support.question_resolved",
       entityType: "AuditEvent",
       entityId: eventId,
-      metadata: {
-        resolution: note ?? "Resolved by admin",
-        question:
-          typeof (event.metadata as Record<string, unknown> | null)?.question === "string"
-            ? (event.metadata as Record<string, unknown>).question
-            : undefined,
-      },
+      metadata,
     },
   });
 }
