@@ -2,21 +2,23 @@ import { v4 as uuidv4 } from "uuid";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
+
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
 });
 const prisma = new PrismaClient({ adapter });
+
 async function main() {
   console.log("Seeding database with full catalogue and course modules...");
   
   const passwordHash = await bcrypt.hash("Password123!", 10);
   
-  // 1. Core Users (Admin & Student)
+  // 1. Core Users (Admin & Students)
   const admin = await prisma.user.upsert({
-    where: { email: "admin@mechlms.com" },
+    where: { email: "admin@mechspec.com" },
     update: {},
     create: {
-      email: "admin@mechlms.com",
+      email: "admin@mechspec.com",
       passwordHash,
       fullName: "Admin User",
       role: "ADMIN",
@@ -25,20 +27,46 @@ async function main() {
   });
   
   const student = await prisma.user.upsert({
-    where: { email: "student@mechlms.com" },
+    where: { email: "student@mechspec.com" },
     update: {},
     create: {
-      email: "student@mechlms.com",
+      email: "student@mechspec.com",
       passwordHash,
       fullName: "Student User",
       role: "STUDENT",
       isEmailVerified: true,
     },
   });
+
+  // Additional students to populate instructor analytics and enrollment metrics
+  const extraStudent1 = await prisma.user.upsert({
+    where: { email: "student2@mechspec.com" },
+    update: {},
+    create: {
+      email: "student2@mechspec.com",
+      passwordHash,
+      fullName: "Kwaku Mensah",
+      role: "STUDENT",
+      isEmailVerified: true,
+    },
+  });
+
+  const extraStudent2 = await prisma.user.upsert({
+    where: { email: "student3@mechspec.com" },
+    update: {},
+    create: {
+      email: "student3@mechspec.com",
+      passwordHash,
+      fullName: "Abena Serwaa",
+      role: "STUDENT",
+      isEmailVerified: true,
+    },
+  });
+
   // 2. Expert Instructors
   const instructorData = [
     { 
-      email: "james.walker@mechlms.com", 
+      email: "james.walker@mechspec.com", 
       fullName: "Dr. James Walker", 
       specialization: "Mechanical Systems Expert", 
       credentials: "MIT-trained | Ex-Boeing", 
@@ -49,7 +77,7 @@ async function main() {
       expertise: ["Aerospace Structures", "Mechanical Design", "Systems Engineering"]
     },
     { 
-      email: "sarah.chen@mechlms.com", 
+      email: "sarah.chen@mechspec.com", 
       fullName: "Prof. Sarah Chen", 
       specialization: "CAD / CAM Specialist", 
       credentials: "Stanford ME | Ex-Lockheed", 
@@ -60,7 +88,7 @@ async function main() {
       expertise: ["CNC Milling & Turning", "G-Code Programming", "CAM Software (Fusion 360)", "Precision Metrology", "Cutting Tool Selection"]
     },
     { 
-      email: "emily.torres@mechlms.com", 
+      email: "emily.torres@mechspec.com", 
       fullName: "Emily Torres", 
       specialization: "CNC & Robotics Engineer", 
       credentials: "Georgia Tech | Fanuc Certified", 
@@ -71,7 +99,7 @@ async function main() {
       expertise: ["Fanuc Robotics", "Assembly Automation", "PLC Integration", "Kinematics"]
     },
     { 
-      email: "kwame.osei@mechlms.com", 
+      email: "kwame.osei@mechspec.com", 
       fullName: "Dr. Kwame Osei", 
       specialization: "Industrial Automation Lead", 
       credentials: "Delft | Ex-ABB & Siemens", 
@@ -82,7 +110,7 @@ async function main() {
       expertise: ["SCADA Systems", "PLC Programming", "Industrial IoT", "Process Automation"]
     },
     { 
-      email: "marcus.hill@mechlms.com", 
+      email: "marcus.hill@mechspec.com", 
       fullName: "Dr. Marcus Hill", 
       specialization: "Fluid Dynamics Researcher", 
       credentials: "Caltech | Ex-NASA JPL", 
@@ -93,7 +121,7 @@ async function main() {
       expertise: ["CFD Analysis", "Propulsion Systems", "Hydraulics", "Aerodynamics"]
     },
     { 
-      email: "liu.wei@mechlms.com", 
+      email: "liu.wei@mechspec.com", 
       fullName: "Prof. Liu Wei", 
       specialization: "Thermodynamics & Energy", 
       credentials: "Tsinghua | Ex-GE Energy", 
@@ -104,7 +132,7 @@ async function main() {
       expertise: ["Heat Transfer", "Thermal Cycles", "Energy Systems", "Turbomachinery"]
     },
     { 
-      email: "nina.patel@mechlms.com", 
+      email: "nina.patel@mechspec.com", 
       fullName: "Dr. Nina Patel", 
       specialization: "Electrical Systems Engineer", 
       credentials: "IIT Delhi | Ex-Honeywell", 
@@ -115,7 +143,7 @@ async function main() {
       expertise: ["Circuit Design", "Power Systems", "Avionics", "Electromechanics"]
     },
     { 
-      email: "mark.sullivan@mechlms.com", 
+      email: "mark.sullivan@mechspec.com", 
       fullName: "Mark Sullivan", 
       specialization: "Quality & Six Sigma Master", 
       credentials: "Black Belt | Ex-Caterpillar", 
@@ -149,6 +177,7 @@ async function main() {
     });
     createdInstructors[inst.fullName] = userRecord;
   }
+
   // 3. Engineering Categories
   const categoriesData = [
     { name: "Mechanical Engineering", slug: "mechanical-engineering", description: "Core systems, statics, dynamics & machine design" },
@@ -174,7 +203,8 @@ async function main() {
     });
     createdCategories[cat.slug] = catRecord;
   }
-  // 4. Catalogue Courses (12 Unique Courses with full data and pictures)
+
+  // 4. Catalogue Courses
   const coursesData = [
     {
       title: "Quality Control & Six Sigma Green Belt",
@@ -459,13 +489,13 @@ async function main() {
                   title: m.title + " - Part 1", 
                   order: 1, 
                   durationSeconds: 1200, 
-                  contentUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" 
+                  contentUrl: "http://localhost:3000/videos/sample-lecture.mp4"
                 },
                 { 
                   title: m.title + " - Part 2", 
                   order: 2, 
                   durationSeconds: 1500, 
-                  contentUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" 
+                  contentUrl: "http://localhost:3000/videos/sample-lecture.mp4"
                 }
               ]
             }
@@ -474,6 +504,7 @@ async function main() {
       },
     });
   }
+
   // 5. Test Coupon
   await prisma.coupon.upsert({
     where: { code: "TEST20" },
@@ -486,28 +517,28 @@ async function main() {
       isActive: true,
     },
   });
-  // 6. Student Enrollments & Progress Data
+
+  // 6. Student Enrollments & Progress Data (Primary Student)
   console.log('Seeding student enrollments and progress...');
   
   const testStudent = await prisma.user.findUnique({
-    where: { email: 'student@mechlms.test' }
+    where: { email: 'student@mechspec.com' }
   });
   
   const availableCourses = await prisma.course.findMany({
-    take: 3,
+    take: 5,
     include: {
       modules: {
         include: { lessons: true }
       }
     }
   });
+
   if (testStudent && availableCourses.length >= 3) {
-    const completionRates = [1.0, 0.91, 0.34]; 
-    const statuses: any[] = ['COMPLETED', 'ACTIVE', 'ACTIVE'];
     for (let i = 0; i < 3; i++) {
       const course = availableCourses[i];
       const allLessons = course.modules.flatMap(m => m.lessons);
-      const targetCompletedCount = Math.floor(allLessons.length * completionRates[i]);
+      
       await prisma.enrollment.upsert({
         where: {
           userId_courseId: {
@@ -519,25 +550,67 @@ async function main() {
         create: {
           userId: testStudent.id,
           courseId: course.id,
-          status: statuses[i],
+          status: 'ACTIVE',
           progress: {
-            create: allLessons.map((lesson, index) => ({
+            create: allLessons.map((lesson) => ({
               user: { connect: { id: testStudent.id } },
               lesson: { connect: { id: lesson.id } },
-              status: (index < targetCompletedCount ? 'COMPLETED' : 'NOT_STARTED') as any,
-              completedAt: index < targetCompletedCount ? new Date() : null
+              status: 'NOT_STARTED',
+              completedAt: null
             }))
           }
         }
       });
     }
     console.log('✅ Student enrollments and progress successfully seeded!');
-  } else {
-    console.log('⚠️ Could not seed enrollments: Missing student or insufficient courses.');
   }
-  
-  console.log("Database successfully seeded with 12 courses, modules, and video streams!"); 
+
+ // 7. Seed Multi-Student Enrollments for ALL Instructors' Courses 
+  console.log('Seeding cross-student enrollments for instructor metrics...');
+  const allSystemCourses = await prisma.course.findMany({
+    include: { modules: { include: { lessons: true } } }
+  });
+
+  const studentsList = [testStudent, extraStudent1, extraStudent2].filter(Boolean);
+
+  for (const course of allSystemCourses) {
+    // Fixed: Correctly flatten lessons directly from modules
+    const allLessons = course.modules.flatMap(m => m.lessons || []);
+    
+    for (const [index, studentUser] of studentsList.entries()) {
+      if ((index + course.title.length) % 2 === 0 && studentUser) {
+        await prisma.enrollment.upsert({
+          where: {
+            userId_courseId: {
+              userId: studentUser.id,
+              courseId: course.id
+            }
+          },
+          update: {},
+          create: {
+            userId: studentUser.id,
+            courseId: course.id,
+            status: 'ACTIVE',
+            progress: {
+              create: allLessons.map((lesson, lessonIndex) => ({
+                user: { connect: { id: studentUser.id } },
+                lesson: { connect: { id: lesson.id } },
+                status: lessonIndex === 0 ? 'COMPLETED' : 'NOT_STARTED',
+                completedAt: lessonIndex === 0 ? new Date() : null
+              }))
+            }
+          }
+        }).catch(() => {
+          // Ignore duplicate upsert edge cases gracefully
+        });
+      }
+    }
+  }
+
+  console.log('✅ Instructor analytics and multi-student course metrics successfully seeded!');
+  console.log("Database successfully seeded with 12 courses, modules, video streams, and populated instructor dashboards!");
 }
+
 main()
   .catch((e) => {
     console.error("Seeding failed:", e);

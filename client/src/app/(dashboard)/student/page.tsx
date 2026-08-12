@@ -1,8 +1,8 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Award, BookOpen } from "lucide-react";
 import { StatCard } from "@/components/ui/StatCard";
 import { ProgressBar } from "@/components/ui/ProgressBar";
@@ -47,6 +47,9 @@ interface DashboardData {
 
 export default function StudentDashboard() {
   const { user } = useAuthStore(); 
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get("search")?.toLowerCase() || "";
+
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -66,8 +69,17 @@ export default function StudentDashboard() {
     fetchDashboard();
   }, []);
 
+  // Filter active and recommended courses dynamically based on search parameter
+  const filteredActiveCourses = data?.activeCourses?.filter((course) =>
+    course.title.toLowerCase().includes(searchQuery)
+  ) || [];
+
+  const filteredRecommendedCourses = data?.recommendedCourses?.filter((course) =>
+    course.title.toLowerCase().includes(searchQuery)
+  ) || [];
+
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
+    <div className="space-y-8">
       
       {/* 1. HERO BANNER */}
       <section className="bg-[#196A54] rounded-2xl p-8 text-white relative overflow-hidden shadow-lg border border-[#12503F]">
@@ -121,11 +133,13 @@ export default function StudentDashboard() {
           </div>
         ) : error ? (
           <p className="text-red-500 text-sm">{error}</p>
-        ) : !data?.activeCourses || data.activeCourses.length === 0 ? (
-          <p className="text-slate-500 text-sm">You are not enrolled in any courses yet. Visit the catalog to start learning!</p>
+        ) : filteredActiveCourses.length === 0 ? (
+          <p className="text-slate-500 text-sm">
+            {searchQuery ? `No active courses match "${searchQuery}".` : "You are not enrolled in any courses yet."}
+          </p>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {data.activeCourses.map((course) => (
+            {filteredActiveCourses.map((course) => (
               <div key={course.id} className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col">
                 <div className="flex gap-4 mb-6">
                   <div className="w-16 h-16 rounded-xl overflow-hidden relative shrink-0 bg-slate-100">
@@ -139,7 +153,6 @@ export default function StudentDashboard() {
                 <div className="mt-auto">
                   <ProgressBar value={course.progress} showPercent color="brand" />
                   <p className="text-xs text-slate-500 mt-3 mb-4">Next: {course.nextLesson}</p>
-                  {/* Fixed: Replaced <button> with <Link> */}
                   <Link 
                     href={`/learn/${course.id}`}
                     className="block text-center w-full py-2.5 bg-[#0A4A3A] text-white rounded-lg text-sm font-bold hover:bg-[#12503F] transition-colors"
@@ -161,23 +174,23 @@ export default function StudentDashboard() {
           <section className="lg:col-span-2">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-slate-900">Recommended Courses</h2>
-              {/* Pointing to the catalog */}
               <Link href="/student/courses" className="text-sm font-semibold text-[#196A54] hover:underline">
                 Browse all
               </Link>
             </div>
             
-            {/* Fixed: Added Empty State Check */}
-            {data?.recommendedCourses?.length === 0 ? (
+            {filteredRecommendedCourses.length === 0 ? (
               <div className="bg-slate-50 border border-slate-200 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center h-[280px]">
-                <p className="text-slate-600 text-sm font-medium mb-2">You are enrolled in all available courses!</p>
+                <p className="text-slate-600 text-sm font-medium mb-2">
+                  {searchQuery ? `No recommendations match "${searchQuery}".` : "You are enrolled in all available courses!"}
+                </p>
                 <Link href="/student/courses" className="text-[#196A54] text-xs font-bold hover:underline">
                   Check the catalog for new releases
                 </Link>
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 gap-6">
-                {data?.recommendedCourses?.map((course) => (
+                {filteredRecommendedCourses.map((course) => (
                   <div key={course.id} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col">
                     <div className="aspect-video relative rounded-xl overflow-hidden mb-4 bg-slate-100 shrink-0">
                       <Image src={course.thumbnailUrl} alt={course.title} fill className="object-cover" />
@@ -193,7 +206,6 @@ export default function StudentDashboard() {
                       <div className="font-extrabold text-slate-900">
                         {course.price ? `$${course.price}` : "Free"}
                       </div>
-                      {/* Fixed: Replaced <button> with <Link> */}
                       <Link 
                         href={`/student/courses/${course.id}`}
                         className="px-4 py-2 bg-[#0A4A3A] text-white rounded-lg text-xs font-bold hover:bg-[#12503F] transition-colors"

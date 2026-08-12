@@ -179,14 +179,31 @@ export default function CoursePlayerPage({ params }: { params: Promise<{ courseI
             <div className="relative aspect-video w-full bg-black rounded-xl overflow-hidden shadow-2xl border border-slate-800 flex items-center justify-center">
               {currentLesson?.contentUrl ? (
                 <video
-                  key={currentLesson.id}
-                  controls
-                  autoPlay
-                  className="w-full h-full object-contain"
-                  src={currentLesson.contentUrl}
-                >
-                  Your browser does not support the video tag.
-                </video>
+          key={currentLesson.id}
+          controls
+          autoPlay
+          playsInline
+          className="w-full h-full object-contain"
+          src={currentLesson.contentUrl}
+          onEnded={() => {
+            // Automatically mark as complete when the video finishes
+            if (progressMap[currentLesson.id] !== "COMPLETED") {
+              handleToggleComplete(currentLesson.id);
+            }
+          }}
+          onTimeUpdate={(e) => {
+            const videoNode = e.currentTarget;
+            // Optional: You can throttle or track videoNode.currentTime here 
+            // and send periodic progressSeconds updates to your backend API if desired.
+          }}
+          ref={(videoNode) => {
+            if (videoNode) {
+              videoNode.load();
+            }
+          }}
+        >
+          Your browser does not support the video tag.
+        </video>
               ) : (
                 <div className="text-center p-6 text-slate-400">
                   <p className="text-lg font-medium">No video content uploaded for this lesson yet.</p>
@@ -194,7 +211,6 @@ export default function CoursePlayerPage({ params }: { params: Promise<{ courseI
                 </div>
               )}
             </div>
-
             {/* Lesson Title & Action Toolbar */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-slate-900 border border-slate-800 p-6 rounded-xl">
               <div>

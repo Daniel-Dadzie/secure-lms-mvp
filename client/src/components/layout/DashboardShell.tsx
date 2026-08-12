@@ -36,8 +36,11 @@ export function DashboardShell({
           breadcrumb={breadcrumb} 
           onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
         />
-        <main className="flex-1 overflow-y-auto">
-          {children}
+        {/* Added standard padding and max-w constraints here */}
+        <main className="flex-1 overflow-y-auto px-6 lg:px-8 py-8">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>
