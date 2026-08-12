@@ -6,7 +6,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { useAuthStore } from "@/store/auth.store";
 import { Bell, Check, CheckCheck, Clock, ExternalLink } from "lucide-react";
 import api from "@/lib/api";
-
+import { usePathname } from "next/navigation";
 interface TopBarProps {
   title?: string;
   breadcrumb?: { label: string; href?: string }[];
@@ -23,6 +23,7 @@ interface Notification {
 
 export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, logout } = useAuthStore() as { user: any; logout: () => void };
   const [searchQuery, setSearchQuery] = useState("");
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -35,34 +36,28 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Fetch notifications for the dropdown
-const fetchNotifications = async () => {
+  const fetchNotifications = async () => {
     try {
-    
       const res = await api.get("/notifications");
       setNotifications(res.data.notifications || []);
       setUnreadCount(res.data.unreadCount || 0);
     } catch (err) {
       console.error("Failed to fetch notifications", err);
-    } finally {
-       // Silently catch if unauthenticated; no need for loading state in a dropdown
     }
   };
 
-useEffect(() => {
-    // Define the async function inside the effect
+  useEffect(() => {
     const loadData = async () => {
       try {
         const res = await api.get("/notifications?limit=5");
-        // These calls are fine here because they are inside an async flow
         setNotifications(res.data.notifications || []);
         setUnreadCount(res.data.unreadCount || 0);
       } catch (err) {
         console.error("Failed to fetch notifications", err);
       }
     };
-
     loadData();
-  }, []); // Empty dependency array ensures this runs only once on mount
+  }, []);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -98,10 +93,22 @@ useEffect(() => {
     }
   };
 
+  // Role-aware search handler
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/courses?search=${encodeURIComponent(searchQuery.trim())}`);
+      const query = encodeURIComponent(searchQuery.trim());
+      let searchRoute = `/student/search?q=${query}`; // Default student fallback
+
+      if (user?.role === "INSTRUCTOR") {
+        // Instructors search across courses, students, modules, and videos
+        searchRoute = `/instructor/search?q=${query}`;
+      } else if (user?.role === "ADMIN") {
+        // Admins search globally across users (students/instructors), courses, modules, and videos
+        searchRoute = `/admin/search?q=${query}`;
+      }
+
+      router.push(searchRoute);
     }
   };
 
@@ -109,6 +116,17 @@ useEffect(() => {
     await logout();
     router.push("/login");
   };
+
+  // Compute dynamic base path depending on role
+  const basePath = user?.role === "ADMIN" 
+    ? "/admin" 
+    : user?.role === "INSTRUCTOR" 
+    ? "/instructor" 
+    : "/student";
+
+  const profilePath = `${basePath}/profile`;
+  const helpPath = `${basePath}/help-center`;
+  const notificationsPath = `${basePath}/notifications`;
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8 shadow-sm">
@@ -124,7 +142,6 @@ useEffect(() => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-
         <div className="hidden md:flex flex-col flex-shrink-0 mr-8">
           {title && (
             <h1 className="text-lg font-extrabold text-slate-900 leading-tight">{title}</h1>
@@ -167,9 +184,7 @@ useEffect(() => {
             />
           </div>
         </form>
-
         <div className="hidden sm:block w-px h-8 bg-slate-200"></div>
-
         <div className="flex items-center gap-4">
           
           {/* INTERACTIVE NOTIFICATION BELL & DROPDOWN */}
@@ -189,7 +204,6 @@ useEffect(() => {
                 </span>
               )}
             </button>
-
             {showNotifications && (
               <div className="absolute right-0 z-30 mt-2 w-80 sm:w-96 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl ring-1 ring-black/5">
                 
@@ -240,7 +254,6 @@ useEffect(() => {
                             })}
                           </span>
                         </div>
-
                         {!notif.isRead && (
                           <button
                             onClick={(e) => handleMarkAsRead(notif.id, e)}
@@ -258,14 +271,13 @@ useEffect(() => {
                 {/* Dropdown Footer Link */}
                 <div className="border-t border-slate-100 bg-slate-50 p-2 text-center">
                   <Link
-                    href="/student/notifications"
+                    href={notificationsPath}
                     onClick={() => setShowNotifications(false)}
                     className="text-xs font-bold text-[#196A54] hover:underline flex items-center justify-center gap-1.5 py-1"
                   >
                     View all notifications <ExternalLink className="w-3.5 h-3.5" />
                   </Link>
                 </div>
-
               </div>
             )}
           </div>
@@ -281,13 +293,12 @@ useEffect(() => {
                 <Avatar name={user?.fullName} size="sm" />
               </div>
               <span className="hidden text-sm font-bold text-slate-700 sm:block">
-                {user?.fullName?.split(" ")[0] || "Student"}
+                {user?.fullName?.split(" ")[0] || "User"}
               </span>
               <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
-
             {showProfileMenu && (
               <>
                 <div
@@ -303,14 +314,14 @@ useEffect(() => {
                   </div>
                   <div className="py-1">
                     <Link
-                      href="/student/profile"
+                      href={profilePath}
                       onClick={() => setShowProfileMenu(false)}
                       className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-[#196A54] transition-colors"
                     >
                       My Profile
                     </Link>
                     <Link
-                      href="/student/help-center"
+                      href={helpPath}
                       onClick={() => setShowProfileMenu(false)}
                       className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-[#196A54] transition-colors"
                     >
@@ -333,4 +344,4 @@ useEffect(() => {
       </div>
     </header>
   );
-}   
+}

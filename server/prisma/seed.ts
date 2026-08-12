@@ -2,16 +2,18 @@ import { v4 as uuidv4 } from "uuid";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
+
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
 });
 const prisma = new PrismaClient({ adapter });
+
 async function main() {
   console.log("Seeding database with full catalogue and course modules...");
   
   const passwordHash = await bcrypt.hash("Password123!", 10);
   
-  // 1. Core Users (Admin & Student)
+  // 1. Core Users (Admin & Students)
   const admin = await prisma.user.upsert({
     where: { email: "admin@mechspec.com" },
     update: {},
@@ -35,6 +37,32 @@ async function main() {
       isEmailVerified: true,
     },
   });
+
+  // Additional students to populate instructor analytics and enrollment metrics
+  const extraStudent1 = await prisma.user.upsert({
+    where: { email: "student2@mechspec.com" },
+    update: {},
+    create: {
+      email: "student2@mechspec.com",
+      passwordHash,
+      fullName: "Kwaku Mensah",
+      role: "STUDENT",
+      isEmailVerified: true,
+    },
+  });
+
+  const extraStudent2 = await prisma.user.upsert({
+    where: { email: "student3@mechspec.com" },
+    update: {},
+    create: {
+      email: "student3@mechspec.com",
+      passwordHash,
+      fullName: "Abena Serwaa",
+      role: "STUDENT",
+      isEmailVerified: true,
+    },
+  });
+
   // 2. Expert Instructors
   const instructorData = [
     { 
@@ -149,6 +177,7 @@ async function main() {
     });
     createdInstructors[inst.fullName] = userRecord;
   }
+
   // 3. Engineering Categories
   const categoriesData = [
     { name: "Mechanical Engineering", slug: "mechanical-engineering", description: "Core systems, statics, dynamics & machine design" },
@@ -174,7 +203,8 @@ async function main() {
     });
     createdCategories[cat.slug] = catRecord;
   }
-  // 4. Catalogue Courses (12 Unique Courses with full data and pictures)
+
+  // 4. Catalogue Courses
   const coursesData = [
     {
       title: "Quality Control & Six Sigma Green Belt",
@@ -459,14 +489,13 @@ async function main() {
                   title: m.title + " - Part 1", 
                   order: 1, 
                   durationSeconds: 1200, 
-                 contentUrl: "http://localhost:3000/videos/sample-lecture.mp4"
+                  contentUrl: "http://localhost:3000/videos/sample-lecture.mp4"
                 },
-                
                 { 
                   title: m.title + " - Part 2", 
                   order: 2, 
                   durationSeconds: 1500, 
-                 contentUrl: "http://localhost:3000/videos/sample-lecture.mp4"
+                  contentUrl: "http://localhost:3000/videos/sample-lecture.mp4"
                 }
               ]
             }
@@ -475,6 +504,7 @@ async function main() {
       },
     });
   }
+
   // 5. Test Coupon
   await prisma.coupon.upsert({
     where: { code: "TEST20" },
@@ -488,7 +518,7 @@ async function main() {
     },
   });
 
-// 6. Student Enrollments & Progress Data
+  // 6. Student Enrollments & Progress Data (Primary Student)
   console.log('Seeding student enrollments and progress...');
   
   const testStudent = await prisma.user.findUnique({
@@ -496,7 +526,7 @@ async function main() {
   });
   
   const availableCourses = await prisma.course.findMany({
-    take: 3,
+    take: 5,
     include: {
       modules: {
         include: { lessons: true }
@@ -533,11 +563,54 @@ async function main() {
       });
     }
     console.log('✅ Student enrollments and progress successfully seeded!');
-  } else {
-    console.log('⚠️ Could not seed enrollments: Missing student or insufficient courses.');
   }
-  console.log("Database successfully seeded with 12 courses, modules, and video streams!"); 
+
+ // 7. Seed Multi-Student Enrollments for ALL Instructors' Courses 
+  console.log('Seeding cross-student enrollments for instructor metrics...');
+  const allSystemCourses = await prisma.course.findMany({
+    include: { modules: { include: { lessons: true } } }
+  });
+
+  const studentsList = [testStudent, extraStudent1, extraStudent2].filter(Boolean);
+
+  for (const course of allSystemCourses) {
+    // Fixed: Correctly flatten lessons directly from modules
+    const allLessons = course.modules.flatMap(m => m.lessons || []);
+    
+    for (const [index, studentUser] of studentsList.entries()) {
+      if ((index + course.title.length) % 2 === 0 && studentUser) {
+        await prisma.enrollment.upsert({
+          where: {
+            userId_courseId: {
+              userId: studentUser.id,
+              courseId: course.id
+            }
+          },
+          update: {},
+          create: {
+            userId: studentUser.id,
+            courseId: course.id,
+            status: 'ACTIVE',
+            progress: {
+              create: allLessons.map((lesson, lessonIndex) => ({
+                user: { connect: { id: studentUser.id } },
+                lesson: { connect: { id: lesson.id } },
+                status: lessonIndex === 0 ? 'COMPLETED' : 'NOT_STARTED',
+                completedAt: lessonIndex === 0 ? new Date() : null
+              }))
+            }
+          }
+        }).catch(() => {
+          // Ignore duplicate upsert edge cases gracefully
+        });
+      }
+    }
+  }
+
+  console.log('✅ Instructor analytics and multi-student course metrics successfully seeded!');
+  console.log("Database successfully seeded with 12 courses, modules, video streams, and populated instructor dashboards!");
 }
+
 main()
   .catch((e) => {
     console.error("Seeding failed:", e);
