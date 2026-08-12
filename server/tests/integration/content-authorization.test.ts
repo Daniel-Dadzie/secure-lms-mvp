@@ -94,6 +94,39 @@ describe("Security — Course content authorization", () => {
     expect(res.body.lesson.contentUrl).toBeNull();
   });
 
+  it("does not expose lesson contentUrl through the public course detail endpoint", async () => {
+  const { course } = await createContentFixture("PUBLISHED");
+
+  const res = await request.get(`/api/courses/${course.id}`);
+
+  expect(res.status).toBe(200);
+  expect(res.body.course.modules).toHaveLength(1);
+  expect(res.body.course.modules[0].lessons).toHaveLength(1);
+  expect(res.body.course.modules[0].lessons[0]).not.toHaveProperty(
+    "contentUrl"
+   );
+
+ });
+
+  it("does not expose lesson contentUrl through the public course catalogue", async () => {
+  const { course } = await createContentFixture("PUBLISHED");
+
+  const res = await request.get("/api/courses?limit=50");
+
+  expect(res.status).toBe(200);
+
+  const returnedCourse = res.body.data.find(
+    (item: any) => item.id === course.id
+  );
+
+  expect(returnedCourse).toBeDefined();
+  expect(returnedCourse.modules).toHaveLength(1);
+  expect(returnedCourse.modules[0].lessons).toHaveLength(1);
+  expect(returnedCourse.modules[0].lessons[0]).not.toHaveProperty(
+    "contentUrl"
+   );
+ });
+
   it("returns lesson contentUrl to an actively enrolled student", async () => {
     const { course, courseModule, lesson } =
       await createContentFixture("PUBLISHED");
