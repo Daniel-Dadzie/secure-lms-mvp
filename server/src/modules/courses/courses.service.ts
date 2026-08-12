@@ -291,6 +291,11 @@ export async function archiveCourse(
   courseId: string,
   adminId: string
 ): Promise<void> {
+  const course = await prisma.course.findUnique({
+    where: { id: courseId },
+    select: { title: true },
+  });
+
   await prisma.course.update({
     where: { id: courseId },
     data: { status: "ARCHIVED", isActive: false },
@@ -302,6 +307,7 @@ export async function archiveCourse(
       action: "admin.course_archived",
       entityType: "Course",
       entityId: courseId,
+      metadata: course ? { courseTitle: course.title } : undefined,
     },
   });
 }

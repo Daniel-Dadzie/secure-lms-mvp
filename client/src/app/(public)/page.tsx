@@ -8,17 +8,30 @@ export default function HomePage() {
     <div className="w-full bg-[#F4F9F7]">
       
       {/* 1. HERO SECTION */}
-      <section className="relative min-h-[90vh] flex items-center pt-24 pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden bg-[#0A4A3A]">
-        
-        <div className="absolute inset-0 z-0 opacity-20">
-          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(#196A54 2px, transparent 2px)', backgroundSize: '32px 32px' }}></div>
-          <div className="absolute right-0 top-0 w-1/2 h-full bg-gradient-to-l from-[#C2F25B]/10 to-transparent blur-3xl transform rotate-12"></div>
+      <section className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center pt-20 sm:pt-24 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <Image
+          src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80&w=1920"
+          alt=""
+          fill
+          priority
+          className="object-cover"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0A4A3A]/95 via-[#0A4A3A]/88 to-[#196A54]/75" />
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: "radial-gradient(#196A54 2px, transparent 2px)",
+              backgroundSize: "32px 32px",
+            }}
+          />
         </div>
 
         <div className="mx-auto max-w-7xl w-full relative z-10">
           <div className="max-w-3xl">
             
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] mb-6 drop-shadow-lg">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] mb-6 drop-shadow-lg">
               Master Practical <br/>
               <span className="text-[#C2F25B]">Engineering Skills</span>
             </h1>
@@ -72,7 +85,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20 md:mt-32 pt-10 border-t border-white/20 backdrop-blur-sm relative z-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mt-12 sm:mt-20 md:mt-32 pt-8 sm:pt-10 border-t border-white/20 backdrop-blur-sm relative z-10">
             {[
               { num: "50k+", label: "Active Students" },
               { num: "200+", label: "Expert Instructors" },

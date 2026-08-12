@@ -331,13 +331,13 @@ describe("Auth — Audit events", () => {
     expect(events.length).toBe(1);
   });
 
-  it("writes audit event on token refresh", async () => {
+  it("does not write audit event on token refresh", async () => {
     const { cookie, userId } = await createTestUser({ email: "audit-refresh@test.com" });
     await request.post("/api/auth/refresh").set("Cookie", cookie);
 
     const events = await prisma.auditEvent.findMany({
       where: { userId, action: "auth.token_refresh" },
     });
-    expect(events.length).toBe(1);
+    expect(events.length).toBe(0);
   });
 });

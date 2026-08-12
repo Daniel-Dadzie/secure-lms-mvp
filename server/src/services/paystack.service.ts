@@ -1,9 +1,10 @@
 import crypto from "crypto";
 import { paystack } from "../config/paystack";
+import { PLATFORM_CURRENCY } from "../config/platform";
 
 // ----------------------------------------------------------------------------
 // Initialize a Paystack transaction. amountInSubunit must already be in the
-// smallest currency unit (pesewas for GHS) — matches how amountCents/
+// smallest currency unit (cents for USD) — matches how amountCents/
 // finalAmountCents are already stored, so no conversion needed here.
 // ----------------------------------------------------------------------------
 export async function initializeTransaction(params: {
@@ -18,7 +19,7 @@ export async function initializeTransaction(params: {
     amount: params.amountInSubunit,
     reference: params.reference,
     callback_url: params.callbackUrl,
-    currency: "GHS",
+    currency: PLATFORM_CURRENCY,
     metadata: params.metadata,
   });
 

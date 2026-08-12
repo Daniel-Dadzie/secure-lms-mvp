@@ -4,7 +4,7 @@ import type { Role } from "@/types/auth";
 export const APP_ROUTES = {
   HOME: "/",
   LOGIN: "/login",
-  ADMIN_DASHBOARD: "/admin",
+  ADMIN_DASHBOARD: "/admin/dashboard",
   INSTRUCTOR_DASHBOARD: "/instructor",
   STUDENT_DASHBOARD: "/student",
 } as const;

@@ -78,6 +78,15 @@ enum LessonProgressStatus {
   COMPLETED
 }
 
+enum UserRegion {
+  NORTH_AMERICA
+  LATIN_AMERICA
+  EUROPE
+  AFRICA
+  MIDDLE_EAST
+  ASIA_PACIFIC
+}
+
 // ----------------------------------------------------------------------------
 // Users & Roles
 // ----------------------------------------------------------------------------
@@ -112,6 +121,8 @@ model User {
   instructorAnalytics InstructorAnalytics[]
   notifications       Notification[]
   activities          Activity[]
+  supportTickets      SupportTicket[]
+  supportMessages     SupportMessage[]
 
   specialization     String?
   credentials        String?
@@ -124,7 +135,11 @@ model User {
   bio       String?  @db.Text // For the long "About" section
   expertise String[] // Postgres array to store ["CNC Milling", "G-Code", ...]
 
+  region           UserRegion?
+  detectedTimezone String?
+
   @@index([role])
+  @@index([region])
   @@map("users")
 }
 
@@ -290,6 +305,8 @@ model Purchase {
   couponId         String?
   discountCents    Int          @default(0)
   finalAmountCents Int
+  buyerRegion      UserRegion?
+  buyerTimezone    String?
 
   @@index([userId])
   @@index([status])
@@ -637,6 +654,51 @@ enum NotificationType {
   ENROLLMENT_CONFIRMED
   CERTIFICATE_ISSUED
   NEW_REVIEW
+  SUPPORT_TICKET_NEW
+  PLATFORM_ALERT
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+}
+
+model SupportTicket {
+  id        String         @id @default(uuid())
+  userId    String?
+  user      User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  subject   String
+  status    TicketStatus   @default(OPEN)
+  priority  TicketPriority @default(NORMAL)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  messages  SupportMessage[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("support_tickets")
+}
+
+model SupportMessage {
+  id        String        @id @default(uuid())
+  ticketId  String
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  senderId  String?
+  sender    User?         @relation(fields: [senderId], references: [id], onDelete: SetNull)
+  body      String
+  isStaff   Boolean       @default(false)
+  createdAt DateTime      @default(now())
+
+  @@index([ticketId])
+  @@map("support_messages")
 }
 
 model Notification {

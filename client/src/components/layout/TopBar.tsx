@@ -6,11 +6,15 @@ import { Avatar } from "@/components/ui/Avatar";
 import { useAuthStore } from "@/store/auth.store";
 import { Bell, Check, CheckCheck, Clock, ExternalLink } from "lucide-react";
 import api from "@/lib/api";
-import { usePathname } from "next/navigation";
+
 interface TopBarProps {
   title?: string;
   breadcrumb?: { label: string; href?: string }[];
   onOpenMobileSidebar?: () => void;
+  profileHref?: string;
+  notificationsHref?: string;
+  helpHref?: string;
+  searchPlaceholder?: string;
 }
 
 interface Notification {
@@ -21,9 +25,16 @@ interface Notification {
   createdAt: string;
 }
 
-export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) {
+export function TopBar({
+  title,
+  breadcrumb,
+  onOpenMobileSidebar,
+  profileHref = "/student/profile",
+  notificationsHref = "/student/notifications",
+  helpHref = "/student/help-center",
+  searchPlaceholder = "Search courses...",
+}: TopBarProps) {
   const router = useRouter();
-  const pathname = usePathname();
   const { user, logout } = useAuthStore() as { user: any; logout: () => void };
   const [searchQuery, setSearchQuery] = useState("");
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -36,28 +47,34 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Fetch notifications for the dropdown
-  const fetchNotifications = async () => {
+const fetchNotifications = async () => {
     try {
+    
       const res = await api.get("/notifications");
       setNotifications(res.data.notifications || []);
       setUnreadCount(res.data.unreadCount || 0);
     } catch (err) {
       console.error("Failed to fetch notifications", err);
+    } finally {
+       // Silently catch if unauthenticated; no need for loading state in a dropdown
     }
   };
 
-  useEffect(() => {
+useEffect(() => {
+    // Define the async function inside the effect
     const loadData = async () => {
       try {
         const res = await api.get("/notifications?limit=5");
+        // These calls are fine here because they are inside an async flow
         setNotifications(res.data.notifications || []);
         setUnreadCount(res.data.unreadCount || 0);
       } catch (err) {
         console.error("Failed to fetch notifications", err);
       }
     };
+
     loadData();
-  }, []);
+  }, []); // Empty dependency array ensures this runs only once on mount
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -93,22 +110,10 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
     }
   };
 
-  // Role-aware search handler
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      const query = encodeURIComponent(searchQuery.trim());
-      let searchRoute = `/student/search?q=${query}`; // Default student fallback
-
-      if (user?.role === "INSTRUCTOR") {
-        // Instructors search across courses, students, modules, and videos
-        searchRoute = `/instructor/search?q=${query}`;
-      } else if (user?.role === "ADMIN") {
-        // Admins search globally across users (students/instructors), courses, modules, and videos
-        searchRoute = `/admin/search?q=${query}`;
-      }
-
-      router.push(searchRoute);
+      router.push(`/courses?search=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -116,17 +121,6 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
     await logout();
     router.push("/login");
   };
-
-  // Compute dynamic base path depending on role
-  const basePath = user?.role === "ADMIN" 
-    ? "/admin" 
-    : user?.role === "INSTRUCTOR" 
-    ? "/instructor" 
-    : "/student";
-
-  const profilePath = `${basePath}/profile`;
-  const helpPath = `${basePath}/help-center`;
-  const notificationsPath = `${basePath}/notifications`;
 
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8 shadow-sm">
@@ -142,6 +136,7 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
+
         <div className="hidden md:flex flex-col flex-shrink-0 mr-8">
           {title && (
             <h1 className="text-lg font-extrabold text-slate-900 leading-tight">{title}</h1>
@@ -178,13 +173,15 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search courses..."
+              placeholder={searchPlaceholder}
               aria-label="Search courses"
               className="w-full rounded-lg bg-[#F4F9F7] pl-10 pr-4 py-2.5 text-sm text-slate-900 placeholder:text-slate-500 border-none focus:outline-none focus:ring-2 focus:ring-[#196A54]/30 focus:bg-white transition-all"
             />
           </div>
         </form>
+
         <div className="hidden sm:block w-px h-8 bg-slate-200"></div>
+
         <div className="flex items-center gap-4">
           
           {/* INTERACTIVE NOTIFICATION BELL & DROPDOWN */}
@@ -204,6 +201,7 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
                 </span>
               )}
             </button>
+
             {showNotifications && (
               <div className="absolute right-0 z-30 mt-2 w-80 sm:w-96 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl ring-1 ring-black/5">
                 
@@ -254,6 +252,7 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
                             })}
                           </span>
                         </div>
+
                         {!notif.isRead && (
                           <button
                             onClick={(e) => handleMarkAsRead(notif.id, e)}
@@ -271,13 +270,14 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
                 {/* Dropdown Footer Link */}
                 <div className="border-t border-slate-100 bg-slate-50 p-2 text-center">
                   <Link
-                    href={notificationsPath}
+                    href={notificationsHref}
                     onClick={() => setShowNotifications(false)}
                     className="text-xs font-bold text-[#196A54] hover:underline flex items-center justify-center gap-1.5 py-1"
                   >
                     View all notifications <ExternalLink className="w-3.5 h-3.5" />
                   </Link>
                 </div>
+
               </div>
             )}
           </div>
@@ -293,12 +293,13 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
                 <Avatar name={user?.fullName} size="sm" />
               </div>
               <span className="hidden text-sm font-bold text-slate-700 sm:block">
-                {user?.fullName?.split(" ")[0] || "User"}
+                {user?.fullName?.split(" ")[0] || "Student"}
               </span>
               <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
+
             {showProfileMenu && (
               <>
                 <div
@@ -314,14 +315,14 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
                   </div>
                   <div className="py-1">
                     <Link
-                      href={profilePath}
+                      href={profileHref}
                       onClick={() => setShowProfileMenu(false)}
                       className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-[#196A54] transition-colors"
                     >
                       My Profile
                     </Link>
                     <Link
-                      href={helpPath}
+                      href={helpHref}
                       onClick={() => setShowProfileMenu(false)}
                       className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:text-[#196A54] transition-colors"
                     >
@@ -344,4 +345,4 @@ export function TopBar({ title, breadcrumb, onOpenMobileSidebar }: TopBarProps) 
       </div>
     </header>
   );
-}
+}   

@@ -1,8 +1,10 @@
-// client/src/components/layout/DashboardShell.tsx
 "use client";
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { Sidebar, NavItem } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
+
+const SIDEBAR_COLLAPSED_KEY = "lms-sidebar-collapsed";
 
 interface DashboardShellProps {
   children: React.ReactNode;
@@ -10,6 +12,10 @@ interface DashboardShellProps {
   portalLabel: string;
   topBarTitle?: string;
   breadcrumb?: { label: string; href?: string }[];
+  profileHref?: string;
+  notificationsHref?: string;
+  helpHref?: string;
+  searchPlaceholder?: string;
 }
 
 export function DashboardShell({
@@ -18,30 +24,49 @@ export function DashboardShell({
   portalLabel,
   topBarTitle,
   breadcrumb,
+  profileHref,
+  notificationsHref,
+  helpHref,
+  searchPlaceholder,
 }: DashboardShellProps) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+    if (stored === "true") setSidebarCollapsed(true);
+  }, []);
+
+  function toggleSidebarCollapse() {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, String(next));
+      return next;
+    });
+  }
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F4F9F7]">
-      <Sidebar 
-        navItems={navItems} 
-        portalLabel={portalLabel} 
+      <Sidebar
+        navItems={navItems}
+        portalLabel={portalLabel}
         isOpen={isMobileSidebarOpen}
         onClose={() => setIsMobileSidebarOpen(false)}
+        profileHref={profileHref}
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={toggleSidebarCollapse}
       />
       <div className="flex flex-1 flex-col overflow-hidden">
-        {/* Pass mobile toggle trigger handler down to TopBar */}
-        <TopBar 
-          title={topBarTitle} 
-          breadcrumb={breadcrumb} 
+        <TopBar
+          title={topBarTitle}
+          breadcrumb={breadcrumb}
           onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
+          profileHref={profileHref}
+          notificationsHref={notificationsHref}
+          helpHref={helpHref}
+          searchPlaceholder={searchPlaceholder}
         />
-        {/* Added standard padding and max-w constraints here */}
-        <main className="flex-1 overflow-y-auto px-6 lg:px-8 py-8">
-          <div className="max-w-7xl mx-auto">
-            {children}
-          </div>
-        </main>
+        <main className="flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
   );
