@@ -1,0 +1,31 @@
+
+> secure-lms-server@1.0.0 test
+> npx dotenv-cli -e .env.test -- vitest run --fileParallelism=false content-authorization.test.ts
+
+(!) Your Vite config uses features that are unsupported by `configLoader: 'native'`, which is planned to become the default in a future major version of Vite:
+  - ESM syntax in a file loaded as CommonJS (vitest.config.ts:1:1). Use a `.mjs` extension or set `"type": "module"` in the closest package.json
+Set `VITE_CONFIG_NATIVE_IGNORE_WARNING=true` to suppress this warning.
+
+[1m[30m[46m RUN [49m[39m[22m [36mv4.1.10 [39m[90m/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server[39m
+
+[90mstdout[2m | tests/integration/content-authorization.test.ts
+[22m[39mCloudinary config: { cloud_name: [90mundefined[39m, api_key: [90mundefined[39m, api_secret: [32m'MISSING'[39m }
+
+[90mstderr[2m | tests/integration/content-authorization.test.ts[2m > [22m[2mSecurity — Course content authorization[2m > [22m[2mdoes not expose modules belonging to a draft course
+[22m[39mError: Course not found
+    at Module.getModulesByCourse [90m(/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/[39msrc/modules/courses/modules.service.ts:54:19[90m)[39m
+[90m    at processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at getModulesByCourse [90m(/home/amuzie/workspace/secure-lms-learning/secure-lms-mvp/server/[39msrc/modules/courses/modules.controller.ts:7:21[90m)[39m {
+  statusCode: [33m404[39m
+}
+
+ [32m✓[39m tests/integration/content-authorization.test.ts [2m([22m[2m4 tests[22m[2m)[22m[33m 5283[2mms[22m[39m
+     [33m[2m✓[22m[39m does not expose lesson contentUrl through the public modules endpoint [33m 1293[2mms[22m[39m
+     [33m[2m✓[22m[39m does not expose modules belonging to a draft course [33m 1012[2mms[22m[39m
+     [33m[2m✓[22m[39m hides lesson contentUrl from a non-enrolled student [33m 1427[2mms[22m[39m
+     [33m[2m✓[22m[39m returns lesson contentUrl to an actively enrolled student [33m 1323[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m1 passed[39m[22m[90m (1)[39m
+[2m      Tests [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+[2m   Start at [22m 09:20:20
+[2m   Duration [22m 7.31s[2m (transform 820ms, setup 292ms, import 1.47s, tests 5.28s, environment 0ms)[22m

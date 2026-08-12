@@ -1,0 +1,116 @@
+Step: gitleaks
+Started: 2026-08-11T08:40:51Z
+
+
+    ○
+    │╲
+    │ ○
+    ○ ░
+    ░    gitleaks
+
+[90m9:40AM[0m [32mINF[0m [1m94 commits scanned.[0m
+[90m9:40AM[0m [32mINF[0m [1mscanned ~3853655 bytes (3.85 MB) in 887ms[0m
+[90m9:40AM[0m [32mINF[0m [1mno leaks found[0m
+
+Finished: 2026-08-11T08:40:53Z
+Exit code: 0
+Step: npm-audit-client
+Started: 2026-08-11T08:40:53Z
+
+found 0 vulnerabilities
+
+Finished: 2026-08-11T08:40:55Z
+Exit code: 0
+Step: npm-audit-server
+Started: 2026-08-11T08:40:55Z
+
+# npm audit report
+
+uuid  <11.1.1
+Severity: moderate
+uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided - https://github.com/advisories/GHSA-w5hq-g745-h8pq
+fix available via `npm audit fix --force`
+Will install uuid@14.0.1, which is a breaking change
+node_modules/uuid
+  gaxios  6.4.0 - 6.7.1
+  Depends on vulnerable versions of uuid
+  node_modules/gaxios
+  teeny-request  3.9.1 - 9.0.0
+  Depends on vulnerable versions of uuid
+  node_modules/teeny-request
+    @google-cloud/storage  2.2.0 - 2.5.0 || >=5.19.0
+    Depends on vulnerable versions of retry-request
+    Depends on vulnerable versions of teeny-request
+    node_modules/@google-cloud/storage
+      firebase-admin  7.0.0 - 8.2.0 || >=11.0.0
+      Depends on vulnerable versions of @google-cloud/storage
+      node_modules/firebase-admin
+    retry-request  7.0.0 - 7.0.2
+    Depends on vulnerable versions of teeny-request
+    node_modules/retry-request
+
+6 moderate severity vulnerabilities
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Finished: 2026-08-11T08:40:58Z
+Exit code: 0
+Step: npm-audit-packages-shared
+Started: 2026-08-11T08:40:58Z
+
+found 0 vulnerabilities
+
+Finished: 2026-08-11T08:41:00Z
+Exit code: 0
+Step: semgrep
+Started: 2026-08-11T08:41:00Z
+
+
+
+┌─────────────┐
+│ Scan Status │
+└─────────────┘
+  Scanning 330 files tracked by git with 565 Code rules:
+
+  Language      Rules   Files          Origin      Rules
+ ─────────────────────────────        ───────────────────
+  <multilang>       6     330          Community     565
+  ts               76     161
+  json              3       9
+  yaml             25       6
+  js               70       4
+  bash              1       2
+  dockerfile        4       1
+
+
+
+┌──────────────┐
+│ Scan Summary │
+└──────────────┘
+✅ Scan completed successfully.
+ • Findings: 0 (0 blocking)
+ • Rules run: 115
+ • Targets scanned: 330
+ • Parsed lines: ~99.9%
+ • Scan skipped:
+   ◦ Files larger than  files 1.0 MB: 1
+   ◦ Files matching .semgrepignore patterns: 12
+ • Scan was limited to files tracked by git
+ • For a detailed list of skipped files and lines, run semgrep with the --verbose flag
+Ran 115 rules on 330 files: 0 findings.
+(need more rules? `semgrep login` for additional free Semgrep Registry rules)
+
+If Semgrep missed a finding, please send us feedback to let us know!
+See https://semgrep.dev/docs/reporting-false-negatives/
+
+Finished: 2026-08-11T08:41:30Z
+Exit code: 0
+PASS: Validation left the repository working state unchanged.
+PASS: Strict evidence sanitisation verification passed
+
+Evidence directory: .ci-evidence/pr-validation/local-1-security-2026-08-11T08-40-51Z
+PR validation result: PASS
