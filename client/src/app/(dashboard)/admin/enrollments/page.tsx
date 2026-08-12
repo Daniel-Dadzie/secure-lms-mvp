@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -18,7 +18,7 @@ export default function AdminEnrollmentsPage() {
   const [userId, setUserId] = useState("");
   const [courseId, setCourseId] = useState("");
 
-  const fetchEnrollments = useCallback(async () => {
+  async function reloadEnrollments() {
     setLoading(true);
     try {
       const res = await api.get("/admin/enrollments", { params: { page, limit: 20 } });
@@ -27,9 +27,32 @@ export default function AdminEnrollmentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page]);
+  }
 
-  useEffect(() => { fetchEnrollments(); }, [fetchEnrollments]);
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await api.get("/admin/enrollments", { params: { page, limit: 20 } });
+        if (!cancelled) {
+          setEnrollments(res.data.enrollments ?? []);
+          setTotalPages(res.data.totalPages ?? 1);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [page]);
 
   async function handleManualEnroll(e: React.FormEvent) {
     e.preventDefault();
@@ -37,13 +60,13 @@ export default function AdminEnrollmentsPage() {
     setShowEnrollForm(false);
     setUserId("");
     setCourseId("");
-    fetchEnrollments();
+    reloadEnrollments();
   }
 
   async function handleCancel(id: string) {
     if (!confirm("Cancel this enrollment?")) return;
     await api.patch(`/admin/enrollments/${id}/cancel`);
-    fetchEnrollments();
+    reloadEnrollments();
   }
 
   return (

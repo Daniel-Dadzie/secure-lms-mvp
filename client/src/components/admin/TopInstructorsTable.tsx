@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import api from "@/lib/api";
 import { formatCurrency, formatNumber } from "@/lib/admin/formatters";
@@ -17,21 +17,31 @@ export function TopInstructorsTable() {
   const [sort, setSort] = useState<TopInstructorSort>("completions");
   const [loading, setLoading] = useState(true);
 
-  const fetchInstructors = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await api.get("/admin/analytics/instructors/top", {
-        params: { sort, limit: 20 },
-      });
-      setInstructors(res.data.instructors ?? []);
-    } finally {
-      setLoading(false);
-    }
-  }, [sort]);
-
   useEffect(() => {
-    fetchInstructors();
-  }, [fetchInstructors]);
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await api.get("/admin/analytics/instructors/top", {
+          params: { sort, limit: 20 },
+        });
+        if (!cancelled) {
+          setInstructors(res.data.instructors ?? []);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sort]);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">

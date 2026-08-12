@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { formatCurrency, formatNumber } from "@/lib/admin/formatters";
 import type { TopCourseRow, TopCourseSort } from "@/types/admin";
@@ -17,21 +17,31 @@ export function TopCoursesTable() {
   const [sort, setSort] = useState<TopCourseSort>("students");
   const [loading, setLoading] = useState(true);
 
-  const fetchCourses = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await api.get("/admin/analytics/courses/top", {
-        params: { sort, limit: 20 },
-      });
-      setCourses(res.data.courses ?? []);
-    } finally {
-      setLoading(false);
-    }
-  }, [sort]);
-
   useEffect(() => {
-    fetchCourses();
-  }, [fetchCourses]);
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await api.get("/admin/analytics/courses/top", {
+          params: { sort, limit: 20 },
+        });
+        if (!cancelled) {
+          setCourses(res.data.courses ?? []);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [sort]);
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">

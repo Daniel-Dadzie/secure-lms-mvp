@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import api from "@/lib/api";
 import { Badge } from "@/components/ui/Badge";
@@ -35,7 +35,7 @@ export default function AdminHelpArticlesPage() {
   const [form, setForm] = useState<ArticleForm>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
-  const fetchArticles = useCallback(async () => {
+  async function reloadArticles() {
     setLoading(true);
     try {
       const res = await api.get("/admin/help-articles");
@@ -43,11 +43,31 @@ export default function AdminHelpArticlesPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }
 
   useEffect(() => {
-    fetchArticles();
-  }, [fetchArticles]);
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await api.get("/admin/help-articles");
+        if (!cancelled) {
+          setArticles(res.data.articles ?? []);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function startCreate() {
     setEditingId(null);
@@ -79,7 +99,7 @@ export default function AdminHelpArticlesPage() {
       await api.post("/admin/help-articles", form);
       setShowForm(false);
       setForm(EMPTY_FORM);
-      await fetchArticles();
+      await reloadArticles();
     } finally {
       setSaving(false);
     }
@@ -93,7 +113,7 @@ export default function AdminHelpArticlesPage() {
       await api.patch(`/admin/help-articles/${editingId}`, form);
       setEditingId(null);
       setForm(EMPTY_FORM);
-      await fetchArticles();
+      await reloadArticles();
     } finally {
       setSaving(false);
     }
@@ -101,14 +121,14 @@ export default function AdminHelpArticlesPage() {
 
   async function togglePublish(article: HelpArticle) {
     await api.patch(`/admin/help-articles/${article.id}`, { isPublished: !article.isPublished });
-    fetchArticles();
+    reloadArticles();
   }
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this article?")) return;
     await api.delete(`/admin/help-articles/${id}`);
     if (editingId === id) cancelEdit();
-    fetchArticles();
+    reloadArticles();
   }
 
   function renderFormFields(

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -16,7 +16,7 @@ export default function AdminPurchasesPage() {
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("");
 
-  const fetchPurchases = useCallback(async () => {
+  async function reloadPurchases() {
     setLoading(true);
     try {
       const params: Record<string, string | number> = { page, limit: 20 };
@@ -27,16 +27,39 @@ export default function AdminPurchasesPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, statusFilter]);
+  }
 
   useEffect(() => {
-    fetchPurchases();
-  }, [fetchPurchases]);
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      try {
+        const params: Record<string, string | number> = { page, limit: 20 };
+        if (statusFilter) params.status = statusFilter;
+        const res = await api.get("/admin/purchases", { params });
+        if (!cancelled) {
+          setPurchases(res.data.purchases ?? []);
+          setTotalPages(res.data.totalPages ?? 1);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [page, statusFilter]);
 
   async function handleRefund(id: string) {
     if (!confirm("Mark this purchase as refunded?")) return;
     await api.patch(`/admin/purchases/${id}/refund`);
-    fetchPurchases();
+    reloadPurchases();
   }
 
   return (

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -17,19 +17,44 @@ export default function AdminMessagesPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
-  const fetchTickets = useCallback(async () => {
+  async function reloadTickets() {
     const res = await api.get("/admin/tickets?limit=50");
     setTickets(res.data.tickets ?? []);
-  }, []);
+  }
 
-  const fetchMessages = useCallback(async () => {
+  async function reloadMessages() {
     const res = await api.get("/admin/messages?answered=false&limit=50");
     setMessages(res.data.messages ?? []);
-  }, []);
+  }
 
   useEffect(() => {
-    Promise.all([fetchTickets(), fetchMessages()]).finally(() => setLoading(false));
-  }, [fetchTickets, fetchMessages]);
+    let cancelled = false;
+
+    async function load() {
+      try {
+        const [ticketsRes, messagesRes] = await Promise.all([
+          api.get("/admin/tickets?limit=50"),
+          api.get("/admin/messages?answered=false&limit=50"),
+        ]);
+        if (!cancelled) {
+          setTickets(ticketsRes.data.tickets ?? []);
+          setMessages(messagesRes.data.messages ?? []);
+        }
+      } catch (err) {
+        console.error("Failed to load messages:", err);
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function loadTicketDetail(ticketId: string) {
     const res = await api.get(`/admin/tickets/${ticketId}`);
@@ -44,7 +69,7 @@ export default function AdminMessagesPage() {
       await api.post(`/admin/tickets/${selectedTicket.id}/reply`, { body: reply });
       setReply("");
       await loadTicketDetail(selectedTicket.id);
-      await fetchTickets();
+      await reloadTickets();
     } finally {
       setSubmitting(false);
     }
@@ -52,12 +77,12 @@ export default function AdminMessagesPage() {
 
   async function resolveFaqMessage(eventId: string) {
     await api.patch(`/admin/messages/${eventId}/resolve`);
-    await fetchMessages();
+    await reloadMessages();
   }
 
   async function updateTicketStatus(ticketId: string, status: string) {
     await api.patch(`/admin/tickets/${ticketId}`, { status });
-    await fetchTickets();
+    await reloadTickets();
     if (selectedTicket?.id === ticketId) await loadTicketDetail(ticketId);
   }
 

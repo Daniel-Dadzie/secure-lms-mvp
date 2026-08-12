@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "@/lib/api";
 import { CourseTable } from "@/components/admin/CourseTable";
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
@@ -15,7 +15,7 @@ export default function AdminCoursesPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
 
-  const fetchCourses = useCallback(async () => {
+  async function reloadCourses() {
     try {
       setLoading(true);
       const res = await api.get("/admin/courses");
@@ -27,11 +27,37 @@ export default function AdminCoursesPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }
 
   useEffect(() => {
-    fetchCourses();
-  }, [fetchCourses]);
+    let cancelled = false;
+
+    async function load() {
+      try {
+        setLoading(true);
+        const res = await api.get("/admin/courses");
+        if (!cancelled) {
+          setCourses(res.data.courses ?? []);
+          setError(null);
+        }
+      } catch (err) {
+        console.error("Failed to load courses:", err);
+        if (!cancelled) {
+          setError("Could not load courses.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filteredCourses = useMemo(() => {
     return courses.filter((course) => {
@@ -45,7 +71,7 @@ export default function AdminCoursesPage() {
 
   async function handleArchive(courseId: string) {
     await api.delete(`/courses/${courseId}`);
-    await fetchCourses();
+    await reloadCourses();
   }
 
   return (

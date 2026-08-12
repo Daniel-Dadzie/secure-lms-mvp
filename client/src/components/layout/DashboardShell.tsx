@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Sidebar, NavItem } from "@/components/layout/Sidebar";
 import { TopBar } from "@/components/layout/TopBar";
 
@@ -30,12 +30,10 @@ export function DashboardShell({
   searchPlaceholder,
 }: DashboardShellProps) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-
-  useEffect(() => {
-    const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
-    if (stored === "true") setSidebarCollapsed(true);
-  }, []);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "true";
+  });
 
   function toggleSidebarCollapse() {
     setSidebarCollapsed((prev) => {

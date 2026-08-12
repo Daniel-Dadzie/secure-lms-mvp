@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -16,7 +16,7 @@ export default function AdminReviewsPage() {
   const [loading, setLoading] = useState(true);
   const [visibleFilter, setVisibleFilter] = useState<string>("");
 
-  const fetchReviews = useCallback(async () => {
+  async function reloadReviews() {
     setLoading(true);
     try {
       const params: Record<string, string | number> = { page, limit: 20 };
@@ -27,9 +27,34 @@ export default function AdminReviewsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, visibleFilter]);
+  }
 
-  useEffect(() => { fetchReviews(); }, [fetchReviews]);
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      try {
+        const params: Record<string, string | number> = { page, limit: 20 };
+        if (visibleFilter) params.visible = visibleFilter;
+        const res = await api.get("/admin/reviews", { params });
+        if (!cancelled) {
+          setReviews(res.data.reviews ?? []);
+          setTotalPages(res.data.totalPages ?? 1);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [page, visibleFilter]);
 
   async function toggleVisibility(review: AdminReview) {
     if (review.isVisible) {
@@ -37,7 +62,7 @@ export default function AdminReviewsPage() {
     } else {
       await api.patch(`/admin/reviews/${review.id}/restore`);
     }
-    fetchReviews();
+    reloadReviews();
   }
 
   return (

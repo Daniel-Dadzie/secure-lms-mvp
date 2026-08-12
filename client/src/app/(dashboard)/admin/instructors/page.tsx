@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import api from "@/lib/api";
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
@@ -15,18 +15,30 @@ export default function AdminInstructorsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  const fetchInstructors = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await api.get("/admin/instructors", { params: { page, limit: 20 } });
-      setInstructors(res.data.instructors ?? []);
-      setTotalPages(res.data.totalPages ?? 1);
-    } finally {
-      setLoading(false);
-    }
-  }, [page]);
+  useEffect(() => {
+    let cancelled = false;
 
-  useEffect(() => { fetchInstructors(); }, [fetchInstructors]);
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await api.get("/admin/instructors", { params: { page, limit: 20 } });
+        if (!cancelled) {
+          setInstructors(res.data.instructors ?? []);
+          setTotalPages(res.data.totalPages ?? 1);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [page]);
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">

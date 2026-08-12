@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -18,7 +18,7 @@ export default function AdminCouponsPage() {
     maxUses: "",
   });
 
-  const fetchCoupons = useCallback(async () => {
+  async function reloadCoupons() {
     setLoading(true);
     try {
       const res = await api.get("/admin/coupons");
@@ -26,9 +26,31 @@ export default function AdminCouponsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }
 
-  useEffect(() => { fetchCoupons(); }, [fetchCoupons]);
+  useEffect(() => {
+    let cancelled = false;
+
+    async function load() {
+      setLoading(true);
+      try {
+        const res = await api.get("/admin/coupons");
+        if (!cancelled) {
+          setCoupons(res.data.coupons ?? []);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -40,13 +62,13 @@ export default function AdminCouponsPage() {
     });
     setShowForm(false);
     setForm({ code: "", discountType: "PERCENTAGE", discountValue: 10, maxUses: "" });
-    fetchCoupons();
+    reloadCoupons();
   }
 
   async function handleDeactivate(id: string) {
     if (!confirm("Deactivate this coupon?")) return;
     await api.delete(`/admin/coupons/${id}`);
-    fetchCoupons();
+    reloadCoupons();
   }
 
   return (

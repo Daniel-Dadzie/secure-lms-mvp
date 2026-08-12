@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import api from "@/lib/api";
 import { AuditLogTable } from "@/components/admin/AuditLogTable";
 import { Pagination } from "@/components/ui/Pagination";
@@ -17,31 +17,43 @@ export default function AdminActivityLogsPage() {
   const [page, setPage] = useState(1);
   const [actionFilter, setActionFilter] = useState("");
 
-  const fetchLogs = useCallback(async () => {
-    try {
-      setLoading(true);
-      const params: Record<string, string | number> = {
-        page,
-        limit: PAGE_SIZE,
-      };
-      if (actionFilter) {
-        params.action = actionFilter;
-      }
-
-      const res = await api.get("/admin/audit-log", { params });
-      setData(res.data);
-      setError(null);
-    } catch (err) {
-      console.error("Failed to load audit logs:", err);
-      setError("Could not load activity logs.");
-    } finally {
-      setLoading(false);
-    }
-  }, [page, actionFilter]);
-
   useEffect(() => {
-    fetchLogs();
-  }, [fetchLogs]);
+    let cancelled = false;
+
+    async function load() {
+      try {
+        setLoading(true);
+        const params: Record<string, string | number> = {
+          page,
+          limit: PAGE_SIZE,
+        };
+        if (actionFilter) {
+          params.action = actionFilter;
+        }
+
+        const res = await api.get("/admin/audit-log", { params });
+        if (!cancelled) {
+          setData(res.data);
+          setError(null);
+        }
+      } catch (err) {
+        console.error("Failed to load audit logs:", err);
+        if (!cancelled) {
+          setError("Could not load activity logs.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [page, actionFilter]);
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import api from "@/lib/api";
 import { UserTable } from "@/components/admin/UserTable";
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
@@ -18,7 +18,7 @@ export default function AdminUsersPage() {
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("ALL");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
 
-  const fetchUsers = useCallback(async () => {
+  async function reloadUsers() {
     try {
       setLoading(true);
       const res = await api.get("/admin/users");
@@ -30,11 +30,37 @@ export default function AdminUsersPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }
 
   useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+    let cancelled = false;
+
+    async function load() {
+      try {
+        setLoading(true);
+        const res = await api.get("/admin/users");
+        if (!cancelled) {
+          setUsers(res.data.users ?? []);
+          setError(null);
+        }
+      } catch (err) {
+        console.error("Failed to load users:", err);
+        if (!cancelled) {
+          setError("Could not load users.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
@@ -55,17 +81,17 @@ export default function AdminUsersPage() {
 
   async function handleActivate(userId: string) {
     await api.post(`/users/admin/users/${userId}/activate`);
-    await fetchUsers();
+    await reloadUsers();
   }
 
   async function handleDeactivate(userId: string) {
     await api.post(`/users/admin/users/${userId}/deactivate`);
-    await fetchUsers();
+    await reloadUsers();
   }
 
   async function handleVerifyEmail(userId: string) {
     await api.post(`/admin/users/${userId}/verify-email`);
-    await fetchUsers();
+    await reloadUsers();
   }
 
   async function handleResetPassword(userId: string, newPassword: string) {

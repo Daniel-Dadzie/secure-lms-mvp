@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Shield, Trash2 } from "lucide-react";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
@@ -20,7 +20,7 @@ export default function AdminSettingsPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  const fetchCategories = useCallback(async () => {
+  async function reloadCategories() {
     try {
       setLoading(true);
       const res = await api.get("/categories");
@@ -31,11 +31,36 @@ export default function AdminSettingsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }
 
   useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+    let cancelled = false;
+
+    async function load() {
+      try {
+        setLoading(true);
+        const res = await api.get("/categories");
+        if (!cancelled) {
+          setCategories(res.data.categories ?? res.data ?? []);
+        }
+      } catch (err) {
+        console.error("Failed to load categories:", err);
+        if (!cancelled) {
+          setError("Could not load categories.");
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+
+    void load();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleAddCategory(e: React.FormEvent) {
     e.preventDefault();
@@ -49,7 +74,7 @@ export default function AdminSettingsPage() {
       await api.post("/categories", { name: newCategoryName.trim() });
       setNewCategoryName("");
       setSuccess("Category created successfully.");
-      await fetchCategories();
+      await reloadCategories();
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data
@@ -72,7 +97,7 @@ export default function AdminSettingsPage() {
     try {
       await api.delete(`/categories/${categoryId}`);
       setSuccess("Category deleted successfully.");
-      await fetchCategories();
+      await reloadCategories();
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data
