@@ -1,6 +1,8 @@
 import type { Request, Response, NextFunction } from "express";
 import * as lessonsService from "./lessons.service";
+import { verifyLessonStreamToken, streamLessonVideo } from "./lesson-stream.service";
 import { createLessonSchema, updateLessonSchema, reorderLessonsSchema } from "./lessons.schemas";
+import { prisma } from "../../config/prisma";
 
 export async function getLessonById(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
@@ -62,4 +64,50 @@ export async function reorderLessons(req: Request, res: Response, next: NextFunc
     await lessonsService.reorderLessons(req.params.moduleId as string, parsed.data, userId);
     res.status(200).json({ message: "Lessons reordered" });
   } catch (error) { next(error); }
+}
+
+export async function streamLessonVideoHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const token = typeof req.query.token === "string" ? req.query.token : null;
+    if (!token) {
+      res.status(401).json({ message: "Stream token required" });
+      return;
+    }
+
+    const payload = verifyLessonStreamToken(token);
+    const { courseId, lessonId } = req.params;
+
+    if (payload.lessonId !== lessonId || payload.courseId !== courseId) {
+      res.status(403).json({ message: "Invalid stream token" });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: payload.sub },
+      select: { role: true, isActive: true },
+    });
+
+    if (!user?.isActive) {
+      res.status(403).json({ message: "Video not available" });
+      return;
+    }
+
+    await streamLessonVideo(
+      lessonId as string,
+      payload.sub,
+      user.role,
+      req,
+      res
+    );
+  } catch (error: any) {
+    if (error?.name === "JsonWebTokenError" || error?.name === "TokenExpiredError") {
+      res.status(401).json({ message: "Stream token expired" });
+      return;
+    }
+    next(error);
+  }
 }

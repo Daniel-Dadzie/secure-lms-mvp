@@ -127,6 +127,33 @@ describe("Security — Course content authorization", () => {
    );
  });
 
+  it("returns lesson contentUrl to a student with completed enrollment", async () => {
+    const { course, courseModule, lesson } =
+      await createContentFixture("PUBLISHED");
+
+    const { user: student, accessToken } = await createTestUser({
+      email: `completed-${crypto.randomUUID()}@test.com`,
+      role: "STUDENT",
+    });
+
+    await prisma.enrollment.create({
+      data: {
+        userId: student.id,
+        courseId: course.id,
+        status: "COMPLETED",
+      },
+    });
+
+    const res = await request
+      .get(
+        `/api/courses/${course.id}/modules/${courseModule.id}/lessons/${lesson.id}`
+      )
+      .set("Authorization", `Bearer ${accessToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.lesson.contentUrl).toMatch(/\/stream\?token=/);
+  });
+
   it("returns lesson contentUrl to an actively enrolled student", async () => {
     const { course, courseModule, lesson } =
       await createContentFixture("PUBLISHED");
@@ -151,9 +178,7 @@ describe("Security — Course content authorization", () => {
       .set("Authorization", `Bearer ${accessToken}`);
 
     expect(res.status).toBe(200);
-    expect(res.body.lesson.contentUrl).toBe(
-      "https://cdn.example.test/protected-video.mp4"
-    );
+    expect(res.body.lesson.contentUrl).toMatch(/\/stream\?token=/);
   });
 
   it("resolves course detail by slug and exposes access flags", async () => {

@@ -493,13 +493,13 @@ async function main() {
                   title: m.title + " - Part 1", 
                   order: 1, 
                   durationSeconds: 1200, 
-                  contentUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" 
+                  contentUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
                 },
                 { 
                   title: m.title + " - Part 2", 
                   order: 2, 
                   durationSeconds: 1500, 
-                  contentUrl: "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4" 
+                  contentUrl: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4" 
                 }
               ]
             }
@@ -802,6 +802,29 @@ async function main() {
 
   console.log("Database successfully seeded with 12 courses, modules, and video streams!");
 
+  // Patch legacy demo video URLs that now return 403 from Google Storage
+  const legacyUrlPatches = [
+    {
+      from: "https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      to: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+    },
+    {
+      from: "https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+      to: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4",
+    },
+    {
+      from: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+      to: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",
+    },
+  ] as const;
+
+  for (const patch of legacyUrlPatches) {
+    await prisma.lesson.updateMany({
+      where: { contentUrl: patch.from },
+      data: { contentUrl: patch.to },
+    });
+  }
+
   // 7. Sample purchases across months for admin analytics charts
   console.log("Seeding sample purchases...");
   const allCourses = await prisma.course.findMany({ take: 6 });
@@ -919,33 +942,310 @@ async function main() {
     skipDuplicates: true,
   });
 
-  // 9. Help articlesb
-  await prisma.helpArticle.upsert({
-    where: { slug: "how-to-register" },
-    update: {},
-    create: {
-      title: "How to Register",
+  // 9. Help articles (FAQ knowledge base for help center + chatbot)
+  const helpArticles = [
+    {
       slug: "how-to-register",
-      content:
-        "Click Create Account on the login page, fill in your details, and verify your email.",
+      title: "How to Register for an Account",
       category: "getting-started",
-      isPublished: true,
       order: 1,
-    },
-  });
+      content: `Creating a MechSpec LMS account takes about two minutes.
 
-  await prisma.helpArticle.upsert({
-    where: { slug: "how-to-enroll" },
-    update: {},
-    create: {
-      title: "How to Enroll in a Course",
-      slug: "how-to-enroll",
-      content: "Browse courses, add to cart, and complete checkout to enroll.",
-      category: "courses",
-      isPublished: true,
-      order: 2,
+1. Go to the login page and click "Create Account".
+2. Enter your full name, email address, and a password (minimum 8 characters).
+3. Choose your role: Student (to take courses) or Instructor (to publish courses).
+4. Submit the form and check your email for a verification link.
+5. Click the verification link, then log in with your new credentials.
+
+If you do not receive the verification email within a few minutes, check your spam folder or request a new link from the login page.`,
     },
-  });
+    {
+      slug: "how-to-log-in",
+      title: "How to Log In to Your Account",
+      category: "getting-started",
+      order: 2,
+      content: `To access your student or instructor dashboard:
+
+1. Visit the login page.
+2. Enter the email address you used when registering.
+3. Enter your password and click "Log In".
+
+If you forgot your password, use the "Forgot Password" link on the login page. You will receive an email with instructions to set a new password.
+
+Stay logged in on trusted devices using the remember-me option. Log out from shared computers when you are finished.`,
+    },
+    {
+      slug: "how-to-reset-password",
+      title: "How to Reset Your Password",
+      category: "getting-started",
+      order: 3,
+      content: `If you cannot log in because you forgot your password:
+
+1. Open the login page and click "Forgot Password".
+2. Enter your registered email address and submit the form.
+3. Check your inbox (and spam folder) for a password reset email.
+4. Click the link in the email — it expires after a limited time for security.
+5. Choose a new password (at least 8 characters) and confirm it.
+6. Return to the login page and sign in with your new password.
+
+If you did not request a reset and receive an email, contact support immediately. Never share your password with anyone, including support staff.`,
+    },
+    {
+      slug: "how-to-enroll",
+      title: "How to Enroll in a Course",
+      category: "courses",
+      order: 1,
+      content: `Enrolling gives you access to course lessons, progress tracking, and certificates.
+
+For paid courses:
+1. Browse the course catalogue from the home page or student portal.
+2. Open a course to read the description, syllabus, and price.
+3. Click "Add to Cart" or "Enroll Now".
+4. Review your cart and proceed to checkout.
+5. Complete payment using the available payment methods.
+6. After successful payment, the course appears under "My Courses" / "My Learning".
+
+For free courses:
+1. Find a course marked as free in the catalogue.
+2. Click "Enroll" — no checkout is required.
+3. Start learning immediately from your dashboard.
+
+You must be logged in as a student to enroll. Instructors cannot enroll in their own courses as students.`,
+    },
+    {
+      slug: "free-courses",
+      title: "How Free Courses Work",
+      category: "courses",
+      order: 2,
+      content: `Some courses on MechSpec LMS are offered at no cost.
+
+Free courses:
+- Display a "Free" label on the course card and detail page.
+- Can be enrolled in with one click — no cart or payment step.
+- Include the same lessons, progress tracking, and certificates as paid courses (when the instructor enables certificates).
+- May still require a registered student account.
+
+To enroll in a free course, log in, open the course page, and click "Enroll" or "Start Learning". The course will appear in My Learning immediately.
+
+Free courses are subject to the same platform terms of use as paid courses.`,
+    },
+    {
+      slug: "using-the-shopping-cart",
+      title: "Using the Shopping Cart and Checkout",
+      category: "courses",
+      order: 3,
+      content: `The cart holds paid courses you intend to purchase.
+
+Adding courses:
+- Click "Add to Cart" on any paid course page or catalogue card.
+- You can add multiple courses before checking out.
+
+Checkout:
+1. Open the cart from the navigation menu.
+2. Review course titles, prices, and the total amount.
+3. Apply a coupon code if you have one (enter it on the checkout page).
+4. Click "Proceed to Checkout" and complete payment.
+5. On success, you are redirected to a confirmation page and enrolled automatically.
+
+If payment fails, your cart is preserved — fix the payment issue and try again. Do not complete checkout twice for the same order.`,
+    },
+    {
+      slug: "payment-methods",
+      title: "Payment Methods and Checkout",
+      category: "payments",
+      order: 1,
+      content: `MechSpec LMS uses secure online payment processing for course purchases.
+
+Supported payment flow:
+- Checkout is powered by Paystack.
+- Payments are processed in the platform currency (GHS — Ghana Cedis) for test and regional accounts.
+- You can pay with supported cards and mobile money options shown on the Paystack checkout page.
+
+Steps:
+1. Add paid courses to your cart.
+2. Go to checkout and confirm your order total.
+3. You are redirected to the secure Paystack payment page.
+4. Complete payment — on success, enrolments are created automatically.
+5. If redirected back with an error, check your payment method or try again.
+
+Receipts and purchase history are available in your student dashboard. Contact support if you were charged but not enrolled.`,
+    },
+    {
+      slug: "refund-policy",
+      title: "Refund Policy for Paid Courses",
+      category: "payments",
+      order: 2,
+      content: `We want you to be confident in your purchase.
+
+30-day money-back guarantee:
+- Applies to paid individual courses purchased through the platform.
+- Request a refund within 30 days of purchase if you are not satisfied with the learning experience.
+- Refunds are reviewed by the platform administrator.
+
+To request a refund:
+1. Open Help Center or contact support from your student dashboard.
+2. Include your account email, course name, and purchase date.
+3. Briefly describe why you are requesting a refund.
+
+Refunds are not automatic — each request is reviewed. Completed courses with issued certificates may not qualify. Bundle or promotional pricing may have different terms noted at purchase time.`,
+    },
+    {
+      slug: "certificate-access",
+      title: "How to Access and Download Your Certificate",
+      category: "certificates",
+      order: 1,
+      content: `Certificates are awarded when you complete all required lessons in a course.
+
+To earn a certificate:
+1. Enroll in the course and complete every lesson (videos, readings, quizzes as required).
+2. Your progress bar must reach 100%.
+3. The certificate is generated automatically — no separate application is needed.
+
+To view and download:
+1. Log in and go to "Certificates" in the student portal sidebar.
+2. Find the course in your list of earned certificates.
+3. Click to view or download the PDF certificate.
+
+Certificates include your name, course title, completion date, and a verification reference. If you completed a course but do not see a certificate, ensure all modules are marked complete or contact support.`,
+    },
+    {
+      slug: "certificate-recognition",
+      title: "Are Certificates Recognised by Employers?",
+      category: "certificates",
+      order: 2,
+      content: `MechSpec Technologies courses are designed for professional engineering upskilling.
+
+Our professional certificates:
+- Demonstrate completion of structured technical coursework on the platform.
+- Are WCQA-accredited where noted on the course page.
+- Are recognised by partner engineering organisations and employers in our network.
+
+Certificates verify that you completed the course requirements on MechSpec LMS. Employer acceptance varies by company and role — always check with your HR or licensing body for specific requirements.
+
+You can share your certificate PDF or verification link from the Certificates page in your student dashboard.`,
+    },
+    {
+      slug: "mobile-and-offline-access",
+      title: "Mobile Access and Learning on the Go",
+      category: "account",
+      order: 1,
+      content: `MechSpec LMS works on phones, tablets, and desktops.
+
+Mobile access:
+- The platform is a responsive web app — open it in Chrome, Safari, or Firefox on your phone.
+- Log in with the same account as on desktop; your progress syncs automatically.
+- Add the site to your home screen for quick access (browser "Install app" or "Add to Home Screen").
+
+Tips for mobile learning:
+- Use Wi-Fi for video lessons to save data.
+- Rotate to landscape for better video viewing.
+- Notifications (if enabled) alert you to course updates and messages.
+
+There is no separate app store download required — use your mobile browser. If a page does not display correctly, update your browser or try desktop mode.`,
+    },
+    {
+      slug: "become-an-instructor",
+      title: "How to Become an Instructor",
+      category: "instructors",
+      order: 1,
+      content: `Instructors publish and manage courses on MechSpec LMS.
+
+Who can apply:
+- Experienced engineers and technical professionals.
+- Industry practitioners with expertise in mechanical engineering, CAD, robotics, automation, or related fields.
+
+How to register as an instructor:
+1. Click "Create Account" on the login page.
+2. Select "Instructor" as your role during registration.
+3. Complete your profile with professional background information.
+4. After approval, access the Instructor Portal to create courses, manage students, and view analytics.
+
+Alternatively, contact our partnerships team via the Contact page for enterprise or bulk instructor onboarding.
+
+Instructors set course pricing (free or paid), upload content, and respond to student reviews. Earnings from paid courses are tracked in the Instructor Portal under Earnings.`,
+    },
+    {
+      slug: "contact-support",
+      title: "How to Contact Support",
+      category: "support",
+      order: 1,
+      content: `We are here to help with account, payment, and course access issues.
+
+Self-service options:
+- Use the Help Assistant chat button (bottom-right on most pages) to search help articles.
+- Browse the Help Center from your student or instructor dashboard.
+
+Submit a support ticket:
+1. Log in and open Help Center.
+2. Describe your issue clearly — include course name, error messages, and screenshots if possible.
+3. Submit the ticket; an administrator will respond.
+
+When asking the Help Assistant:
+- Questions about registration, enrollment, payments, and certificates are answered from our help articles.
+- If the assistant cannot help, your question is logged automatically as a support ticket.
+
+For urgent payment or access issues, include your account email and the date of the transaction.`,
+    },
+    {
+      slug: "student-dashboard-overview",
+      title: "Student Dashboard Overview",
+      category: "getting-started",
+      order: 4,
+      content: `The Student Portal is your home base after logging in.
+
+Main sections:
+- Dashboard: quick overview of your learning activity.
+- Browse Courses: search and filter the full catalogue.
+- My Courses / My Learning: courses you are enrolled in and your progress.
+- Certificates: download earned certificates.
+- Help Center: articles and support tickets.
+
+Use the search bar in the top navigation to find courses by title or keyword. Notification bell shows unread messages and updates.
+
+To continue a course, open My Learning, select the course, and click "Continue" on the next incomplete lesson.`,
+    },
+    {
+      slug: "instructor-help-overview",
+      title: "Instructor Portal — Getting Started",
+      category: "instructors",
+      order: 2,
+      content: `The Instructor Portal helps you manage courses and students.
+
+Key areas:
+- Dashboard: summary of enrollments and activity.
+- My Courses: create, edit, and publish courses.
+- Students: view enrolled learners per course.
+- Reviews: read and respond to course reviews.
+- Analytics: track engagement and completion rates.
+- Earnings: view revenue from paid course sales.
+- Help Center: same support articles and tickets as students.
+
+To publish a new course, go to My Courses, click "Create Course", add modules and lessons, set pricing, and submit for review if required by platform settings.
+
+Use the Help Assistant on any page for quick answers about the platform.`,
+    },
+  ];
+
+  for (const article of helpArticles) {
+    await prisma.helpArticle.upsert({
+      where: { slug: article.slug },
+      update: {
+        title: article.title,
+        content: article.content,
+        category: article.category,
+        order: article.order,
+        isPublished: true,
+      },
+      create: {
+        title: article.title,
+        slug: article.slug,
+        content: article.content,
+        category: article.category,
+        isPublished: true,
+        order: article.order,
+      },
+    });
+  }
 }
 main()
   .catch((e) => {

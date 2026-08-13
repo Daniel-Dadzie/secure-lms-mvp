@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Save, Upload } from "lucide-react";
 import api from "@/lib/api";
+import { uploadAvatar } from "@/lib/upload.api";
 import { useAuthStore } from "@/store/auth.store";
 import { Avatar } from "@/components/ui/Avatar";
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
@@ -62,13 +63,14 @@ export default function InstructorSettingsPage() {
   async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !profile) return;
-    const formData = new FormData();
-    formData.append("image", file);
-    const res = await api.post("/uploads", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-    const url = res.data.url || res.data.imageUrl;
-    if (url) setProfile({ ...profile, avatarUrl: url });
+    try {
+      const url = await uploadAvatar(file);
+      setProfile({ ...profile, avatarUrl: url });
+    } catch {
+      setSuccess(null);
+      // Brief inline feedback — settings page has no dedicated error banner
+      alert("Failed to upload photo. Please try again.");
+    }
   }
 
   function addExpertise() {

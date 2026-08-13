@@ -1,6 +1,17 @@
 import api from "./api";
 
 // ----------------------------------------------------------------------------
+// Upload avatar — multipart/form-data to Cloudinary via our API
+// ----------------------------------------------------------------------------
+export async function uploadAvatar(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("image", file);
+
+  const response = await api.post("/uploads", formData);
+  return response.data.url;
+}
+
+// ----------------------------------------------------------------------------
 // Upload thumbnail — sends as multipart/form-data to our Express API
 // which then uploads to Cloudinary server-side
 // ----------------------------------------------------------------------------
@@ -26,6 +37,7 @@ export async function uploadCourseThumbnail(
 // ----------------------------------------------------------------------------
 export async function uploadLessonVideo(
   courseId: string,
+  moduleId: string,
   lessonId: string,
   file: File,
   onProgress?: (percent: number) => void
@@ -53,6 +65,12 @@ export async function uploadLessonVideo(
     xhr.onload = () => xhr.status === 200 ? resolve() : reject(new Error("Upload failed"));
     xhr.onerror = () => reject(new Error("Upload failed"));
     xhr.send(file);
+  });
+
+  // Persist the Firebase storage path — the server resolves it to a signed
+  // playback URL when a student loads the lesson.
+  await api.patch(`/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`, {
+    contentUrl: filePath,
   });
 
   return filePath;

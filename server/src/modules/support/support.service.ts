@@ -1,4 +1,12 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../../config/prisma";
+import { retrieveRelevantArticles } from "../../lib/articleRetrieval";
+import {
+  formatRetrievalFallback,
+  generateGroundedAnswer,
+  GeminiRateLimitError,
+  isChatbotEnabled,
+} from "../../services/chatbot.service";
 import * as helpService from "../help/help.service";
 import * as ticketsService from "../admin/admin-tickets.service";
 
@@ -35,35 +43,42 @@ const FALLBACK_FAQ = [
   },
 ];
 
-async function loadFaqFromDb(): Promise<{ keywords: string[]; answer: string }[]> {
-  try {
-    const articles = await helpService.getPublishedHelpArticles();
-    if (articles.length === 0) return FALLBACK_FAQ;
-    return articles.map((a) => ({
-      keywords: a.title.toLowerCase().split(/\s+/),
-      answer: a.content,
-    }));
-  } catch {
-    return FALLBACK_FAQ;
-  }
+function getRetrievalThreshold(): number {
+  const parsed = Number.parseFloat(process.env.CHATBOT_RETRIEVAL_THRESHOLD ?? "0.15");
+  return Number.isFinite(parsed) ? parsed : 0.15;
 }
 
-function findAnswer(
-  question: string,
-  knowledgeBase: { keywords: string[]; answer: string }[]
+function getSkipLlmThreshold(): number {
+  const parsed = Number.parseFloat(process.env.CHATBOT_SKIP_LLM_THRESHOLD ?? "0.2");
+  return Number.isFinite(parsed) ? parsed : 0.2;
+}
+
+function applyRetrievalAnswer(
+  retrieved: ReturnType<typeof retrieveRelevantArticles>
+): Pick<SupportAnswerResult, "answer" | "confidence" | "source" | "sourceTitles"> {
+  return {
+    answer: formatRetrievalFallback(retrieved.map((entry) => entry.article)),
+    confidence: retrieved[0].score,
+    source: "retrieval",
+    sourceTitles: retrieved.map((entry) => entry.article.title),
+  };
+}
+
+function findFallbackAnswer(
+  question: string
 ): { answer: string; confidence: number } {
   const normalised = question.toLowerCase().trim();
-  let bestMatch = { answer: "", confidence: 0, index: -1 };
+  let bestMatch = { answer: "", confidence: 0 };
 
-  knowledgeBase.forEach((entry, i) => {
+  for (const entry of FALLBACK_FAQ) {
     const matchedKeywords = entry.keywords.filter((kw) => normalised.includes(kw));
     const confidence = matchedKeywords.length / entry.keywords.length;
     if (confidence > bestMatch.confidence) {
-      bestMatch = { answer: entry.answer, confidence, index: i };
+      bestMatch = { answer: entry.answer, confidence };
     }
-  });
+  }
 
-  if (bestMatch.confidence === 0 || bestMatch.index === -1) {
+  if (bestMatch.confidence === 0) {
     return {
       answer:
         "I can only answer questions about platform features. Your question has been logged and an administrator will review it.",
@@ -71,30 +86,123 @@ function findAnswer(
     };
   }
 
-  return { answer: bestMatch.answer, confidence: bestMatch.confidence };
+  return bestMatch;
+}
+
+export interface SupportAnswerResult {
+  answer: string;
+  confidence: number;
+  ticketId?: string;
+  source?: "llm" | "retrieval" | "fallback";
+  sourceTitles?: string[];
 }
 
 export async function askSupport(
   question: string,
   userId?: string
-): Promise<{ answer: string; confidence: number; ticketId?: string }> {
-  const knowledgeBase = await loadFaqFromDb();
-  const result = findAnswer(question, knowledgeBase);
+): Promise<SupportAnswerResult> {
+  const threshold = getRetrievalThreshold();
+  const skipLlmThreshold = getSkipLlmThreshold();
+  const articles = await helpService.getPublishedHelpArticles();
+  const retrieved = retrieveRelevantArticles(question, articles, 3);
 
-  const auditEvent = await prisma.auditEvent.create({
+  let answer: string;
+  let confidence: number;
+  let source: SupportAnswerResult["source"];
+  let sourceTitles: string[] | undefined;
+  let createTicket = false;
+
+  if (articles.length === 0) {
+    const fallback = findFallbackAnswer(question);
+    answer = fallback.answer;
+    confidence = fallback.confidence;
+    source = "fallback";
+    createTicket = fallback.confidence === 0;
+  } else if (isChatbotEnabled()) {
+    const contextArticles =
+      retrieved.length > 0
+        ? retrieved.map((entry) => entry.article)
+        : articles.slice(0, 3);
+
+    const strongMatch =
+      retrieved.length > 0 && retrieved[0].score >= skipLlmThreshold;
+
+    if (strongMatch) {
+      ({ answer, confidence, source, sourceTitles } = applyRetrievalAnswer(retrieved));
+    } else {
+      try {
+        const llmResult = await generateGroundedAnswer(question, contextArticles);
+
+        if (llmResult.outOfScope) {
+          createTicket = true;
+          answer =
+            "I can only answer questions covered in our help center. Your question has been logged and an administrator will review it.";
+          confidence = retrieved[0]?.score ?? 0;
+          source = "llm";
+        } else {
+          answer = llmResult.answer;
+          confidence = Math.max(retrieved[0]?.score ?? 0.5, threshold);
+          source = "llm";
+          sourceTitles = contextArticles.map((article) => article.title);
+        }
+      } catch (error) {
+        const isRateLimit = error instanceof GeminiRateLimitError;
+        const detail =
+          error instanceof Error
+            ? error.message
+            : "Unknown error while calling OpenRouter";
+
+        if (isRateLimit) {
+          console.warn("LLM quota exceeded — serving help article directly.", detail);
+        } else {
+          console.warn(
+            "LLM help assistant unavailable — using retrieval fallback.",
+            detail
+          );
+        }
+
+        if (retrieved.length > 0) {
+          ({ answer, confidence, source, sourceTitles } = applyRetrievalAnswer(retrieved));
+        } else {
+          createTicket = true;
+          answer =
+            "I could not find a matching help article. Your question has been logged for review.";
+          confidence = 0;
+          source = "retrieval";
+        }
+      }
+    }
+  } else if (retrieved.length > 0 && retrieved[0].score >= threshold) {
+    answer = formatRetrievalFallback(retrieved.map((entry) => entry.article));
+    confidence = retrieved[0].score;
+    source = "retrieval";
+    sourceTitles = retrieved.map((entry) => entry.article.title);
+  } else {
+    createTicket = true;
+    answer =
+      "I could not find a matching help article. Your question has been logged for review.";
+    confidence = retrieved[0]?.score ?? 0;
+    source = "retrieval";
+  }
+
+  const metadata: Prisma.InputJsonValue = {
+    question: question.substring(0, 500),
+    confidence,
+    answered: !createTicket,
+    source: source ?? "unknown",
+    sourceTitles: sourceTitles ?? [],
+  };
+
+  await prisma.auditEvent.create({
     data: {
       userId: userId || null,
       action: "support.question_asked",
-      metadata: {
-        question: question.substring(0, 500),
-        confidence: result.confidence,
-        answered: result.confidence > 0,
-      },
+      metadata,
     },
   });
 
   let ticketId: string | undefined;
-  if (result.confidence === 0) {
+  if (createTicket) {
     const ticket = await ticketsService.createTicket({
       userId,
       subject: question.substring(0, 100),
@@ -103,5 +211,5 @@ export async function askSupport(
     ticketId = ticket.id;
   }
 
-  return { ...result, ticketId };
+  return { answer, confidence, ticketId, source, sourceTitles };
 }

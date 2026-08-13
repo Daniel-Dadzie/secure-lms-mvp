@@ -143,6 +143,11 @@ router.delete(
 // Lesson routes
 // ----------------------------------------------------------------------------
 router.get(
+  "/:courseId/modules/:moduleId/lessons/:lessonId/stream",
+  lessonsController.streamLessonVideoHandler
+);
+
+router.get(
   "/:courseId/modules/:moduleId/lessons/:lessonId",
   authenticate,
   lessonsController.getLessonById
