@@ -1,5 +1,18 @@
 import { prisma } from "../../config/prisma";
 
+/** Routine auth noise — excluded from activity feeds and audit log listings. */
+const EXCLUDED_AUDIT_ACTIONS = ["auth.token_refresh"];
+
+function buildAuditWhere(filters: { action?: string; userId?: string }) {
+  return {
+    ...(filters.userId && { userId: filters.userId }),
+    AND: [
+      { action: { notIn: EXCLUDED_AUDIT_ACTIONS } },
+      ...(filters.action ? [{ action: { contains: filters.action } }] : []),
+    ],
+  };
+}
+
 // ----------------------------------------------------------------------------
 // Platform statistics for admin dashboard
 // ----------------------------------------------------------------------------
@@ -27,7 +40,8 @@ export async function getPlatformStats() {
       _sum: { finalAmountCents: true },
     }),
     prisma.auditEvent.findMany({
-      take: 20,
+      where: buildAuditWhere({}),
+      take: 10,
       orderBy: { createdAt: "desc" },
       include: {
         user: { select: { id: true, fullName: true, email: true, role: true } },
@@ -59,10 +73,7 @@ export async function getAuditLog(filters: {
   const { action, userId, page = 1, limit = 50 } = filters;
   const skip = (page - 1) * limit;
 
-  const where = {
-    ...(action && { action: { contains: action } }),
-    ...(userId && { userId }),
-  };
+  const where = buildAuditWhere({ action, userId });
 
   const [events, total] = await Promise.all([
     prisma.auditEvent.findMany({

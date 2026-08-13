@@ -6,6 +6,11 @@ import { z } from "zod";
 const checkoutSchema = z.object({
   courseId: z.string().uuid("Invalid course ID"),
   couponCode: z.string().trim().min(1).optional(),
+  timezone: z.string().min(1).max(100).optional(),
+});
+
+const checkoutCartSchema = z.object({
+  timezone: z.string().min(1).max(100).optional(),
 });
 
 export async function checkout(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -16,7 +21,12 @@ export async function checkout(req: Request, res: Response, next: NextFunction):
       return;
     }
     const userId = (req as any).user?.sub;
-    const result = await paymentsService.checkout(userId, parsed.data.courseId, parsed.data.couponCode);
+    const result = await paymentsService.checkout(
+      userId,
+      parsed.data.courseId,
+      parsed.data.couponCode,
+      parsed.data.timezone
+    );
     res.status(200).json(result);
   } catch (error: any) {
     if ([400, 404, 409].includes(error.statusCode)) {
@@ -30,7 +40,9 @@ export async function checkout(req: Request, res: Response, next: NextFunction):
 export async function checkoutCart(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const userId = (req as any).user?.sub;
-    const result = await paymentsService.checkoutCart(userId);
+    const parsed = checkoutCartSchema.safeParse(req.body ?? {});
+    const timezone = parsed.success ? parsed.data.timezone : undefined;
+    const result = await paymentsService.checkoutCart(userId, timezone);
     res.status(200).json(result);
   } catch (error: any) {
     if (error.statusCode === 400) { res.status(400).json({ message: error.message }); return; }

@@ -6,6 +6,7 @@ import Link from "next/link";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
+import { detectTimezone } from "@/lib/detectTimezone";
 
 const FALLBACK_IMAGE = "/images/course-fallback.jpg";
 
@@ -95,7 +96,8 @@ export default function CartPage() {
 
     try {
       // Cart checkout — one Paystack transaction covering all items.
-      const res = await api.post("/payments/checkout/cart");
+      const timezone = detectTimezone();
+      const res = await api.post("/payments/checkout/cart", timezone ? { timezone } : {});
 
       if (res.data.authorizationUrl) {
         // External Paystack URL — use browser navigation rather than router.push.

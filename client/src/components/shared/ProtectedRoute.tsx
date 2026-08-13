@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
+import { syncUserRegionOnce } from "@/lib/syncUserRegion";
 import type { Role } from "@/types/auth";
 
 interface ProtectedRouteProps {
@@ -36,6 +37,10 @@ export default function ProtectedRoute({
 
     if (allowedRoles && user && !allowedRoles.includes(user.role)) {
       router.replace("/unauthorized");
+    }
+
+    if (isAuthenticated) {
+      void syncUserRegionOnce();
     }
   }, [isAuthenticated, isLoading, user, allowedRoles, router]);
 

@@ -70,7 +70,7 @@ export default function Navbar() {
 
   const dashboardPath =
     user?.role === "ADMIN"
-      ? "/admin"
+      ? "/admin/dashboard"
       : user?.role === "INSTRUCTOR"
         ? "/instructor"
         : "/student";

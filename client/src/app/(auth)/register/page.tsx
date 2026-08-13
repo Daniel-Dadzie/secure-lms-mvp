@@ -5,8 +5,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { BookOpen, CheckCircle, GraduationCap, Briefcase } from "lucide-react";
+import { AuthBackground } from "@/components/auth/AuthBackground";
 
-// Inner component that uses useSearchParams
+const REGISTER_IMAGE =
+  "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=1920";
+
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -59,18 +62,20 @@ function RegisterForm() {
   };
 
   return (
-    <div className="w-full max-w-md space-y-6">
-      <div>
+    <div className="w-full space-y-4">
+      <div className="flex justify-end mb-1">
         <Link
           href="/"
-          className="inline-flex items-center text-xs font-semibold text-slate-500 hover:text-[#0A4A3A] mb-4 transition-colors"
+          className="inline-flex items-center text-xs font-semibold text-slate-500 hover:text-[#0A4A3A] transition-colors"
         >
           ← Back to Home
         </Link>
-        <h2 className="text-3xl font-extrabold text-slate-900 tracking-tight">
+      </div>
+      <div>
+        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
           Create your account
         </h2>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1.5 text-sm text-slate-500">
           Already have one?{" "}
           <Link
             href={`/login${returnTo !== "/student" ? `?returnTo=${returnTo}` : ""}`}
@@ -82,12 +87,12 @@ function RegisterForm() {
       </div>
 
       {errorMessage && (
-        <div className="rounded-lg bg-red-50 p-4 text-sm font-medium text-red-700 border border-red-200">
+        <div className="rounded-lg bg-red-50 p-3 text-sm font-medium text-red-700 border border-red-200">
           {errorMessage}
         </div>
       )}
 
-      <form className="space-y-4" onSubmit={handleRegister}>
+      <form className="space-y-3.5" onSubmit={handleRegister}>
         <div>
           <label className="block text-sm font-semibold text-slate-700 mb-1" htmlFor="fullName">
             Full Name
@@ -118,84 +123,80 @@ function RegisterForm() {
           />
         </div>
 
-        <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-1" htmlFor="password">
-            Password
-          </label>
-          <input
-            id="password"
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="relative block w-full appearance-none rounded-xl border border-slate-300 px-3.5 py-2.5 text-slate-900 placeholder-slate-400 focus:border-[#0A4A3A] focus:outline-none focus:ring-1 focus:ring-[#0A4A3A] sm:text-sm bg-white"
-            placeholder="Create a strong password"
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1" htmlFor="password">
+              Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="relative block w-full appearance-none rounded-xl border border-slate-300 px-3.5 py-2.5 text-slate-900 placeholder-slate-400 focus:border-[#0A4A3A] focus:outline-none focus:ring-1 focus:ring-[#0A4A3A] sm:text-sm bg-white"
+              placeholder="Create a strong password"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1" htmlFor="confirmPassword">
+              Confirm Password
+            </label>
+            <input
+              id="confirmPassword"
+              type="password"
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="relative block w-full appearance-none rounded-xl border border-slate-300 px-3.5 py-2.5 text-slate-900 placeholder-slate-400 focus:border-[#0A4A3A] focus:outline-none focus:ring-1 focus:ring-[#0A4A3A] sm:text-sm bg-white"
+              placeholder="Repeat your password"
+            />
+          </div>
         </div>
 
         <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-1" htmlFor="confirmPassword">
-            Confirm Password
-          </label>
-          <input
-            id="confirmPassword"
-            type="password"
-            required
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="relative block w-full appearance-none rounded-xl border border-slate-300 px-3.5 py-2.5 text-slate-900 placeholder-slate-400 focus:border-[#0A4A3A] focus:outline-none focus:ring-1 focus:ring-[#0A4A3A] sm:text-sm bg-white"
-            placeholder="Repeat your password"
-          />
-        </div>
-
-        {/* Role Selection Cards with SVG Icons */}
-        <div>
-          <label className="block text-sm font-semibold text-slate-700 mb-2">
+          <label className="block text-sm font-semibold text-slate-700 mb-1.5">
             I want to join as
           </label>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <button
               type="button"
               onClick={() => setRole("STUDENT")}
-              className={`p-4 rounded-xl border text-left transition-all flex flex-col justify-between ${
+              className={`p-3.5 rounded-xl border text-left transition-all flex flex-col ${
                 role === "STUDENT"
                   ? "border-[#0A4A3A] bg-emerald-50/40 ring-2 ring-[#0A4A3A]/20 shadow-sm"
                   : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >
-              <GraduationCap className="w-6 h-6 text-[#0A4A3A] mb-2" />
-              <div>
-                <p className="font-bold text-slate-900 text-sm">Student</p>
-                <p className="text-xs text-slate-500 mt-0.5">Learn and grow</p>
-              </div>
+              <GraduationCap className="w-5 h-5 text-[#0A4A3A] mb-1.5" />
+              <p className="font-bold text-slate-900 text-sm">Student</p>
+              <p className="text-xs text-slate-500 mt-0.5">Learn and grow</p>
             </button>
 
             <button
               type="button"
               onClick={() => setRole("INSTRUCTOR")}
-              className={`p-4 rounded-xl border text-left transition-all flex flex-col justify-between ${
+              className={`p-3.5 rounded-xl border text-left transition-all flex flex-col ${
                 role === "INSTRUCTOR"
                   ? "border-[#0A4A3A] bg-emerald-50/40 ring-2 ring-[#0A4A3A]/20 shadow-sm"
                   : "border-slate-200 bg-white hover:border-slate-300"
               }`}
             >
-              <Briefcase className="w-6 h-6 text-[#0A4A3A] mb-2" />
-              <div>
-                <p className="font-bold text-slate-900 text-sm">Instructor</p>
-                <p className="text-xs text-slate-500 mt-0.5">Teach and earn</p>
-              </div>
+              <Briefcase className="w-5 h-5 text-[#0A4A3A] mb-1.5" />
+              <p className="font-bold text-slate-900 text-sm">Instructor</p>
+              <p className="text-xs text-slate-500 mt-0.5">Teach and earn</p>
             </button>
           </div>
         </div>
 
-        {/* Terms and Conditions Checkbox */}
-        <div className="flex items-start space-x-2 pt-1">
+        <div className="flex items-start gap-2">
           <input
             id="terms"
             type="checkbox"
             checked={agreedToTerms}
             onChange={(e) => setAgreedToTerms(e.target.checked)}
-            className="mt-0.5 w-4 h-4 rounded border-slate-300 text-[#0A4A3A] focus:ring-[#0A4A3A]"
+            className="mt-0.5 w-4 h-4 rounded border-slate-300 text-[#0A4A3A] focus:ring-[#0A4A3A] shrink-0"
           />
           <label htmlFor="terms" className="text-xs text-slate-600 leading-relaxed">
             I agree to the{" "}
@@ -209,25 +210,21 @@ function RegisterForm() {
           </label>
         </div>
 
-        <div className="pt-2">
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="group relative flex w-full justify-center rounded-xl border border-transparent bg-[#0A4A3A] hover:bg-[#12503F] px-4 py-3 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-[#0A4A3A] focus:ring-offset-2 disabled:bg-slate-400 disabled:cursor-not-allowed transition-all shadow-sm"
-          >
-            {isSubmitting ? "Creating account..." : "Create Account"}
-          </button>
-        </div>
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="flex w-full justify-center rounded-xl border border-transparent bg-[#0A4A3A] hover:bg-[#12503F] px-4 py-3 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-[#0A4A3A] focus:ring-offset-2 disabled:bg-slate-400 disabled:cursor-not-allowed transition-all shadow-sm"
+        >
+          {isSubmitting ? "Creating account..." : "Create Account"}
+        </button>
       </form>
     </div>
   );
 }
 
-// Fallback skeleton
 function RegisterFormSkeleton() {
   return (
-    <div className="space-y-4 animate-pulse w-full max-w-md">
-      <div className="h-10 rounded-xl bg-slate-200" />
+    <div className="space-y-4 animate-pulse w-full">
       <div className="h-10 rounded-xl bg-slate-200" />
       <div className="h-10 rounded-xl bg-slate-200" />
       <div className="h-10 rounded-xl bg-slate-200" />
@@ -236,62 +233,61 @@ function RegisterFormSkeleton() {
   );
 }
 
-// Split-screen page shell with vertically centered left branding panel
 export default function RegisterPage() {
   return (
-    <div className="flex min-h-screen w-full bg-slate-50">
-      {/* Left Branding Panel - Vertically Centered */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#0A4A3A] text-white p-12 flex-col justify-center relative overflow-hidden">
-        <div className="absolute inset-0 opacity-10 pointer-events-none bg-[radial-gradient(#3b82f6_1px,transparent_1px)] [background-size:24px_24px]" />
-        
-        <div className="relative z-10 max-w-lg mx-auto w-full my-auto space-y-8">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-400/10 border border-emerald-400/30 flex items-center justify-center text-emerald-400 font-bold">
-              <BookOpen className="w-6 h-6" />
+    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
+      {/* Image panel */}
+      <div className="relative flex flex-col justify-center items-center text-white overflow-hidden px-6 py-10 lg:px-10 lg:py-12 min-h-[200px] lg:min-h-screen">
+        <AuthBackground imageSrc={REGISTER_IMAGE} overlay="panel" className="hidden lg:block" />
+        <AuthBackground imageSrc={REGISTER_IMAGE} overlay="mobile" className="lg:hidden" />
+
+        <div className="relative z-10 w-full max-w-lg text-left space-y-4 lg:space-y-5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-emerald-400/10 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
+              <BookOpen className="w-5 h-5" />
             </div>
-            <span className="font-bold text-lg tracking-tight">Mech Spec Technologies</span>
+            <span className="font-bold text-base lg:text-lg tracking-tight">Mech Spec Technologies</span>
           </div>
 
           <div>
-            <h1 className="text-4xl font-extrabold tracking-tight mb-4 leading-tight">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight">
               Start Your Engineering Journey Today
             </h1>
-            <p className="text-emerald-100 text-sm max-w-md mb-8 leading-relaxed">
+            <p className="text-emerald-100/90 text-sm lg:text-base mt-2 max-w-md leading-relaxed">
               Create your free account and get instant access to 500+ engineering courses.
             </p>
-
-            <ul className="space-y-4 text-sm text-emerald-100">
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
-                <span>Free access to starter courses</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
-                <span>Earn industry-recognized certificates</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
-                <span>Learn from top engineers worldwide</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
-                <span>Track progress with AI insights</span>
-              </li>
-            </ul>
           </div>
 
-          <div className="text-xs text-emerald-300 pt-4">
+          <ul className="hidden lg:block space-y-2 text-sm text-emerald-100">
+            {[
+              "Free access to starter courses",
+              "Earn industry-recognized certificates",
+              "Learn from top engineers worldwide",
+              "Track progress with AI insights",
+            ].map((item) => (
+              <li key={item} className="flex items-center gap-2.5">
+                <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+
+          <p className="hidden lg:block text-xs text-emerald-300/90 pt-2">
             © 2026 Mech Spec Technologies Ltd. All rights reserved.
-          </div>
+          </p>
         </div>
       </div>
 
-      {/* Right Form Container */}
-      <div className="flex-1 flex flex-col justify-center px-6 py-12 lg:px-20 xl:px-24 bg-slate-50">
-        <div className="mx-auto w-full max-w-md">
-          <Suspense fallback={<RegisterFormSkeleton />}>
-            <RegisterForm />
-          </Suspense>
+      {/* Form panel — plain background */}
+      <div className="min-h-0 lg:min-h-screen flex flex-col bg-[#F4F9F7]">
+        <div className="flex-1 flex items-center justify-center px-4 py-8 sm:px-8 sm:py-10 lg:px-12 xl:px-16">
+          <div className="w-full max-w-lg">
+            <div className="rounded-2xl bg-white border border-slate-200 shadow-sm p-6 sm:p-7">
+              <Suspense fallback={<RegisterFormSkeleton />}>
+                <RegisterForm />
+              </Suspense>
+            </div>
+          </div>
         </div>
       </div>
     </div>
