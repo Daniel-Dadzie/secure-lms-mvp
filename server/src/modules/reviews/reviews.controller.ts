@@ -17,13 +17,21 @@ export async function getCourseReviews(
       res.status(400).json({ message: "Invalid pagination params" });
       return;
     }
+    const viewer = (req as any).user ?? null;
     const result = await reviewsService.getCourseReviews(
       req.params.courseId as string,
       parsed.data.page,
-      parsed.data.limit
+      parsed.data.limit,
+      viewer
     );
     res.status(200).json(result);
-  } catch (error) { next(error); }
+  } catch (error: any) {
+    if (error.statusCode === 404) {
+      res.status(404).json({ message: "Course not found" });
+      return;
+    }
+    next(error);
+  }
 }
 
 export async function createReview(

@@ -41,7 +41,7 @@ const publicModuleSelect = {
 export async function getModulesByCourse(courseId: string) {
   const course = await prisma.course.findFirst({
     where: {
-      id: courseId,
+      OR: [{ id: courseId }, { slug: courseId }],
       status: "PUBLISHED",
       isActive: true,
     },
@@ -58,7 +58,7 @@ export async function getModulesByCourse(courseId: string) {
 
   return prisma.module.findMany({
     where: {
-      courseId,
+      courseId: course.id,
     },
     select: publicModuleSelect,
     orderBy: {

@@ -128,6 +128,7 @@ export async function enrollFree(userId: string, courseId: string) {
     select: {
       id: true,
       title: true,
+      instructorId: true,
       modules: {
         select: { lessons: { select: { id: true } } },
       },
@@ -186,6 +187,14 @@ export async function enrollFree(userId: string, courseId: string) {
       "Enrollment confirmed",
       `You're now enrolled in ${course.title}.`,
       { courseId }
+    );
+
+    await createNotification(
+      course.instructorId,
+      "NEW_ENROLLMENT",
+      "New student enrolled",
+      `A student enrolled in your course "${course.title}".`,
+      { courseId, enrollmentId: enrollment.id }
     );
 
     return enrollment;

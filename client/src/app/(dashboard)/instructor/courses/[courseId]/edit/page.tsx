@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import api from "@/lib/api";
-import ProtectedRoute from "@/components/shared/ProtectedRoute";
-import { uploadCourseThumbnail } from "@/lib/upload.api";
+import { uploadCourseThumbnail, uploadLessonVideo } from "@/lib/upload.api";
 
 interface Category { id: string; name: string; }
 interface Lesson { id: string; title: string; order: number; durationSeconds?: number; }
@@ -49,6 +49,9 @@ export default function EditCoursePage() {
   const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
   const [newLessonTitle, setNewLessonTitle] = useState("");
   const [isAddingLesson, setIsAddingLesson] = useState(false);
+  const [learningObjectives, setLearningObjectives] = useState<string[]>([]);
+  const [objectiveInput, setObjectiveInput] = useState("");
+  const [videoUploadProgress, setVideoUploadProgress] = useState<Record<string, number>>({});
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -67,6 +70,7 @@ export default function EditCoursePage() {
       setPriceInput(data.priceCents ? (data.priceCents / 100).toFixed(2) : "");
       setCategoryId(data.categoryId || "");
       setThumbnailPreview(data.thumbnailUrl || null);
+      setLearningObjectives(Array.isArray(data.learningObjectives) ? data.learningObjectives : []);
     } catch (err: any) {
       if (err?.response?.status === 404) {
         setError("Course not found.");
@@ -100,6 +104,7 @@ useEffect(() => {
       );
       setCategoryId(data.categoryId || "");
       setThumbnailPreview(data.thumbnailUrl || null);
+      setLearningObjectives(Array.isArray(data.learningObjectives) ? data.learningObjectives : []);
 
       const categoriesData = categoriesRes.data;
 
@@ -161,6 +166,7 @@ useEffect(() => {
         description: description.trim(),
         priceCents,
         categoryId: categoryId || undefined,
+        learningObjectives,
       });
 
       if (thumbnailFile) {
@@ -265,85 +271,106 @@ useEffect(() => {
     }
   };
 
+  const handleVideoUpload = async (lessonId: string, file: File) => {
+    setVideoUploadProgress((prev) => ({ ...prev, [lessonId]: 0 }));
+    try {
+      await uploadLessonVideo(courseId, lessonId, file, (percent) => {
+        setVideoUploadProgress((prev) => ({ ...prev, [lessonId]: percent }));
+      });
+      showToast("Video uploaded.");
+      await fetchCourse();
+    } catch {
+      setError("Video upload failed.");
+    } finally {
+      setVideoUploadProgress((prev) => {
+        const next = { ...prev };
+        delete next[lessonId];
+        return next;
+      });
+    }
+  };
+
+  const handleCreateQuiz = async (lessonId: string, lessonTitle: string) => {
+    try {
+      await api.post(`/quizzes/courses/${courseId}/quizzes`, {
+        title: `${lessonTitle} Quiz`,
+        lessonId,
+        passMark: 70,
+        questions: [
+          {
+            text: `Review question for ${lessonTitle}`,
+            options: [
+              { id: "a", text: "Option A" },
+              { id: "b", text: "Option B" },
+            ],
+            correctOption: "a",
+            order: 0,
+          },
+        ],
+      });
+      showToast("Quiz created for lesson.");
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Failed to create quiz.");
+    }
+  };
+
   if (isLoading) {
     return (
-      <ProtectedRoute allowedRoles={["INSTRUCTOR"]}>
-        <div className="min-h-screen bg-slate-50 animate-pulse p-8">
-          <div className="mx-auto max-w-3xl space-y-6">
-            <div className="h-8 w-1/2 rounded bg-slate-200" />
-            <div className="h-64 rounded-2xl bg-slate-200" />
-            <div className="h-48 rounded-2xl bg-slate-200" />
-          </div>
-        </div>
-      </ProtectedRoute>
+      <div className="p-6 md:p-8 max-w-3xl mx-auto animate-pulse space-y-6">
+        <div className="h-8 w-1/2 rounded bg-slate-200" />
+        <div className="h-64 rounded-2xl bg-slate-200" />
+      </div>
     );
   }
 
   if (error && !course) {
     return (
-      <ProtectedRoute allowedRoles={["INSTRUCTOR"]}>
-        <div className="flex min-h-screen flex-col items-center justify-center bg-slate-50 px-4">
-          <p className="text-red-600 mb-4">{error}</p>
-          <button onClick={() => router.back()} className="text-blue-600 hover:underline text-sm">
-            Go Back
-          </button>
-        </div>
-      </ProtectedRoute>
+      <div className="p-6 md:p-8 max-w-3xl mx-auto text-center space-y-4">
+        <p className="text-red-600">{error}</p>
+        <Link href="/instructor/courses" className="text-[#196A54] hover:underline text-sm">Back to courses</Link>
+      </div>
     );
   }
 
   return (
-    <ProtectedRoute allowedRoles={["INSTRUCTOR"]}>
-      <div className="min-h-screen bg-slate-50 pb-20">
+    <div className="p-6 md:p-8 max-w-3xl mx-auto pb-20 space-y-8">
         {toast && (
           <div className="fixed top-4 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-xl">
             {toast}
           </div>
         )}
 
-        <header className="bg-white border-b border-slate-200 py-6 shadow-sm sticky top-0 z-10">
-          <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.back()}
-                className="text-slate-500 hover:text-slate-900 transition text-sm"
-              >
-                ← Back
-              </button>
-              <div>
-                <h1 className="text-lg font-bold text-slate-900 truncate max-w-xs">
-                  {course?.title || "Edit Course"}
-                </h1>
-                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                  course?.status === "PUBLISHED"
-                    ? "bg-green-100 text-green-700"
-                    : "bg-amber-100 text-amber-700"
-                }`}>
-                  {course?.status === "PUBLISHED" ? "Published" : "Draft"}
-                </span>
-              </div>
-            </div>
-
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <Link href="/instructor/courses" className="text-sm text-slate-500 hover:text-slate-900">← Back to courses</Link>
+            <h1 className="text-xl font-bold text-slate-900 mt-1">{course?.title || "Edit Course"}</h1>
+            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+              course?.status === "PUBLISHED" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
+            }`}>
+              {course?.status === "PUBLISHED" ? "Published" : "Draft"}
+            </span>
+          </div>
+          <div className="flex gap-2">
+            {course?.status === "PUBLISHED" && (
+              <Link href={`/courses/${course.id}`} className="rounded-lg border px-3 py-2 text-sm font-semibold">
+                Preview
+              </Link>
+            )}
             <button
               onClick={handlePublishToggle}
               disabled={isPublishing}
-              className={`rounded-lg px-4 py-2 text-sm font-semibold transition disabled:opacity-50 ${
+              className={`rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-50 ${
                 course?.status === "PUBLISHED"
-                  ? "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
-                  : "bg-green-600 text-white hover:bg-green-700"
+                  ? "border border-slate-300 bg-white text-slate-700"
+                  : "bg-green-600 text-white"
               }`}
             >
-              {isPublishing
-                ? "Updating..."
-                : course?.status === "PUBLISHED"
-                ? "Unpublish"
-                : "Publish Course"}
+              {isPublishing ? "Updating..." : course?.status === "PUBLISHED" ? "Unpublish" : "Publish"}
             </button>
           </div>
-        </header>
+        </div>
 
-        <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 lg:px-8 space-y-8">
-          {error && (
+        {error && (
             <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
             </div>
@@ -419,6 +446,47 @@ useEffect(() => {
                     </select>
                   </div>
                 </div>
+              </div>
+            </section>
+
+            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <h2 className="text-lg font-bold text-slate-900 mb-4">Learning Objectives</h2>
+              <div className="flex flex-wrap gap-2 mb-3">
+                {learningObjectives.map((obj) => (
+                  <span key={obj} className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 px-2 py-1 rounded-full text-xs font-semibold">
+                    {obj}
+                    <button type="button" onClick={() => setLearningObjectives(learningObjectives.filter((o) => o !== obj))}>×</button>
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={objectiveInput}
+                  onChange={(e) => setObjectiveInput(e.target.value)}
+                  placeholder="Add learning objective"
+                  className="flex-1 rounded-lg border px-3 py-2 text-sm"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      if (objectiveInput.trim()) {
+                        setLearningObjectives([...learningObjectives, objectiveInput.trim()]);
+                        setObjectiveInput("");
+                      }
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (objectiveInput.trim()) {
+                      setLearningObjectives([...learningObjectives, objectiveInput.trim()]);
+                      setObjectiveInput("");
+                    }
+                  }}
+                  className="px-4 py-2 rounded-lg border text-sm font-semibold"
+                >
+                  Add
+                </button>
               </div>
             </section>
 
@@ -514,15 +582,41 @@ useEffect(() => {
                   {expandedModuleId === module.id && (
                     <div className="px-4 py-3 space-y-2">
                       {module.lessons?.map((lesson) => (
-                        <div key={lesson.id} className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0">
-                          <span className="text-sm text-slate-700">{lesson.title}</span>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteLesson(module.id, lesson.id)}
-                            className="text-xs text-red-400 hover:text-red-600 font-semibold"
-                          >
-                            Remove
-                          </button>
+                        <div key={lesson.id} className="py-2 border-b border-slate-100 last:border-0 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm text-slate-700">{lesson.title}</span>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteLesson(module.id, lesson.id)}
+                              className="text-xs text-red-400 hover:text-red-600 font-semibold"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <label className="text-xs font-semibold text-[#196A54] cursor-pointer">
+                              Upload video
+                              <input
+                                type="file"
+                                accept="video/*"
+                                className="sr-only"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) void handleVideoUpload(lesson.id, file);
+                                }}
+                              />
+                            </label>
+                            {videoUploadProgress[lesson.id] !== undefined && (
+                              <span className="text-xs text-slate-500">{videoUploadProgress[lesson.id]}%</span>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => handleCreateQuiz(lesson.id, lesson.title)}
+                              className="text-xs font-semibold text-blue-600 hover:underline"
+                            >
+                              + Add quiz
+                            </button>
+                          </div>
                         </div>
                       ))}
 
@@ -575,8 +669,6 @@ useEffect(() => {
               </button>
             </div>
           </section>
-        </main>
-      </div>
-    </ProtectedRoute>
+    </div>
   );
 }

@@ -98,7 +98,11 @@ export default function AdminReviewsPage() {
               <tbody className="divide-y divide-slate-100">
                 {reviews.map((r) => (
                   <tr key={r.id}>
-                    <td className="px-4 py-3 text-sm font-medium">{r.course.title}</td>
+                    <td className="px-4 py-3 text-sm font-medium">
+                      <a href={`/courses/${r.course.id}`} className="text-[#196A54] hover:underline">
+                        {r.course.title}
+                      </a>
+                    </td>
                     <td className="px-4 py-3 text-sm">{r.user.fullName}</td>
                     <td className="px-4 py-3 text-sm">{r.rating}/5</td>
                     <td className="px-4 py-3 text-sm max-w-xs truncate">{r.comment ?? "—"}</td>

@@ -15,6 +15,8 @@ interface TopBarProps {
   notificationsHref?: string;
   helpHref?: string;
   searchPlaceholder?: string;
+  searchPath?: string;
+  notificationBadge?: number;
 }
 
 interface Notification {
@@ -33,6 +35,8 @@ export function TopBar({
   notificationsHref = "/student/notifications",
   helpHref = "/student/help-center",
   searchPlaceholder = "Search courses...",
+  searchPath,
+  notificationBadge: externalBadge,
 }: TopBarProps) {
   const router = useRouter();
   const { user, logout } = useAuthStore() as { user: any; logout: () => void };
@@ -113,7 +117,9 @@ useEffect(() => {
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      router.push(`/courses?search=${encodeURIComponent(searchQuery.trim())}`);
+      const base = searchPath ?? "/courses";
+      const param = searchPath ? "q" : "search";
+      router.push(`${base}?${param}=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
 
@@ -197,7 +203,7 @@ useEffect(() => {
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
                 <span className="absolute top-2 right-2 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white border-2 border-white">
-                  {unreadCount > 9 ? "9+" : unreadCount}
+                  {(externalBadge ?? unreadCount) > 9 ? "9+" : (externalBadge ?? unreadCount)}
                 </span>
               )}
             </button>

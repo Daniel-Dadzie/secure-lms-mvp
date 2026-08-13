@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, use, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -85,6 +86,7 @@ export default function CoursePlayerPage({
 }) {
   const resolvedParams = use(params);
   const courseId = resolvedParams.courseId;
+  const router = useRouter();
   const { isAuthenticated } = useAuthStore();
 
   const [course, setCourse] = useState<CourseData | null>(null);
@@ -123,20 +125,30 @@ export default function CoursePlayerPage({
 
   // Fetch course catalogue, modules, lessons, and student progress
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) {
+      router.replace(`/login?redirect=/learn/${courseId}`);
+      return;
+    }
 
-    const fetchCourseData = async () => {
+    let cancelled = false;
+
+    async function fetchCourseData() {
       setIsLoading(true);
       setError(null);
 
       try {
-        // Fetch public course structure and lesson metadata
         const courseRes = await api.get(`/courses/${courseId}`);
         const courseData = courseRes.data?.course || courseRes.data;
 
+        if (cancelled) return;
+
+        if (!courseData?.access?.canPlayContent) {
+          router.replace(`/courses/${courseId}`);
+          return;
+        }
+
         setCourse(courseData);
 
-        // Fetch student enrollment/progress for this course
         const enrollmentsRes = await api.get("/enrollments");
 
         const enrollments = Array.isArray(enrollmentsRes.data)
@@ -144,7 +156,7 @@ export default function CoursePlayerPage({
           : enrollmentsRes.data?.enrollments || [];
 
         const currentEnrollment = enrollments.find(
-          (e: any) =>
+          (e: { courseId?: string; course?: { id: string } }) =>
             e.courseId === courseId ||
             e.course?.id === courseId
         );
@@ -155,14 +167,13 @@ export default function CoursePlayerPage({
           currentEnrollment &&
           Array.isArray(currentEnrollment.progress)
         ) {
-          currentEnrollment.progress.forEach((p: any) => {
+          currentEnrollment.progress.forEach((p: { lessonId: string; status: string }) => {
             pMap[p.lessonId] = p.status;
           });
         }
 
         setProgressMap(pMap);
 
-        // Auto-select the first lesson through the secured lesson endpoint
         if (
           courseData?.modules &&
           courseData.modules.length > 0
@@ -181,14 +192,22 @@ export default function CoursePlayerPage({
         }
       } catch (err) {
         console.error("Failed to load course player:", err);
-        setError("Failed to load course content. Please try again.");
+        if (!cancelled) {
+          setError("Failed to load course content. Please try again.");
+        }
       } finally {
-        setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
-    };
+    }
 
-    fetchCourseData();
-  }, [courseId, isAuthenticated, loadAuthorizedLesson]);
+    void fetchCourseData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [courseId, isAuthenticated, loadAuthorizedLesson, router]);
 
   // Handle marking a lesson as complete & advancing progress
   const handleToggleComplete = async (lessonId: string) => {

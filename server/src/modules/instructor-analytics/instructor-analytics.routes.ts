@@ -12,6 +12,13 @@ router.get(
 );
 
 router.get(
+  "/trends",
+  authenticate,
+  requireRole(["INSTRUCTOR", "ADMIN"]),
+  analyticsController.getAnalyticsTrends
+);
+
+router.get(
   "/courses/:courseId",
   authenticate,
   requireRole(["INSTRUCTOR", "ADMIN"]),

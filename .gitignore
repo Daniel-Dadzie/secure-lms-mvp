@@ -39,3 +39,6 @@ cleanup-routes.ps1
 
 apiContract
 audit.json
+
+#cursor files
+.cursor/

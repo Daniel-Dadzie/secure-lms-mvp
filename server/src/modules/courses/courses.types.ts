@@ -15,6 +15,7 @@ export interface UpdateCourseInput {
   priceCents?: number;
   thumbnailUrl?: string;
   status?: CourseStatus;
+  learningObjectives?: string[];
 }
 
 export interface CourseFilters {
@@ -30,6 +31,14 @@ export interface PaginatedCourses {
   page: number;
   limit: number;
   totalPages: number;
+}
+
+export interface CourseAccessInfo {
+  canPlayContent: boolean;
+  isEnrolled: boolean;
+  isOwner: boolean;
+  isAdmin: boolean;
+  isPreview: boolean;
 }
 
 export interface CourseResponse {
@@ -54,4 +63,17 @@ export interface CourseResponse {
   } | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface CourseDetailResponse extends CourseResponse {
+  longDescription?: string | null;
+  duration?: string | null;
+  level?: string | null;
+  highlights?: string[];
+  learningObjectives?: string[];
+  averageRating?: number;
+  reviewCount?: number;
+  enrollmentCount?: number;
+  access: CourseAccessInfo;
+  enrollmentId?: string;
 }

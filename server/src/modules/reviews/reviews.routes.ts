@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { authenticate, requireRole } from "../../middleware";
+import { authenticate, optionalAuthenticate, requireRole } from "../../middleware";
 import * as reviewsController from "./reviews.controller";
 
 const router = Router({ mergeParams: true });
 // mergeParams: true — needed to access :courseId from parent router
 
-// Public — anyone can read reviews
-router.get("/", reviewsController.getCourseReviews);
+// Public — visible reviews for viewable courses (optional auth for draft preview)
+router.get("/", optionalAuthenticate, reviewsController.getCourseReviews);
 
 // Student — must be enrolled (enforced in service)
 router.post(

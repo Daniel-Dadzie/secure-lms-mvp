@@ -669,6 +669,56 @@ async function main() {
     console.log("✅ Sample purchases seeded");
   }
 
+  // Sample reviews with instructor replies for instructor dashboard demos
+  const reviewCourses = await prisma.course.findMany({ take: 4, select: { id: true, instructorId: true, title: true } });
+  const reviewStudents = await prisma.user.findMany({ where: { role: "STUDENT" }, take: 3 });
+  if (reviewCourses.length > 0 && reviewStudents.length > 0) {
+    for (let i = 0; i < reviewCourses.length; i++) {
+      const course = reviewCourses[i];
+      const reviewer = reviewStudents[i % reviewStudents.length];
+      await prisma.review.upsert({
+        where: { userId_courseId: { userId: reviewer.id, courseId: course.id } },
+        update: {},
+        create: {
+          userId: reviewer.id,
+          courseId: course.id,
+          rating: 4 + (i % 2),
+          comment: `Excellent content in ${course.title}. Very practical and well structured.`,
+          instructorReply: i % 2 === 0 ? "Thank you for the thoughtful feedback! Glad you found it useful." : null,
+          instructorReplyAt: i % 2 === 0 ? new Date() : null,
+        },
+      });
+    }
+    console.log("✅ Sample reviews seeded");
+
+    for (const course of reviewCourses) {
+      const visibleReviews = await prisma.review.findMany({
+        where: { courseId: course.id, isVisible: true },
+        select: { rating: true },
+      });
+      const total = visibleReviews.length;
+      const sum = visibleReviews.reduce((acc, r) => acc + r.rating, 0);
+      const average = total > 0 ? Math.round((sum / total) * 10) / 10 : 0;
+      const distribution = { oneStar: 0, twoStar: 0, threeStar: 0, fourStar: 0, fiveStar: 0 };
+      visibleReviews.forEach(({ rating }) => {
+        if (rating === 1) distribution.oneStar++;
+        else if (rating === 2) distribution.twoStar++;
+        else if (rating === 3) distribution.threeStar++;
+        else if (rating === 4) distribution.fourStar++;
+        else if (rating === 5) distribution.fiveStar++;
+      });
+      await prisma.course.update({
+        where: { id: course.id },
+        data: { averageRating: average, reviewCount: total },
+      });
+      await prisma.ratingAggregate.upsert({
+        where: { courseId: course.id },
+        update: distribution,
+        create: { courseId: course.id, ...distribution },
+      });
+    }
+  }
+
   // 8. Sample support audit events
   await prisma.auditEvent.createMany({
     data: [
