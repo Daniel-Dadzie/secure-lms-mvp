@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { AuthBackground } from "@/components/auth/AuthBackground";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirectTo = searchParams.get("redirect") || searchParams.get("returnTo");
   const { login } = useAuthStore();
 
   const [email, setEmail] = useState("");
@@ -24,6 +26,12 @@ export default function LoginPage() {
 
     try {
       await login({ email, password });
+
+      if (redirectTo && redirectTo.startsWith("/")) {
+        router.push(redirectTo);
+        return;
+      }
+
       const user = useAuthStore.getState().user;
       const role = user?.role;
 
@@ -203,5 +211,13 @@ export default function LoginPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center text-sm text-slate-500">Loading...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

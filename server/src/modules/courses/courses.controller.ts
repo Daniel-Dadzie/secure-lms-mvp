@@ -17,7 +17,8 @@ export async function getPublishedCourses(req: Request, res: Response, next: Nex
 
 export async function getPublishedCourseById(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    const course = await coursesService.getPublishedCourseById(req.params.courseId as string);
+    const viewer = (req as any).user ?? null;
+    const course = await coursesService.getCourseDetail(req.params.courseId as string, viewer);
     res.status(200).json({ course });
   } catch (error: any) {
     if (error.statusCode === 404) { res.status(404).json({ message: "Course not found" }); return; }

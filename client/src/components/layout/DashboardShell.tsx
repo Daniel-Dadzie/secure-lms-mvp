@@ -16,6 +16,8 @@ interface DashboardShellProps {
   notificationsHref?: string;
   helpHref?: string;
   searchPlaceholder?: string;
+  searchPath?: string;
+  notificationBadge?: number;
 }
 
 export function DashboardShell({
@@ -28,6 +30,8 @@ export function DashboardShell({
   notificationsHref,
   helpHref,
   searchPlaceholder,
+  searchPath,
+  notificationBadge,
 }: DashboardShellProps) {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
@@ -63,6 +67,8 @@ export function DashboardShell({
           notificationsHref={notificationsHref}
           helpHref={helpHref}
           searchPlaceholder={searchPlaceholder}
+          searchPath={searchPath}
+          notificationBadge={notificationBadge}
         />
         <main className="flex-1 overflow-y-auto">{children}</main>
       </div>

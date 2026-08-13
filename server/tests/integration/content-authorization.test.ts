@@ -155,4 +155,71 @@ describe("Security — Course content authorization", () => {
       "https://cdn.example.test/protected-video.mp4"
     );
   });
+
+  it("resolves course detail by slug and exposes access flags", async () => {
+    const { course } = await createContentFixture("PUBLISHED");
+
+    const res = await request.get(`/api/courses/${course.slug}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.course.id).toBe(course.id);
+    expect(res.body.course.access.canPlayContent).toBe(false);
+    expect(res.body.course.modules[0].lessons[0]).not.toHaveProperty("contentUrl");
+  });
+
+  it("allows the owning instructor to preview a draft course with play access", async () => {
+    const { user: instructor, accessToken } = await createTestUser({
+      email: `draft-owner-${crypto.randomUUID()}@test.com`,
+      role: "INSTRUCTOR",
+    });
+
+    const course = await prisma.course.create({
+      data: {
+        title: "Draft Preview Course",
+        slug: `draft-preview-${crypto.randomUUID()}`,
+        description: "Draft preview test",
+        highlights: [],
+        learningObjectives: [],
+        instructorId: instructor.id,
+        status: "DRAFT",
+        isActive: true,
+      },
+    });
+
+    const ownerRes = await request
+      .get(`/api/courses/${course.id}`)
+      .set("Authorization", `Bearer ${accessToken}`);
+
+    expect(ownerRes.status).toBe(200);
+    expect(ownerRes.body.course.access.isPreview).toBe(true);
+    expect(ownerRes.body.course.access.canPlayContent).toBe(true);
+
+    const publicRes = await request.get(`/api/courses/${course.id}`);
+    expect(publicRes.status).toBe(404);
+  });
+
+  it("grants play access to enrolled students on the course detail endpoint", async () => {
+    const { course } = await createContentFixture("PUBLISHED");
+
+    const { user: student, accessToken } = await createTestUser({
+      email: `detail-enrolled-${crypto.randomUUID()}@test.com`,
+      role: "STUDENT",
+    });
+
+    await prisma.enrollment.create({
+      data: {
+        userId: student.id,
+        courseId: course.id,
+        status: "ACTIVE",
+      },
+    });
+
+    const res = await request
+      .get(`/api/courses/${course.id}`)
+      .set("Authorization", `Bearer ${accessToken}`);
+
+    expect(res.status).toBe(200);
+    expect(res.body.course.access.canPlayContent).toBe(true);
+    expect(res.body.course.access.isEnrolled).toBe(true);
+  });
 });

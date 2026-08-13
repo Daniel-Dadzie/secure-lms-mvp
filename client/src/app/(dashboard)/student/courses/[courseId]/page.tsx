@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import api from "@/lib/api";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
+import { CourseReviewsSection } from "@/components/courses/CourseReviewsSection";
 
 const FALLBACK_IMAGE = "/images/course-fallback.jpg";
 
@@ -218,6 +219,11 @@ useEffect(() => {
                 </Link>
               </div>
             </div>
+          </div>
+
+          {/* Reviews */}
+          <div className="mb-8">
+            <CourseReviewsSection courseId={courseId} canSubmitReview />
           </div>
 
           {/* Curriculum */}

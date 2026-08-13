@@ -417,6 +417,8 @@ model Review {
   // DB-level check constraint added in migration for extra safety.
   comment   String?
   // Comment is optional — a student can leave a star rating without written feedback.
+  instructorReply   String?
+  instructorReplyAt DateTime?
   isVisible Boolean  @default(true)
   // Soft hide: admin can hide inappropriate reviews without deleting them.
   // Audit trail preserved.
@@ -654,7 +656,11 @@ enum NotificationType {
   ENROLLMENT_CONFIRMED
   CERTIFICATE_ISSUED
   NEW_REVIEW
+  NEW_ENROLLMENT
   SUPPORT_TICKET_NEW
+  SUPPORT_TICKET_MESSAGE
+  SUPPORT_TICKET_UPDATED
+  SUPPORT_TICKET_CLOSED
   PLATFORM_ALERT
 }
 

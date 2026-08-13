@@ -1,6 +1,10 @@
 import { prisma } from "../../config/prisma";
-import { createNotification } from "../notifications/notifications.service";
 import type { TicketPriority, TicketStatus } from "@prisma/client";
+import {
+  isTicketClosedForUser,
+  notifyAllAdmins,
+  notifyTicketCreator,
+} from "../support/support-ticket-notifications";
 
 export async function createTicket(data: {
   userId?: string;
@@ -25,21 +29,11 @@ export async function createTicket(data: {
     },
   });
 
-  const admins = await prisma.user.findMany({
-    where: { role: "ADMIN", isActive: true },
-    select: { id: true },
-  });
-
-  await Promise.all(
-    admins.map((admin) =>
-      createNotification(
-        admin.id,
-        "SUPPORT_TICKET_NEW",
-        "New support ticket",
-        data.subject,
-        { ticketId: ticket.id }
-      )
-    )
+  await notifyAllAdmins(
+    "SUPPORT_TICKET_NEW",
+    "New support ticket",
+    data.subject,
+    { ticketId: ticket.id }
   );
 
   return ticket;
@@ -105,7 +99,7 @@ export async function replyToTicket(
   adminId: string,
   body: string
 ) {
-  await getTicketById(ticketId);
+  const ticket = await getTicketById(ticketId);
 
   const message = await prisma.supportMessage.create({
     data: {
@@ -121,6 +115,14 @@ export async function replyToTicket(
     data: { status: "IN_PROGRESS", updatedAt: new Date() },
   });
 
+  await notifyTicketCreator(
+    ticket.userId,
+    "SUPPORT_TICKET_UPDATED",
+    "Support ticket updated",
+    `An admin replied to your ticket "${ticket.subject}".`,
+    { ticketId, status: "IN_PROGRESS" }
+  );
+
   return message;
 }
 
@@ -135,22 +137,46 @@ export async function updateTicket(
     data,
   });
 
-  if (
-    adminId &&
-    data.status &&
-    data.status !== existing.status &&
-    (data.status === "RESOLVED" || data.status === "CLOSED")
-  ) {
-    await prisma.auditEvent.create({
-      data: {
-        userId: adminId,
-        action:
-          data.status === "RESOLVED" ? "admin.ticket_resolved" : "admin.ticket_closed",
-        entityType: "SupportTicket",
-        entityId: ticketId,
-        metadata: { subject: existing.subject, status: data.status },
-      },
-    });
+  if (adminId && data.status && data.status !== existing.status) {
+    if (data.status === "RESOLVED" || data.status === "CLOSED") {
+      await prisma.auditEvent.create({
+        data: {
+          userId: adminId,
+          action:
+            data.status === "RESOLVED" ? "admin.ticket_resolved" : "admin.ticket_closed",
+          entityType: "SupportTicket",
+          entityId: ticketId,
+          metadata: { subject: existing.subject, status: data.status },
+        },
+      });
+
+      await notifyTicketCreator(
+        existing.userId,
+        "SUPPORT_TICKET_CLOSED",
+        "Support ticket closed",
+        `Your ticket "${existing.subject}" has been marked as ${data.status.toLowerCase()}. You can no longer reply unless an admin reopens it.`,
+        { ticketId, status: data.status }
+      );
+    } else if (
+      isTicketClosedForUser(existing.status) &&
+      (data.status === "OPEN" || data.status === "IN_PROGRESS")
+    ) {
+      await notifyTicketCreator(
+        existing.userId,
+        "SUPPORT_TICKET_UPDATED",
+        "Support ticket reopened",
+        `Your ticket "${existing.subject}" has been reopened. You can reply again.`,
+        { ticketId, status: data.status }
+      );
+    } else {
+      await notifyTicketCreator(
+        existing.userId,
+        "SUPPORT_TICKET_UPDATED",
+        "Support ticket updated",
+        `The status of your ticket "${existing.subject}" is now ${data.status.replace("_", " ").toLowerCase()}.`,
+        { ticketId, status: data.status }
+      );
+    }
   }
 
   return ticket;

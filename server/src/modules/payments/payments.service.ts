@@ -250,7 +250,7 @@ export async function checkoutCart(userId: string, timezone?: string) {
 export async function completePurchasesByReference(reference: string): Promise<void> {
   const pendingPurchases = await prisma.purchase.findMany({
     where: { providerReference: reference, status: "PENDING" },
-    include: { course: { select: { title: true, modules: { select: { lessons: { select: { id: true } } } } } } },
+    include: { course: { select: { title: true, instructorId: true, modules: { select: { lessons: { select: { id: true } } } } } } },
   });
 
   if (pendingPurchases.length === 0) {
@@ -332,6 +332,14 @@ export async function completePurchasesByReference(reference: string): Promise<v
         "Enrollment confirmed",
         `You're now enrolled in ${purchase.course.title}.`,
         { courseId: purchase.courseId }
+      );
+
+      await createNotification(
+        purchase.course.instructorId,
+        "NEW_ENROLLMENT",
+        "New student enrolled",
+        `A student enrolled in your course "${purchase.course.title}".`,
+        { courseId: purchase.courseId, enrollmentId: enrollment.id }
       );
     });
 

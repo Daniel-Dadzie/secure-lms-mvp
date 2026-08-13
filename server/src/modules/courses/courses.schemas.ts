@@ -19,6 +19,7 @@ export const updateCourseSchema = z.object({
   priceCents: z.number().int().min(0).max(1000000).optional(),
   thumbnailUrl: z.string().url().optional(),
   status: z.enum(["DRAFT", "PUBLISHED", "ARCHIVED"]).optional(),
+  learningObjectives: z.array(z.string().min(1).max(300)).max(20).optional(),
 });
 
 export const courseFiltersSchema = z.object({

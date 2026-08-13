@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Bell, CheckCheck, Check, Info, AlertCircle, Award, BookOpen, Clock } from "lucide-react";
+import { Bell, CheckCheck, Check, Info, AlertCircle, Award, BookOpen, Clock, MessageSquare } from "lucide-react";
 import api from "@/lib/api";
 
 interface Notification {
@@ -77,6 +77,9 @@ useEffect(() => {
       case "ALERT":
         return <AlertCircle className="w-5 h-5 text-red-500" />;
       default:
+        if (type.startsWith("SUPPORT_TICKET")) {
+          return <MessageSquare className="w-5 h-5 text-blue-600" />;
+        }
         return <Info className="w-5 h-5 text-blue-500" />;
     }
   };
