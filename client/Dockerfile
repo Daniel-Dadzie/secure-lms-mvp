@@ -29,4 +29,6 @@ COPY --from=builder /app/client/public ./client/public
 
 EXPOSE 3000
 
+USER node
+
 CMD ["node", "client/server.js"]

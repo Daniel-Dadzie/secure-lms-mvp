@@ -41,4 +41,6 @@ COPY --from=builder /app/node_modules/@prisma/client ./node_modules/@prisma/clie
 
 EXPOSE 4000
 
+USER node
+
 CMD ["node", "server/dist/server.js"]
