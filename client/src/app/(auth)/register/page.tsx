@@ -78,7 +78,11 @@ function RegisterForm() {
         <p className="mt-1.5 text-sm text-slate-500">
           Already have one?{" "}
           <Link
-            href={`/login${returnTo !== "/student" ? `?returnTo=${returnTo}` : ""}`}
+            href={
+              returnTo !== "/student"
+                ? `/login?redirect=${encodeURIComponent(returnTo)}`
+                : "/login"
+            }
             className="font-bold text-[#0A4A3A] hover:underline"
           >
             Sign in

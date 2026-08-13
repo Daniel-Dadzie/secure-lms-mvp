@@ -3,10 +3,11 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CheckCircle2, Award, BookOpen } from "lucide-react";
+import { CheckCircle2, Award, BookOpen, GraduationCap } from "lucide-react";
 import { StatCard } from "@/components/ui/StatCard";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
+import { formatPrice } from "@/lib/currency";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -15,6 +16,7 @@ interface DashboardData {
     avgProgress: string;
     lessonsDone: number;
     certificates: number;
+    completedCoursesCount?: number;
     timeInvested: string;
     activeCoursesCount: number;
   };
@@ -40,6 +42,7 @@ interface DashboardData {
   activities: Array<{
     id: string;
     title: string;
+    description?: string | null;
     iconType: string;
     createdAt: string;
   }>;
@@ -55,18 +58,22 @@ export default function StudentDashboard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchDashboard() {
       try {
         const res = await api.get("/student/dashboard");
-        setData(res.data);
+        if (!cancelled) setData(res.data);
       } catch (err) {
         console.error("Failed to fetch dashboard data:", err);
-        setError("Could not load dashboard statistics.");
+        if (!cancelled) setError("Could not load dashboard statistics.");
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     }
-    fetchDashboard();
+
+    void fetchDashboard();
+    return () => { cancelled = true; };
   }, []);
 
   // Filter active and recommended courses dynamically based on search parameter
@@ -79,7 +86,7 @@ export default function StudentDashboard() {
   ) || [];
 
   return (
-    <div className="space-y-8">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
       
       {/* 1. HERO BANNER */}
       <section className="bg-[#196A54] rounded-2xl p-8 text-white relative overflow-hidden shadow-lg border border-[#12503F]">
@@ -91,7 +98,11 @@ export default function StudentDashboard() {
             <h1 className="text-3xl md:text-4xl font-extrabold mb-2">
               {user?.fullName || "Student"}
             </h1>
-            <p className="text-emerald-400 font-semibold text-sm mb-8">You&apos;re on a 5-day learning streak!</p>
+            <p className="text-emerald-400 font-semibold text-sm mb-8">
+              {loading
+                ? "Loading your progress..."
+                : `${data?.stats?.activeCoursesCount ?? 0} in progress · ${data?.stats?.completedCoursesCount ?? data?.stats?.certificates ?? 0} completed`}
+            </p>
             
             {loading ? (
               <div className="flex flex-wrap gap-8">
@@ -134,9 +145,23 @@ export default function StudentDashboard() {
         ) : error ? (
           <p className="text-red-500 text-sm">{error}</p>
         ) : filteredActiveCourses.length === 0 ? (
-          <p className="text-slate-500 text-sm">
-            {searchQuery ? `No active courses match "${searchQuery}".` : "You are not enrolled in any courses yet."}
-          </p>
+          <div className="bg-white rounded-2xl border border-dashed border-slate-200 p-8 text-center">
+            <p className="text-slate-500 text-sm mb-3">
+              {searchQuery
+                ? `No active courses match "${searchQuery}".`
+                : "No courses in progress right now."}
+            </p>
+            {(data?.stats?.completedCoursesCount ?? 0) > 0 && (
+              <Link href="/student/my-learning" className="text-[#196A54] text-sm font-semibold hover:underline">
+                View your completed courses →
+              </Link>
+            )}
+            {(data?.stats?.activeCoursesCount ?? 0) === 0 && (data?.stats?.completedCoursesCount ?? 0) === 0 && (
+              <Link href="/student/courses" className="text-[#196A54] text-sm font-semibold hover:underline">
+                Browse courses to get started →
+              </Link>
+            )}
+          </div>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredActiveCourses.map((course) => (
@@ -204,7 +229,7 @@ export default function StudentDashboard() {
                     <p className="text-xs text-slate-500 mb-3">{course.instructorName}</p>
                     <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
                       <div className="font-extrabold text-slate-900">
-                        {course.price ? `$${course.price}` : "Free"}
+                        {course.price != null ? formatPrice(Math.round(course.price * 100)) : "Free"}
                       </div>
                       <Link 
                         href={`/student/courses/${course.id}`}
@@ -221,7 +246,8 @@ export default function StudentDashboard() {
 
           {/* Activity Feed */}
           <section>
-            <h2 className="text-xl font-bold text-slate-900 mb-6">Activity Feed</h2>
+            <h2 className="text-xl font-bold text-slate-900 mb-1">Activity Feed</h2>
+            <p className="text-sm text-slate-500 mb-6">Your 6 most recent learning events</p>
             <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
               <div className="space-y-6">
                 {data?.activities?.length === 0 ? (
@@ -230,12 +256,16 @@ export default function StudentDashboard() {
                   data?.activities?.map((activity) => (
                     <div key={activity.id} className="flex gap-4">
                       <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
-                        {activity.iconType === 'completed' && <CheckCircle2 className="w-4 h-4" />}
-                        {activity.iconType === 'badge' && <Award className="w-4 h-4" />}
-                        {activity.iconType === 'enrolled' && <BookOpen className="w-4 h-4" />}
+                        {activity.iconType === "completed" && <CheckCircle2 className="w-4 h-4" />}
+                        {activity.iconType === "badge" && <Award className="w-4 h-4" />}
+                        {activity.iconType === "enrolled" && <BookOpen className="w-4 h-4" />}
+                        {activity.iconType === "certificate" && <GraduationCap className="w-4 h-4" />}
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-sm font-medium text-slate-800">{activity.title}</p>
+                        {activity.description && (
+                          <p className="text-xs text-slate-500 mt-0.5">{activity.description}</p>
+                        )}
                         <p className="text-xs text-slate-400 mt-1">
                           {new Date(activity.createdAt).toLocaleDateString()}
                         </p>

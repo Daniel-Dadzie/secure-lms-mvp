@@ -1,5 +1,6 @@
 import { prisma } from "../../config/prisma";
 import { createNotification } from "../notifications/notifications.service";
+import { logActivity, logActivityOnce } from "../../lib/activityLog";
 
 // ----------------------------------------------------------------------------
 // Update lesson progress — marks IN_PROGRESS or COMPLETED.
@@ -17,6 +18,7 @@ export async function updateLessonProgress(
     where: { id: lessonId },
     select: {
       id: true,
+      title: true,
       module: {
         select: {
           courseId: true,
@@ -63,12 +65,91 @@ export async function updateLessonProgress(
     },
   });
 
-  // Check course completion if lesson was just completed
+  // Check course completion and progress milestones if lesson was just completed
   if (status === "COMPLETED") {
-    await checkCourseCompletion(userId, courseId, enrollment.id);
+    await logActivity({
+      userId,
+      title: `Completed "${lesson.title}"`,
+      description: lesson.module.course.title,
+      iconType: "completed",
+    });
+
+    await notifyProgressMilestones(
+      userId,
+      courseId,
+      lesson.module.course.title,
+      enrollment.id
+    );
+    await checkCourseCompletion(userId, courseId, enrollment.id, lesson.module.course.title);
   }
 
   return progress;
+}
+
+const PROGRESS_MILESTONES = [25, 50, 75] as const;
+
+async function notifyProgressMilestones(
+  userId: string,
+  courseId: string,
+  courseTitle: string,
+  enrollmentId: string
+): Promise<void> {
+  const totalLessons = await prisma.lesson.count({
+    where: { module: { courseId } },
+  });
+
+  if (totalLessons === 0) return;
+
+  const completedLessons = await prisma.lessonProgress.count({
+    where: {
+      enrollmentId,
+      status: "COMPLETED",
+      lesson: { module: { courseId } },
+    },
+  });
+
+  const percent = Math.round((completedLessons / totalLessons) * 100);
+
+  for (const milestone of PROGRESS_MILESTONES) {
+    if (percent < milestone) continue;
+
+    const existing = await prisma.notification.findFirst({
+      where: {
+        userId,
+        type: "PLATFORM_ALERT",
+        metadata: {
+          equals: {
+            kind: "progress_milestone",
+            courseId,
+            milestone,
+          },
+        },
+      },
+    });
+
+    if (existing) continue;
+
+    await createNotification(
+      userId,
+      "PLATFORM_ALERT",
+      `${milestone}% milestone reached`,
+      `You've completed ${milestone}% of "${courseTitle}". Keep up the great work!`,
+      {
+        kind: "progress_milestone",
+        courseId,
+        milestone,
+        enrollmentId,
+        progressPercent: percent,
+      }
+    );
+
+    await logActivityOnce({
+      userId,
+      title: `Reached ${milestone}% in "${courseTitle}"`,
+      description: `${completedLessons} of ${totalLessons} lessons complete`,
+      iconType: "badge",
+    });
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -78,7 +159,8 @@ export async function updateLessonProgress(
 async function checkCourseCompletion(
   userId: string,
   courseId: string,
-  enrollmentId: string
+  enrollmentId: string,
+  courseTitle: string
 ): Promise<void> {
   // Count total lessons in the course
   const totalLessons = await prisma.lesson.count({
@@ -116,8 +198,7 @@ async function checkCourseCompletion(
         data: { userId, courseId },
       });
 
-    // Notify the student
-    await createNotification(
+      await createNotification(
         userId,
         "CERTIFICATE_ISSUED",
         "Certificate earned!",
@@ -125,7 +206,6 @@ async function checkCourseCompletion(
         { courseId }
       );
     }
-    
 
     await tx.auditEvent.create({
       data: {
@@ -137,6 +217,15 @@ async function checkCourseCompletion(
       },
     });
   });
+
+  if (completedLessons >= totalLessons) {
+    await logActivityOnce({
+      userId,
+      title: `Completed course "${courseTitle}"`,
+      description: "Certificate earned",
+      iconType: "certificate",
+    });
+  }
 }
 
 // ----------------------------------------------------------------------------

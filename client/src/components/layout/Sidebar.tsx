@@ -10,6 +10,7 @@ export interface NavItem {
   href: string;
   icon: React.ReactNode | string;
   badge?: number;
+  tourId?: string;
 }
 
 interface SidebarProps {
@@ -90,6 +91,7 @@ export function Sidebar({
                 href={item.href}
                 onClick={onClose}
                 title={isCollapsed ? item.name : undefined}
+                data-tour-id={item.tourId}
                 className={`group relative flex items-center rounded-lg text-sm font-semibold transition-all ${
                   isCollapsed ? "justify-center px-2 py-2.5" : "justify-between px-3 py-2.5"
                 } ${

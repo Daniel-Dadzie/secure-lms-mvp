@@ -10,6 +10,9 @@ function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectTo = searchParams.get("redirect") || searchParams.get("returnTo");
+  const registerHref = redirectTo
+    ? `/register?returnTo=${encodeURIComponent(redirectTo)}`
+    : "/register";
   const { login } = useAuthStore();
 
   const [email, setEmail] = useState("");
@@ -130,7 +133,7 @@ function LoginForm() {
                 </h2>
                 <p className="text-sm text-slate-500">
                   Don&apos;t have an account?{" "}
-                  <Link href="/register" className="font-bold text-[#0A4A3A] hover:underline">
+                  <Link href={registerHref} className="font-bold text-[#0A4A3A] hover:underline">
                     Create one free
                   </Link>
                 </p>

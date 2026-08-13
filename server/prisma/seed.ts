@@ -508,6 +508,7 @@ async function main() {
       },
     });
   }
+
   // 5. Test Coupon
   await prisma.coupon.upsert({
     where: { code: "TEST20" },
@@ -558,12 +559,18 @@ async function main() {
     include: { modules: { include: { lessons: true } } },
   });
 
+  // Bulk enrollments for regional demo students only — keep student@mechlms.com isolated
+  const bulkEnrollmentStudents = seededStudents.filter(
+    (u) => u.email !== student.email
+  );
+
   const monthsAgo = [11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0];
   let enrollIndex = 0;
 
   for (const course of allCoursesForEnroll.slice(0, 8)) {
     for (let m = 0; m < 3; m++) {
-      const studentUser = seededStudents[enrollIndex % seededStudents.length];
+      const studentUser =
+        bulkEnrollmentStudents[enrollIndex % bulkEnrollmentStudents.length];
       const monthsBack = monthsAgo[enrollIndex % monthsAgo.length];
       const enrolledAt = new Date();
       enrolledAt.setMonth(enrolledAt.getMonth() - monthsBack);
@@ -624,7 +631,175 @@ async function main() {
     }
   }
   console.log("✅ Demo enrollments seeded across months and regions");
-  
+
+  // Primary demo student — runs last so bulk seed cannot overwrite demo state
+  console.log("Seeding primary student (student@mechlms.com) learning data...");
+  const primaryStudentCourses = [
+    { slug: "cnc-programming-machining-fundamentals", mode: "in_progress" as const },
+    { slug: "industrial-robotics-automation", mode: "completed" as const },
+  ] as const;
+
+  const resolvedPrimaryCourses = await Promise.all(
+    primaryStudentCourses.map(({ slug }) =>
+      prisma.course.findUnique({
+        where: { slug },
+        include: {
+          modules: {
+            include: { lessons: { orderBy: { order: "asc" } } },
+          },
+        },
+      })
+    )
+  );
+
+  const demoCourseIds = resolvedPrimaryCourses
+    .filter((c): c is NonNullable<typeof c> => c !== null)
+    .map((c) => c.id);
+
+  const completedDemoCourseId = resolvedPrimaryCourses.find(
+    (c, i) => c && primaryStudentCourses[i].mode === "completed"
+  )?.id;
+
+  if (demoCourseIds.length > 0) {
+    await prisma.enrollment.deleteMany({
+      where: {
+        userId: student.id,
+        courseId: { notIn: demoCourseIds },
+      },
+    });
+  }
+
+  await prisma.certificate.deleteMany({
+    where: {
+      userId: student.id,
+      ...(completedDemoCourseId
+        ? { courseId: { not: completedDemoCourseId } }
+        : {}),
+    },
+  });
+
+  for (let i = 0; i < primaryStudentCourses.length; i++) {
+    const { mode } = primaryStudentCourses[i];
+    const course = resolvedPrimaryCourses[i];
+    if (!course) continue;
+
+    const allLessons = course.modules.flatMap((mod) => mod.lessons);
+    const isCompleted = mode === "completed";
+    const enrolledAt = new Date();
+    enrolledAt.setMonth(enrolledAt.getMonth() - (isCompleted ? 3 : 1));
+    const completedAt = isCompleted
+      ? new Date(enrolledAt.getTime() + 14 * 86400000)
+      : null;
+
+    const enrollment = await prisma.enrollment.upsert({
+      where: { userId_courseId: { userId: student.id, courseId: course.id } },
+      update: {
+        status: isCompleted ? "COMPLETED" : "ACTIVE",
+        completedAt,
+        enrolledAt,
+      },
+      create: {
+        userId: student.id,
+        courseId: course.id,
+        status: isCompleted ? "COMPLETED" : "ACTIVE",
+        enrolledAt,
+        completedAt,
+      },
+    });
+
+    const completedCount = isCompleted
+      ? allLessons.length
+      : Math.max(1, Math.floor(allLessons.length * 0.5));
+
+    for (let li = 0; li < allLessons.length; li++) {
+      const isDone = li < completedCount;
+      const isCurrent = !isCompleted && li === completedCount;
+      await prisma.lessonProgress.upsert({
+        where: {
+          userId_lessonId: { userId: student.id, lessonId: allLessons[li].id },
+        },
+        update: {
+          enrollmentId: enrollment.id,
+          status: isDone ? "COMPLETED" : isCurrent ? "IN_PROGRESS" : "NOT_STARTED",
+          completedAt: isDone ? enrolledAt : null,
+          progressSeconds: isDone ? 900 : isCurrent ? 420 : 0,
+          updatedAt: new Date(),
+        },
+        create: {
+          userId: student.id,
+          lessonId: allLessons[li].id,
+          enrollmentId: enrollment.id,
+          status: isDone ? "COMPLETED" : isCurrent ? "IN_PROGRESS" : "NOT_STARTED",
+          completedAt: isDone ? enrolledAt : null,
+          progressSeconds: isDone ? 900 : isCurrent ? 420 : 0,
+        },
+      });
+    }
+
+    if (isCompleted) {
+      await prisma.certificate.upsert({
+        where: { userId_courseId: { userId: student.id, courseId: course.id } },
+        update: {},
+        create: { userId: student.id, courseId: course.id },
+      });
+    }
+  }
+  console.log("✅ Primary student: 1 in-progress (CNC) + 1 completed with certificate (Robotics)");
+
+  // Sample activity feed for primary demo student dashboard
+  await prisma.activity.deleteMany({ where: { userId: student.id } });
+  const cncCourse = resolvedPrimaryCourses[0];
+  const roboticsCourse = resolvedPrimaryCourses[1];
+  const activityNow = new Date();
+  const activityEntries = [
+    roboticsCourse && {
+      userId: student.id,
+      title: `Completed course "${roboticsCourse.title}"`,
+      description: "Certificate earned",
+      iconType: "certificate",
+      createdAt: new Date(activityNow.getTime() - 1 * 86400000),
+    },
+    roboticsCourse && {
+      userId: student.id,
+      title: `Enrolled in "${roboticsCourse.title}"`,
+      description: "Course enrollment",
+      iconType: "enrolled",
+      createdAt: new Date(activityNow.getTime() - 90 * 86400000),
+    },
+    cncCourse && {
+      userId: student.id,
+      title: `Reached 50% in "${cncCourse.title}"`,
+      description: "3 of 6 lessons complete",
+      iconType: "badge",
+      createdAt: new Date(activityNow.getTime() - 3 * 86400000),
+    },
+    cncCourse && {
+      userId: student.id,
+      title: `Completed "${cncCourse.modules[0]?.lessons[0]?.title ?? "Intro lesson"}"`,
+      description: cncCourse.title,
+      iconType: "completed",
+      createdAt: new Date(activityNow.getTime() - 5 * 86400000),
+    },
+    cncCourse && {
+      userId: student.id,
+      title: `Enrolled in "${cncCourse.title}"`,
+      description: "Course enrollment",
+      iconType: "enrolled",
+      createdAt: new Date(activityNow.getTime() - 30 * 86400000),
+    },
+  ].filter(Boolean) as Array<{
+    userId: string;
+    title: string;
+    description: string;
+    iconType: string;
+    createdAt: Date;
+  }>;
+
+  if (activityEntries.length > 0) {
+    await prisma.activity.createMany({ data: activityEntries });
+    console.log("✅ Primary student activity feed seeded");
+  }
+
   console.log("Database successfully seeded with 12 courses, modules, and video streams!");
 
   // 7. Sample purchases across months for admin analytics charts
@@ -655,7 +830,7 @@ async function main() {
           amountCents: course.priceCents,
           finalAmountCents: course.priceCents,
           discountCents: 0,
-          currency: "USD",
+          currency: "GHS",
           status: "COMPLETED",
           provider: "PAYSTACK",
           providerReference: `seed-ref-${i}-${Date.now()}`,

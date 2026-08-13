@@ -29,7 +29,7 @@ export async function checkout(req: Request, res: Response, next: NextFunction):
     );
     res.status(200).json(result);
   } catch (error: any) {
-    if ([400, 404, 409].includes(error.statusCode)) {
+    if ([400, 404, 409, 502].includes(error.statusCode)) {
       res.status(error.statusCode).json({ message: error.message });
       return;
     }
@@ -45,7 +45,10 @@ export async function checkoutCart(req: Request, res: Response, next: NextFuncti
     const result = await paymentsService.checkoutCart(userId, timezone);
     res.status(200).json(result);
   } catch (error: any) {
-    if (error.statusCode === 400) { res.status(400).json({ message: error.message }); return; }
+    if ([400, 502].includes(error.statusCode)) {
+      res.status(error.statusCode).json({ message: error.message });
+      return;
+    }
     next(error);
   }
 }

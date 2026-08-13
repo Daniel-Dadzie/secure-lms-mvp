@@ -3,6 +3,7 @@ import { useEffect, useState, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { formatPrice } from "@/lib/currency";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -288,7 +289,7 @@ async function handleAddToCart(courseId: string) {
                   </p>
                   <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
                     <span className="text-xl font-extrabold text-[#0A4A3A]">
-                      {course.priceCents === 0 ? "Free" : `$${(course.priceCents / 100).toFixed(2)}`}
+                      {formatPrice(course.priceCents)}
                     </span>
                       <div className="flex gap-2">
                         <Link

@@ -1,5 +1,6 @@
 import { prisma } from "../../config/prisma";
 import { createNotification } from "../notifications/notifications.service";
+import { logActivity } from "../../lib/activityLog";
 
 const enrollmentSelect = {
   id: true,
@@ -44,7 +45,7 @@ export async function getStudentEnrollments(userId: string) {
     orderBy: { enrolledAt: "desc" },
   });
 
-  // Attach progress percentage to each enrollment
+  // Attach progress percentage and per-lesson breakdown to each enrollment
   const enriched = await Promise.all(
     enrollments.map(async (enrollment) => {
       const totalLessons = enrollment.course.modules.reduce(
@@ -52,26 +53,45 @@ export async function getStudentEnrollments(userId: string) {
         0
       );
 
-      const completedLessons = await prisma.lessonProgress.count({
-        where: {
-          enrollmentId: enrollment.id,
-          status: "COMPLETED",
+      const lessonProgress = await prisma.lessonProgress.findMany({
+        where: { enrollmentId: enrollment.id },
+        select: {
+          lessonId: true,
+          status: true,
+          completedAt: true,
+          updatedAt: true,
         },
       });
+
+      const completedLessons = lessonProgress.filter(
+        (p) => p.status === "COMPLETED"
+      ).length;
 
       const progressPercent =
         totalLessons > 0
           ? Math.round((completedLessons / totalLessons) * 100)
           : 0;
 
+      const lastAccessedAt = lessonProgress.reduce<Date | null>((latest, p) => {
+        if (!latest || p.updatedAt > latest) return p.updatedAt;
+        return latest;
+      }, null);
+
       return {
         ...enrollment,
-        progress: progressPercent,
+        progressPercent,
+        lessonProgress: lessonProgress.map(({ lessonId, status, completedAt }) => ({
+          lessonId,
+          status,
+          completedAt,
+        })),
         progressDetails: {
           completedLessons,
           totalLessons,
           progressPercent,
         },
+        lastAccessedAt:
+          lastAccessedAt?.toISOString() ?? enrollment.enrolledAt.toISOString(),
       };
     })
   );
@@ -198,6 +218,13 @@ export async function enrollFree(userId: string, courseId: string) {
     );
 
     return enrollment;
+  });
+
+  await logActivity({
+    userId,
+    title: `Enrolled in "${course.title}"`,
+    description: "Free enrollment",
+    iconType: "enrolled",
   });
 
   return enrollment;
