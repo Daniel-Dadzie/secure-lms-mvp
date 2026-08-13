@@ -27,7 +27,7 @@ export default function StudentSearchPage() {
   }, [query]);
 
   return (
-    <div className="space-y-8 max-w-5xl mx-auto pb-20">
+    <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-8 pb-20">
       <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-xs">
         <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-3 tracking-tight">
           <Search className="w-6 h-6 text-emerald-800" />

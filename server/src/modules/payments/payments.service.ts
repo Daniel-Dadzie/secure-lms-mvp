@@ -4,6 +4,7 @@ import { firebaseMessaging } from "../../config/firebase";
 import { PLATFORM_CURRENCY } from "../../config/platform";
 import { initializeTransaction, verifyTransaction } from "../../services/paystack.service";
 import { createNotification } from "../notifications/notifications.service";
+import { logActivity } from "../../lib/activityLog";
 import { resolveUserRegion } from "../../lib/resolveUserRegion";
 
 function resolveCheckoutRegion(timezone?: string) {
@@ -341,6 +342,13 @@ export async function completePurchasesByReference(reference: string): Promise<v
         `A student enrolled in your course "${purchase.course.title}".`,
         { courseId: purchase.courseId, enrollmentId: enrollment.id }
       );
+    });
+
+    await logActivity({
+      userId: purchase.userId,
+      title: `Enrolled in "${purchase.course.title}"`,
+      description: "Purchase confirmed",
+      iconType: "enrolled",
     });
 
     // Best-effort push notification — never block payment completion on this
