@@ -179,9 +179,15 @@ describe("chatbot.service", () => {
       },
     ]);
 
+    // Handle the promise synchronously to avoid unhandled rejection
+    const errorPromise = promise.catch(error => error);
+
+    // Advance fake timers to trigger the sleep/retry logic
     await vi.runAllTimersAsync();
 
-    await expect(promise).rejects.toBeInstanceOf(ChatbotRateLimitError);
+    // Wait for the error to be caught
+    const error = await errorPromise;
+    expect(error).toBeInstanceOf(ChatbotRateLimitError);
 
     vi.useRealTimers();
   });
