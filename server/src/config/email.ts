@@ -5,7 +5,7 @@ import nodemailer from "nodemailer";
 // Requires a Gmail App Password (not your regular Gmail password) —
 // generate one at https://myaccount.google.com/apppasswords
 // (requires 2-Step Verification enabled on the Google account).
-// Set GMAIL_USER and GMAIL_APP_PASSWORD in your .env file.
+// Set SMTP_USER and SMTP_PASS in your .env file.
 // ----------------------------------------------------------------------------
 export const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST,

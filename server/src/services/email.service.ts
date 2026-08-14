@@ -1,6 +1,6 @@
 import { transporter } from "../config/email";
 
-const FROM = process.env.SMTP_FROM || `Mech Spec LMS <${process.env.GMAIL_USER}>`;
+const FROM = process.env.SMTP_FROM || `Mech Spec LMS <${process.env.SMTP_USER}>`;
 const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
 
 // ----------------------------------------------------------------------------
