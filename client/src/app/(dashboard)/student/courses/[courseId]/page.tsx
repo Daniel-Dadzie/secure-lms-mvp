@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import api from "@/lib/api";
-import ProtectedRoute from "@/components/shared/ProtectedRoute";
+import { CourseReviewsSection } from "@/components/courses/CourseReviewsSection";
 
 const FALLBACK_IMAGE = "/images/course-fallback.jpg";
 
@@ -54,87 +54,84 @@ export default function StudentCourseDetailPage() {
 
   const [enrollment, setEnrollment] = useState<EnrollmentDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRedirecting, setIsRedirecting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const fetchEnrollment = useCallback(async () => {
-  try {
-    const res = await api.get("/enrollments");
-    const rawData = res.data;
-
-    const enrolledList = Array.isArray(rawData)
-      ? rawData
-      : Array.isArray(rawData?.enrollments)
-        ? rawData.enrollments
-        : [];
-
-    const match = enrolledList.find(
-      (e: any) => (e.course?.id || e.courseId) === courseId
-    );
-
-    if (!match) {
-      router.replace(`/courses/${courseId}`);
-      return;
-    }
-
-    const detailRes = await api.get(`/enrollments/${match.id}`);
-    return detailRes.data.enrollment || detailRes.data;
-  } catch {
-    throw new Error("Failed to load course details. Please try again.");
-  }
-}, [courseId, router]);
-
-useEffect(() => {
-  let cancelled = false;
-
-  const loadEnrollment = async () => {
     try {
-      const data = await fetchEnrollment();
+      const res = await api.get("/enrollments");
+      const rawData = res.data;
 
-      if (cancelled || !data) return;
+      const enrolledList = Array.isArray(rawData)
+        ? rawData
+        : Array.isArray(rawData?.enrollments)
+          ? rawData.enrollments
+          : [];
 
-      setEnrollment(data);
-    } catch {
-      if (!cancelled) {
-        setError("Failed to load course details. Please try again.");
+      const match = enrolledList.find(
+        (e: { course?: { id: string }; courseId?: string }) =>
+          (e.course?.id || e.courseId) === courseId
+      );
+
+      if (!match) {
+        setIsRedirecting(true);
+        router.replace(`/courses/${courseId}`);
+        return null;
       }
-    } finally {
-      if (!cancelled) {
-        setIsLoading(false);
+
+      const detailRes = await api.get(`/enrollments/${match.id}`);
+      return detailRes.data.enrollment || detailRes.data;
+    } catch {
+      throw new Error("Failed to load course details. Please try again.");
+    }
+  }, [courseId, router]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadEnrollment() {
+      try {
+        const data = await fetchEnrollment();
+
+        if (cancelled || !data) return;
+
+        setEnrollment(data);
+      } catch {
+        if (!cancelled) {
+          setError("Failed to load course details. Please try again.");
+        }
+      } finally {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
       }
     }
-  };
 
-  void loadEnrollment();
+    void loadEnrollment();
 
-  return () => {
-    cancelled = true;
-  };
-}, [fetchEnrollment]);
+    return () => {
+      cancelled = true;
+    };
+  }, [fetchEnrollment]);
 
-  if (isLoading) {
-    return (
-      <ProtectedRoute allowedRoles={["STUDENT"]}>
-        <div className="min-h-screen bg-slate-50 animate-pulse p-8">
-          <div className="mx-auto max-w-4xl space-y-6">
-            <div className="h-64 rounded-2xl bg-slate-200" />
-            <div className="h-8 w-1/2 rounded bg-slate-200" />
-            <div className="h-48 rounded-2xl bg-slate-200" />
-          </div>
-        </div>
-      </ProtectedRoute>
-    );
-  }
-
-  if (error || !enrollment) {
-    return (
-      <ProtectedRoute allowedRoles={["STUDENT"]}>
-        <div className="flex min-h-[70vh] flex-col items-center justify-center bg-slate-50 px-4">
-          <p className="text-red-600 mb-4">{error || "Enrollment not found."}</p>
-          <Link href="/student" className="text-blue-600 hover:underline text-sm">
-            Back to Dashboard
+  if (isLoading || isRedirecting || !enrollment) {
+    if (error) {
+      return (
+        <div className="flex min-h-[50vh] flex-col items-center justify-center px-4">
+          <p className="text-red-600 mb-4">{error}</p>
+          <Link href="/student/courses" className="text-[#196A54] hover:underline text-sm">
+            Browse courses
           </Link>
         </div>
-      </ProtectedRoute>
+      );
+    }
+
+    return (
+      <div className="p-6 md:p-8 max-w-4xl mx-auto animate-pulse space-y-6">
+        <div className="h-64 rounded-2xl bg-slate-200" />
+        <div className="h-8 w-1/2 rounded bg-slate-200" />
+        <div className="h-48 rounded-2xl bg-slate-200" />
+      </div>
     );
   }
 
@@ -154,10 +151,9 @@ useEffect(() => {
   const isCourseComplete = enrollment.status === "COMPLETED";
 
   return (
-    <ProtectedRoute allowedRoles={["STUDENT"]}>
-      <div className="min-h-screen bg-slate-50 pb-20">
-        {/* Hero */}
-        <div className="relative h-48 w-full sm:h-64 bg-slate-900 overflow-hidden">
+    <div className="pb-12">
+      {/* Hero */}
+      <div className="relative h-48 w-full sm:h-56 bg-slate-900 overflow-hidden">
           <Image
             src={course.thumbnailUrl || FALLBACK_IMAGE}
             alt={course.title}
@@ -176,7 +172,7 @@ useEffect(() => {
           </div>
         </div>
 
-        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
           {/* Progress summary */}
           <div className="mb-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -185,14 +181,14 @@ useEffect(() => {
                   <span className="text-sm font-semibold text-slate-700">
                     {isCourseComplete ? "Course Completed! 🎉" : "Your Progress"}
                   </span>
-                  <span className="text-sm font-bold text-blue-600">
+                  <span className="text-sm font-bold text-[#196A54]">
                     {completedCount}/{totalLessons} lessons
                   </span>
                 </div>
                 <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
-                      isCourseComplete ? "bg-green-500" : "bg-blue-600"
+                      isCourseComplete ? "bg-green-500" : "bg-[#196A54]"
                     }`}
                     style={{ width: `${progressPercent}%` }}
                   />
@@ -212,12 +208,17 @@ useEffect(() => {
                 {/* Correct classroom route: /learn/[courseId] matching (classroom) group */}
                 <Link
                   href={`/learn/${courseId}`}
-                  className="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700"
+                  className="rounded-lg bg-[#196A54] px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-[#12503F]"
                 >
                   {progressPercent === 0 ? "Start Course" : isCourseComplete ? "Review Course" : "Resume Course"}
                 </Link>
               </div>
             </div>
+          </div>
+
+          {/* Reviews */}
+          <div className="mb-8">
+            <CourseReviewsSection courseId={courseId} canSubmitReview />
           </div>
 
           {/* Curriculum */}
@@ -275,7 +276,6 @@ useEffect(() => {
             </div>
           )}
         </div>
-      </div>
-    </ProtectedRoute>
+    </div>
   );
 }

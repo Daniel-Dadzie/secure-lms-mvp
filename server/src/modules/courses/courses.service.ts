@@ -1,6 +1,13 @@
 import slugify from "slugify";
 import { prisma } from "../../config/prisma";
-import type { CreateCourseInput, UpdateCourseInput, CourseFilters, PaginatedCourses, CourseResponse } from "./courses.types";
+import type {
+  CreateCourseInput,
+  UpdateCourseInput,
+  CourseFilters,
+  PaginatedCourses,
+  CourseResponse,
+  CourseDetailResponse,
+} from "./courses.types";
 
 // ----------------------------------------------------------------------------
 // Helpers
@@ -14,6 +21,7 @@ const courseSelect = {
   thumbnailUrl: true,
   priceCents: true,
   status: true,
+  learningObjectives: true,
   instructorId: true,
   instructor: {
     select: { id: true, fullName: true, email: true },
@@ -52,9 +60,16 @@ const publicCourseSelect = {
   title: true,
   slug: true,
   description: true,
+  longDescription: true,
+  duration: true,
+  level: true,
+  highlights: true,
+  learningObjectives: true,
   thumbnailUrl: true,
   priceCents: true,
   status: true,
+  averageRating: true,
+  reviewCount: true,
   instructorId: true,
   instructor: {
     select: { id: true, fullName: true, email: true },
@@ -77,9 +92,14 @@ const publicCourseSelect = {
       },
     },
   },
+  _count: {
+    select: { enrollments: true },
+  },
   createdAt: true,
   updatedAt: true,
 } as const;
+
+type CourseViewer = { sub: string; role: string } | null | undefined;
 
 async function generateUniqueSlug(title: string, excludeId?: string): Promise<string> {
   const base = slugify(title, { lower: true, strict: true });
@@ -137,18 +157,22 @@ export async function getPublishedCourses(filters: CourseFilters): Promise<Pagin
 }
 
 // ----------------------------------------------------------------------------
-// Single published course detail
-// Returns 404 for unpublished/archived/inactive courses — never 403,
-// to avoid confirming the course exists (threat model: info disclosure)
+// Single course detail — published courses are public; draft/archived visible
+// only to the owning instructor or an admin. Supports lookup by id or slug.
+// Returns lesson titles only (no contentUrl). Access flags indicate who can play.
 // ----------------------------------------------------------------------------
-export async function getPublishedCourseById(courseId: string): Promise<CourseResponse> {
+export async function getCourseDetail(
+  idOrSlug: string,
+  viewer?: CourseViewer
+): Promise<CourseDetailResponse> {
   const course = await prisma.course.findFirst({
     where: {
-      id: courseId,
-      status: "PUBLISHED",
+      OR: [{ id: idOrSlug }, { slug: idOrSlug }],
+    },
+    select: {
+      ...publicCourseSelect,
       isActive: true,
     },
-    select: publicCourseSelect,
   });
 
   if (!course) {
@@ -157,7 +181,57 @@ export async function getPublishedCourseById(courseId: string): Promise<CourseRe
     throw error;
   }
 
-  return course as CourseResponse;
+  const userId = viewer?.sub;
+  const userRole = viewer?.role;
+  const isAdmin = userRole === "ADMIN";
+  const isOwner = !!userId && userId === course.instructorId;
+  const isPubliclyVisible = course.status === "PUBLISHED" && course.isActive;
+
+  if (!isPubliclyVisible && !isAdmin && !isOwner) {
+    const error = new Error("Course not found");
+    (error as any).statusCode = 404;
+    throw error;
+  }
+
+  let isEnrolled = false;
+  let enrollmentId: string | undefined;
+
+  if (userId) {
+    const enrollment = await prisma.enrollment.findUnique({
+      where: { userId_courseId: { userId, courseId: course.id } },
+      select: { id: true, status: true },
+    });
+
+    if (
+      enrollment &&
+      (enrollment.status === "ACTIVE" || enrollment.status === "COMPLETED")
+    ) {
+      isEnrolled = true;
+      enrollmentId = enrollment.id;
+    }
+  }
+
+  const canPlayContent = isAdmin || isOwner || isEnrolled;
+  const { _count, isActive: _isActive, ...courseData } = course;
+
+  return {
+    ...(courseData as CourseResponse),
+    enrollmentCount: _count.enrollments,
+    access: {
+      canPlayContent,
+      isEnrolled,
+      isOwner,
+      isAdmin,
+      isPreview: !isPubliclyVisible,
+    },
+    enrollmentId,
+  } as CourseDetailResponse;
+}
+
+/** @deprecated Use getCourseDetail — kept for internal callers */
+export async function getPublishedCourseById(courseId: string): Promise<CourseResponse> {
+  const detail = await getCourseDetail(courseId);
+  return detail;
 }
 
 // ----------------------------------------------------------------------------
@@ -217,6 +291,7 @@ export async function updateCourse(
       ...(input.thumbnailUrl && { thumbnailUrl: input.thumbnailUrl }),
       ...(input.categoryId && { categoryId: input.categoryId }),
       ...(input.status && { status: input.status }),
+      ...(input.learningObjectives !== undefined && { learningObjectives: input.learningObjectives }),
     },
     select: courseSelect,
   });
@@ -291,6 +366,11 @@ export async function archiveCourse(
   courseId: string,
   adminId: string
 ): Promise<void> {
+  const course = await prisma.course.findUnique({
+    where: { id: courseId },
+    select: { title: true },
+  });
+
   await prisma.course.update({
     where: { id: courseId },
     data: { status: "ARCHIVED", isActive: false },
@@ -302,6 +382,7 @@ export async function archiveCourse(
       action: "admin.course_archived",
       entityType: "Course",
       entityId: courseId,
+      metadata: course ? { courseTitle: course.title } : undefined,
     },
   });
 }
@@ -314,7 +395,10 @@ export async function getInstructorCourses(
 ): Promise<CourseResponse[]> {
   const courses = await prisma.course.findMany({
     where: { instructorId, isActive: true },
-    select: courseSelect,
+    select: {
+      ...courseSelect,
+      _count: { select: { enrollments: true } },
+    },
     orderBy: { createdAt: "desc" },
   });
 

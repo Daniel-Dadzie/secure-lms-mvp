@@ -1,8 +1,14 @@
 import type { Request, Response, NextFunction } from "express";
 import bcrypt from "bcrypt";
+import { z } from "zod";
 import { updateProfileSchema, adminResetPasswordSchema } from "./users.schemas";
 import * as usersService from "./users.service";
 import { prisma } from "../../config/prisma";
+import { persistUserRegion } from "../../lib/resolveUserRegion";
+
+const regionSchema = z.object({
+  timezone: z.string().min(1).max(100),
+});
 
 export async function getProfile(
   req: Request,
@@ -41,6 +47,26 @@ export async function updateProfile(
 
     const user = await usersService.updateProfile(userId, parsed.data);
     res.status(200).json({ user });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateRegion(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const userId = (req as any).user?.sub;
+    const parsed = regionSchema.safeParse(req.body);
+    if (!parsed.success) {
+      res.status(400).json({ message: "Validation failed", errors: parsed.error.flatten().fieldErrors });
+      return;
+    }
+
+    const region = await persistUserRegion(userId, { timezone: parsed.data.timezone }, prisma);
+    res.status(200).json({ region });
   } catch (error) {
     next(error);
   }

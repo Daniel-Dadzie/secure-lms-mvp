@@ -1,10 +1,23 @@
 import crypto from "crypto";
+import axios from "axios";
 import { paystack } from "../config/paystack";
+import { PLATFORM_CURRENCY } from "../config/platform";
+
+function mapPaystackError(error: unknown): Error {
+  if (axios.isAxiosError(error)) {
+    const message =
+      (error.response?.data as { message?: string } | undefined)?.message ??
+      "Payment provider rejected the checkout request";
+    const mapped = new Error(message);
+    (mapped as Error & { statusCode?: number }).statusCode = 502;
+    return mapped;
+  }
+  return error instanceof Error ? error : new Error("Payment initialization failed");
+}
 
 // ----------------------------------------------------------------------------
 // Initialize a Paystack transaction. amountInSubunit must already be in the
-// smallest currency unit (pesewas for GHS) — matches how amountCents/
-// finalAmountCents are already stored, so no conversion needed here.
+// smallest currency unit (pesewas for GHS, cents for USD) — matches amountCents.
 // ----------------------------------------------------------------------------
 export async function initializeTransaction(params: {
   email: string;
@@ -13,19 +26,23 @@ export async function initializeTransaction(params: {
   callbackUrl: string;
   metadata?: Record<string, unknown>;
 }): Promise<{ authorizationUrl: string; accessCode: string }> {
-  const response = await paystack.post("/transaction/initialize", {
-    email: params.email,
-    amount: params.amountInSubunit,
-    reference: params.reference,
-    callback_url: params.callbackUrl,
-    currency: "GHS",
-    metadata: params.metadata,
-  });
+  try {
+    const response = await paystack.post("/transaction/initialize", {
+      email: params.email,
+      amount: params.amountInSubunit,
+      reference: params.reference,
+      callback_url: params.callbackUrl,
+      currency: PLATFORM_CURRENCY,
+      metadata: params.metadata,
+    });
 
-  return {
-    authorizationUrl: response.data.data.authorization_url,
-    accessCode: response.data.data.access_code,
-  };
+    return {
+      authorizationUrl: response.data.data.authorization_url,
+      accessCode: response.data.data.access_code,
+    };
+  } catch (error) {
+    throw mapPaystackError(error);
+  }
 }
 
 // ----------------------------------------------------------------------------

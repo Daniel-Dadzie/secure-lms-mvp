@@ -1,128 +1,215 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../../config/prisma";
+import { retrieveRelevantArticles } from "../../lib/articleRetrieval";
+import {
+  formatRetrievalFallback,
+  generateGroundedAnswer,
+  GeminiRateLimitError,
+  isChatbotEnabled,
+} from "../../services/chatbot.service";
+import * as helpService from "../help/help.service";
+import * as ticketsService from "../admin/admin-tickets.service";
 
-// ----------------------------------------------------------------------------
-// FAQ knowledge base — curated platform-specific answers.
-// Stored in code for MVP. Post-MVP: move to DB for admin management.
-// The assistant is intentionally constrained to these topics only —
-// it cannot be prompted into answering outside its scope.
-// This directly addresses the prompt injection threat (TB7) from
-// the security team's threat model.
-// ----------------------------------------------------------------------------
-const FAQ_KNOWLEDGE_BASE = [
+const FALLBACK_FAQ = [
   {
     keywords: ["register", "sign up", "create account", "new account"],
     answer:
-      "To register, click the 'Create Account' button on the login page. Fill in your full name, email address, password (minimum 8 characters), and select your role (Student or Instructor). Click Register and you will be redirected to log in.",
+      "To register, click the 'Create Account' button on the login page. Fill in your full name, email address, password (minimum 8 characters), and select your role (Student or Instructor).",
   },
   {
     keywords: ["login", "log in", "sign in", "access account"],
     answer:
-      "To log in, go to the login page and enter your registered email and password. If your credentials are correct, you will be redirected to your dashboard automatically.",
-  },
-  {
-    keywords: ["password", "reset", "forgot", "change password"],
-    answer:
-      "If you have forgotten your password, please contact the platform administrator who can reset it for you. Password reset emails are not available in the current version.",
+      "To log in, go to the login page and enter your registered email and password.",
   },
   {
     keywords: ["enroll", "enrolment", "join course", "access course"],
     answer:
-      "To enroll in a course, browse the course catalogue, click on a course you are interested in, and click 'Add to Cart'. Proceed to checkout to complete your enrollment. Free courses can be enrolled in directly without payment.",
+      "Browse the course catalogue, add a course to your cart, and complete checkout. Free courses can be enrolled in directly.",
   },
   {
     keywords: ["purchase", "buy", "payment", "checkout", "cart"],
     answer:
-      "To purchase a course, add it to your cart from the course catalogue. Go to your cart and click 'Checkout'. Payments are simulated — no real card details are required. After checkout, you will be automatically enrolled.",
+      "Add courses to your cart and proceed to checkout to complete your purchase.",
   },
   {
     keywords: ["certificate", "completion", "finish course"],
     answer:
-      "You earn a certificate when you complete all lessons in a course. Once every lesson is marked as completed, your certificate is automatically issued and available in your profile under 'My Certificates'.",
-  },
-  {
-    keywords: ["progress", "track", "lesson", "mark complete"],
-    answer:
-      "Your progress is tracked automatically as you complete lessons. Open a lesson from your enrolled course, watch the content, and mark it as complete. Your progress percentage updates on your student dashboard.",
-  },
-  {
-    keywords: ["create course", "upload course", "publish course", "instructor"],
-    answer:
-      "As an instructor, go to your dashboard and click 'Create Course'. Fill in the title, description, and price. Add modules and lessons to structure your content. Upload thumbnails via the course editor and videos per lesson. When ready, click 'Publish' to make the course available to students.",
-  },
-  {
-    keywords: ["refund", "money back", "cancel"],
-    answer:
-      "Refunds are not available in the current MVP version. All purchases are final. Please review the course details carefully before purchasing.",
-  },
-  {
-    keywords: ["admin", "administrator", "manage users", "suspend"],
-    answer:
-      "Administrators can manage users, moderate courses, and view platform activity from the Admin Dashboard. Contact your platform administrator if you need account-level assistance.",
+      "Complete all lessons in a course to earn your certificate automatically.",
   },
   {
     keywords: ["contact", "support", "help", "issue", "problem"],
     answer:
-      "For platform issues not covered here, please contact the platform administrator directly. This assistant can only answer questions about platform features and usage.",
+      "For platform issues not covered here, please contact the platform administrator. Your question has been logged for review.",
   },
 ];
 
-// ----------------------------------------------------------------------------
-// Match question to FAQ entry using keyword scoring.
-// Returns the best match above a confidence threshold.
-// If no match found, returns a safe fallback — never attempts to
-// answer outside its knowledge base (prevents scope abuse).
-// ----------------------------------------------------------------------------
-function findAnswer(question: string): {
-  answer: string;
-  confidence: number;
-} {
+function getRetrievalThreshold(): number {
+  const parsed = Number.parseFloat(process.env.CHATBOT_RETRIEVAL_THRESHOLD ?? "0.15");
+  return Number.isFinite(parsed) ? parsed : 0.15;
+}
+
+function getSkipLlmThreshold(): number {
+  const parsed = Number.parseFloat(process.env.CHATBOT_SKIP_LLM_THRESHOLD ?? "0.2");
+  return Number.isFinite(parsed) ? parsed : 0.2;
+}
+
+function applyRetrievalAnswer(
+  retrieved: ReturnType<typeof retrieveRelevantArticles>
+): Pick<SupportAnswerResult, "answer" | "confidence" | "source" | "sourceTitles"> {
+  return {
+    answer: formatRetrievalFallback(retrieved.map((entry) => entry.article)),
+    confidence: retrieved[0].score,
+    source: "retrieval",
+    sourceTitles: retrieved.map((entry) => entry.article.title),
+  };
+}
+
+function findFallbackAnswer(
+  question: string
+): { answer: string; confidence: number } {
   const normalised = question.toLowerCase().trim();
+  let bestMatch = { answer: "", confidence: 0 };
 
-  let bestMatch = { answer: "", confidence: 0, index: -1 };
-
-  FAQ_KNOWLEDGE_BASE.forEach((entry, i) => {
-    const matchedKeywords = entry.keywords.filter((kw) =>
-      normalised.includes(kw)
-    );
+  for (const entry of FALLBACK_FAQ) {
+    const matchedKeywords = entry.keywords.filter((kw) => normalised.includes(kw));
     const confidence = matchedKeywords.length / entry.keywords.length;
     if (confidence > bestMatch.confidence) {
-      bestMatch = { answer: entry.answer, confidence, index: i };
+      bestMatch = { answer: entry.answer, confidence };
     }
-  });
+  }
 
-  // Threshold: at least one keyword must match
-  if (bestMatch.confidence === 0 || bestMatch.index === -1) {
+  if (bestMatch.confidence === 0) {
     return {
       answer:
-        "I can only answer questions about platform features such as registration, login, purchasing courses, enrollment, progress tracking, and certificates. Please rephrase your question or contact the platform administrator for other issues.",
+        "I can only answer questions about platform features. Your question has been logged and an administrator will review it.",
       confidence: 0,
     };
   }
 
-  return { answer: bestMatch.answer, confidence: bestMatch.confidence };
+  return bestMatch;
 }
 
-// ----------------------------------------------------------------------------
-// Ask the support assistant a question
-// ----------------------------------------------------------------------------
+export interface SupportAnswerResult {
+  answer: string;
+  confidence: number;
+  ticketId?: string;
+  source?: "llm" | "retrieval" | "fallback";
+  sourceTitles?: string[];
+}
+
 export async function askSupport(
   question: string,
   userId?: string
-): Promise<{ answer: string; confidence: number }> {
-  const result = findAnswer(question);
+): Promise<SupportAnswerResult> {
+  const threshold = getRetrievalThreshold();
+  const skipLlmThreshold = getSkipLlmThreshold();
+  const articles = await helpService.getPublishedHelpArticles();
+  const retrieved = retrieveRelevantArticles(question, articles, 3);
 
-  // Log every support interaction for audit purposes
+  let answer: string;
+  let confidence: number;
+  let source: SupportAnswerResult["source"];
+  let sourceTitles: string[] | undefined;
+  let createTicket = false;
+
+  if (articles.length === 0) {
+    const fallback = findFallbackAnswer(question);
+    answer = fallback.answer;
+    confidence = fallback.confidence;
+    source = "fallback";
+    createTicket = fallback.confidence === 0;
+  } else if (isChatbotEnabled()) {
+    const contextArticles =
+      retrieved.length > 0
+        ? retrieved.map((entry) => entry.article)
+        : articles.slice(0, 3);
+
+    const strongMatch =
+      retrieved.length > 0 && retrieved[0].score >= skipLlmThreshold;
+
+    if (strongMatch) {
+      ({ answer, confidence, source, sourceTitles } = applyRetrievalAnswer(retrieved));
+    } else {
+      try {
+        const llmResult = await generateGroundedAnswer(question, contextArticles);
+
+        if (llmResult.outOfScope) {
+          createTicket = true;
+          answer =
+            "I can only answer questions covered in our help center. Your question has been logged and an administrator will review it.";
+          confidence = retrieved[0]?.score ?? 0;
+          source = "llm";
+        } else {
+          answer = llmResult.answer;
+          confidence = Math.max(retrieved[0]?.score ?? 0.5, threshold);
+          source = "llm";
+          sourceTitles = contextArticles.map((article) => article.title);
+        }
+      } catch (error) {
+        const isRateLimit = error instanceof GeminiRateLimitError;
+        const detail =
+          error instanceof Error
+            ? error.message
+            : "Unknown error while calling OpenRouter";
+
+        if (isRateLimit) {
+          console.warn("LLM quota exceeded — serving help article directly.", detail);
+        } else {
+          console.warn(
+            "LLM help assistant unavailable — using retrieval fallback.",
+            detail
+          );
+        }
+
+        if (retrieved.length > 0) {
+          ({ answer, confidence, source, sourceTitles } = applyRetrievalAnswer(retrieved));
+        } else {
+          createTicket = true;
+          answer =
+            "I could not find a matching help article. Your question has been logged for review.";
+          confidence = 0;
+          source = "retrieval";
+        }
+      }
+    }
+  } else if (retrieved.length > 0 && retrieved[0].score >= threshold) {
+    answer = formatRetrievalFallback(retrieved.map((entry) => entry.article));
+    confidence = retrieved[0].score;
+    source = "retrieval";
+    sourceTitles = retrieved.map((entry) => entry.article.title);
+  } else {
+    createTicket = true;
+    answer =
+      "I could not find a matching help article. Your question has been logged for review.";
+    confidence = retrieved[0]?.score ?? 0;
+    source = "retrieval";
+  }
+
+  const metadata: Prisma.InputJsonValue = {
+    question: question.substring(0, 500),
+    confidence,
+    answered: !createTicket,
+    source: source ?? "unknown",
+    sourceTitles: sourceTitles ?? [],
+  };
+
   await prisma.auditEvent.create({
     data: {
       userId: userId || null,
       action: "support.question_asked",
-      metadata: {
-        question: question.substring(0, 500), // truncate for storage
-        confidence: result.confidence,
-        answered: result.confidence > 0,
-      },
+      metadata,
     },
   });
 
-  return result;
+  let ticketId: string | undefined;
+  if (createTicket) {
+    const ticket = await ticketsService.createTicket({
+      userId,
+      subject: question.substring(0, 100),
+      body: question,
+    });
+    ticketId = ticket.id;
+  }
+
+  return { answer, confidence, ticketId, source, sourceTitles };
 }

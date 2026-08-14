@@ -1,219 +1,163 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
+import { BookOpen, BarChart3, Star, Plus } from "lucide-react";
 import api from "@/lib/api";
-import ProtectedRoute from "@/components/shared/ProtectedRoute";
 import { useAuthStore } from "@/store/auth.store";
-import {
-  GraduationCap, 
-  CheckCircle2, 
-  Coins, 
-  Plus, 
-  BookOpen 
-} from "lucide-react";
-
-interface CourseAnalytics {
-  courseId: string;
-  courseTitle: string;
-  enrollmentCount: number;
-  completionCount: number;
-  revenueCents: number;
-  averageProgress: number;
-}
-
-interface OverviewData {
-  courses: CourseAnalytics[];
-  totals: {
-    totalEnrollments: number;
-    totalCompletions: number;
-    totalRevenueCents: number;
-  };
-}
+import { formatCurrency } from "@/lib/admin/formatters";
+import { StatCard } from "@/components/ui/StatCard";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
+import { EmptyState } from "@/components/ui/EmptyState";
+import type { InstructorOverview } from "@/types/instructor";
 
 export default function InstructorDashboard() {
   const { user } = useAuthStore();
-  const router = useRouter();
-  const searchParams = useSearchParams();
-  const searchQuery = searchParams.get("search")?.toLowerCase() || "";
-  
-  const [overview, setOverview] = useState<OverviewData | null>(null);
+  const [overview, setOverview] = useState<InstructorOverview | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchOverview = async () => {
+    let cancelled = false;
+
+    async function load() {
       try {
         const res = await api.get("/instructor/analytics/overview");
-        setOverview(res.data);
-      } catch (err: any) {
-        setError("Failed to load analytics. Please refresh the page.");
+        if (!cancelled) setOverview(res.data);
+      } catch {
+        if (!cancelled) setError("Failed to load analytics. Please refresh the page.");
       } finally {
-        setIsLoading(false);
+        if (!cancelled) setIsLoading(false);
       }
-    };
-    fetchOverview();
+    }
+
+    void load();
+    return () => { cancelled = true; };
   }, []);
 
-  const displayName = user?.fullName || "Instructor";
-
-  const filteredCourses = overview?.courses.filter((course) =>
-    course.courseTitle.toLowerCase().includes(searchQuery)
-  ) || [];
+  const firstName = user?.fullName?.split(" ")[0] || "Instructor";
+  const lowPerformingCourses = overview?.courses.filter(
+    (c) => c.enrollmentCount === 0 || c.averageProgress < 30
+  ) ?? [];
 
   return (
-    <ProtectedRoute allowedRoles={["INSTRUCTOR"]}>
-      <div className="space-y-8 pb-20">
-        {/* Header Section */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-xs">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 sm:text-3xl tracking-tight">
-              Welcome back, {displayName} 👋
-            </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Here&apos;s how your active technical courses are performing.
-            </p>
-          </div>
-          <Link
-            href="/instructor/courses"
-            className="inline-flex items-center gap-2 rounded-xl bg-emerald-800 hover:bg-emerald-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            Create Course
-          </Link>
+    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-slate-900">Welcome back, {firstName}</h1>
+          <p className="text-sm text-slate-500 mt-1">Here&apos;s how your courses are performing.</p>
         </div>
-
-        {error && (
-          <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            {error}
-          </div>
-        )}
-
-        {/* Totals Summary Cards */}
-        {isLoading ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3 animate-pulse">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-32 rounded-2xl bg-slate-200" />
-            ))}
-          </div>
-        ) : overview?.totals ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-            {/* Card 1: Total Enrollments */}
-            <div className="flex flex-col items-center text-center justify-between rounded-2xl border border-slate-100 bg-white p-6 shadow-xs">
-              <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-700">
-                <GraduationCap className="w-5 h-5" />
-              </div>
-              <div className="mt-4">
-                <p className="text-3xl font-extrabold text-slate-900">
-                  {overview.totals.totalEnrollments.toLocaleString()}
-                </p>
-                <p className="mt-1 text-sm font-medium text-slate-500">Total Enrollments</p>
-              </div>
-            </div>
-
-            {/* Card 2: Total Completions */}
-            <div className="flex flex-col items-center text-center justify-between rounded-2xl border border-slate-100 bg-white p-6 shadow-xs">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-700">
-                <CheckCircle2 className="w-5 h-5" />
-              </div>
-              <div className="mt-4">
-                <p className="text-3xl font-extrabold text-slate-900">
-                  {overview.totals.totalCompletions.toLocaleString()}
-                </p>
-                <p className="mt-1 text-sm font-medium text-slate-500">Total Completions</p>
-              </div>
-            </div>
-
-            {/* Card 3: Total Revenue */}
-            <div className="flex flex-col items-center text-center justify-between rounded-2xl border border-slate-100 bg-white p-6 shadow-xs">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-700">
-                <Coins className="w-5 h-5" />
-              </div>
-              <div className="mt-4">
-                <p className="text-3xl font-extrabold text-slate-900">
-                  ₵{(overview.totals.totalRevenueCents / 100).toFixed(2)}
-                </p>
-                <p className="mt-1 text-sm font-medium text-slate-500">Total Revenue</p>
-              </div>
-            </div>
-          </div>
-        ) : null}
-
-        {/* Per-Course Breakdown Table */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-bold text-slate-900">Your Courses</h2>
-            {searchQuery && (
-              <span className="text-xs bg-emerald-50 text-emerald-800 px-3 py-1 rounded-full font-semibold">
-                Filtering by: &ldquo;{searchQuery}&rdquo;
-              </span>
-            )}
-          </div>
-
-          {isLoading ? (
-            <div className="space-y-4 animate-pulse">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-20 rounded-xl bg-slate-200" />
-              ))}
-            </div>
-          ) : filteredCourses.length > 0 ? (
-            <div className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-xs">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-slate-50/70 border-b border-slate-100 text-slate-400 text-xs uppercase tracking-wider">
-                  <tr>
-                    <th className="px-6 py-3.5 font-semibold">Course</th>
-                    <th className="px-6 py-3.5 text-right font-semibold">Enrollments</th>
-                    <th className="px-6 py-3.5 text-right font-semibold">Completions</th>
-                    <th className="px-6 py-3.5 text-right font-semibold">Avg Progress</th>
-                    <th className="px-6 py-3.5 text-right font-semibold">Revenue</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {filteredCourses.map((course) => (
-                    <tr key={course.courseId} className="hover:bg-slate-50/80 transition-colors">
-                      <td className="px-6 py-4 font-medium text-slate-900 flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-600">
-                          <BookOpen className="w-4 h-4" />
-                        </div>
-                        {course.courseTitle}
-                      </td>
-                      <td className="px-6 py-4 text-right text-slate-600 font-medium">
-                        {course.enrollmentCount.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 text-right text-slate-600 font-medium">
-                        {course.completionCount.toLocaleString()}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
-                          {course.averageProgress}%
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right font-semibold text-slate-900">
-                        ₵{(course.revenueCents / 100).toFixed(2)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center">
-              <BookOpen className="w-10 h-10 text-slate-300 mb-3" />
-              <h3 className="text-lg font-bold text-slate-900 mb-1">No matching courses found</h3>
-              <p className="text-sm text-slate-500 mb-6 max-w-sm">
-                No active courses match your search criteria. Try clearing your search term.
-              </p>
-              
-              <button
-                onClick={() => router.push("/instructor")}
-                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
-              >
-                Clear Search
-              </button>
-            </div>
-          )}
-        </div>
+        <Link
+          href="/instructor/courses/create"
+          className="inline-flex items-center gap-2 rounded-lg bg-[#196A54] px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#0A4A3A] transition"
+        >
+          <Plus className="w-4 h-4" /> Create Course
+        </Link>
       </div>
-    </ProtectedRoute>
+
+      {error && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+      )}
+
+      {isLoading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <LoadingSkeleton key={i} className="h-28 rounded-2xl" />
+          ))}
+        </div>
+      ) : overview?.totals ? (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <StatCard label="Total Enrollments" value={overview.totals.totalEnrollments.toLocaleString()} icon="🎓" />
+          <StatCard label="Total Completions" value={overview.totals.totalCompletions.toLocaleString()} icon="✅" />
+          <StatCard label="Total Revenue" value={formatCurrency(overview.totals.totalRevenueCents)} icon="💰" />
+        </div>
+      ) : null}
+
+      <div className="grid sm:grid-cols-3 gap-4">
+        {[
+          { href: "/instructor/courses", label: "My Courses", icon: BookOpen, desc: "Manage and publish" },
+          { href: "/instructor/analytics", label: "Analytics", icon: BarChart3, desc: "Track performance" },
+          { href: "/instructor/reviews", label: "Reviews", icon: Star, desc: "Reply to students" },
+        ].map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm hover:border-[#196A54]/30 transition"
+          >
+            <div className="p-2.5 rounded-xl bg-emerald-50 text-[#196A54]">
+              <item.icon className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-bold text-slate-900">{item.label}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {lowPerformingCourses.length > 0 && !isLoading && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
+          <h3 className="font-bold text-amber-900 text-sm">Courses needing attention</h3>
+          <ul className="mt-2 space-y-1 text-sm text-amber-800">
+            {lowPerformingCourses.slice(0, 3).map((c) => (
+              <li key={c.courseId}>
+                {c.courseTitle} — {c.enrollmentCount === 0 ? "no enrollments yet" : `${c.averageProgress}% avg progress`}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <div>
+        <h2 className="text-lg font-bold text-slate-900 mb-4">Your Courses</h2>
+        {isLoading ? (
+          <LoadingSkeleton className="h-48 w-full rounded-2xl" />
+        ) : overview && overview.courses.length > 0 ? (
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full text-sm">
+              <thead className="bg-slate-50 border-b border-slate-200">
+                <tr>
+                  <th className="px-6 py-3 text-left font-semibold text-slate-600">Course</th>
+                  <th className="px-6 py-3 text-right font-semibold text-slate-600">Enrollments</th>
+                  <th className="px-6 py-3 text-right font-semibold text-slate-600">Completions</th>
+                  <th className="px-6 py-3 text-right font-semibold text-slate-600">Avg Progress</th>
+                  <th className="px-6 py-3 text-right font-semibold text-slate-600">Revenue</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {overview.courses.map((course) => (
+                  <tr key={course.courseId} className="hover:bg-slate-50 transition-colors">
+                    <td className="px-6 py-4 font-medium text-slate-900">
+                      <Link href={`/instructor/courses/${course.courseId}/edit`} className="hover:text-[#196A54]">
+                        {course.courseTitle}
+                      </Link>
+                    </td>
+                    <td className="px-6 py-4 text-right text-slate-600">{course.enrollmentCount.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-right text-slate-600">{course.completionCount.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-right text-slate-600">{course.averageProgress}%</td>
+                    <td className="px-6 py-4 text-right font-semibold text-slate-900">
+                      {formatCurrency(course.revenueCents)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <EmptyState
+            title="No courses yet"
+            description="Start sharing your expertise with students today."
+            action={
+              <Link
+                href="/instructor/courses/create"
+                className="rounded-lg bg-[#196A54] px-6 py-3 font-semibold text-white shadow-sm hover:bg-[#0A4A3A] transition"
+              >
+                Create Your First Course
+              </Link>
+            }
+          />
+        )}
+      </div>
+    </div>
   );
 }

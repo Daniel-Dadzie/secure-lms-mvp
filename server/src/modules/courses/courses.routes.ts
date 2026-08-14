@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authenticate, requireRole, requireOwnership } from "../../middleware";
+import { authenticate, optionalAuthenticate, requireRole, requireOwnership } from "../../middleware";
 import * as coursesController from "./courses.controller";
 import * as modulesController from "./modules.controller";
 import * as lessonsController from "./lessons.controller";
@@ -47,7 +47,7 @@ router.get(
 // ----------------------------------------------------------------------------
 // Single course detail (public) — registered after the specific paths above
 // ----------------------------------------------------------------------------
-router.get("/:courseId", coursesController.getPublishedCourseById);
+router.get("/:courseId", optionalAuthenticate, coursesController.getPublishedCourseById);
 
 router.patch(
   "/:courseId",
@@ -142,6 +142,11 @@ router.delete(
 // ----------------------------------------------------------------------------
 // Lesson routes
 // ----------------------------------------------------------------------------
+router.get(
+  "/:courseId/modules/:moduleId/lessons/:lessonId/stream",
+  lessonsController.streamLessonVideoHandler
+);
+
 router.get(
   "/:courseId/modules/:moduleId/lessons/:lessonId",
   authenticate,

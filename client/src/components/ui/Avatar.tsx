@@ -1,5 +1,6 @@
 interface AvatarProps {
   name?: string | null;
+  imageUrl?: string | null;
   size?: "sm" | "md" | "lg";
   className?: string;
 }
@@ -10,10 +11,20 @@ const SIZE_CLASSES = {
   lg: "h-12 w-12 text-base",
 };
 
-export function Avatar({ name, size = "md", className = "" }: AvatarProps) {
+export function Avatar({ name, imageUrl, size = "md", className = "" }: AvatarProps) {
   const initials = name
     ? name.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
     : "?";
+
+  if (imageUrl) {
+    return (
+      <img
+        src={imageUrl}
+        alt={name ?? "User avatar"}
+        className={`shrink-0 rounded-full object-cover ring-2 ring-white/20 ${SIZE_CLASSES[size]} ${className}`}
+      />
+    );
+  }
 
   return (
     <div

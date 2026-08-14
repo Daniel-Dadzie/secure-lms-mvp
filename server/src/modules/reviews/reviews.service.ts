@@ -9,6 +9,8 @@ const reviewSelect = {
   courseId: true,
   rating: true,
   comment: true,
+  instructorReply: true,
+  instructorReplyAt: true,
   isVisible: true,
   createdAt: true,
   updatedAt: true,
@@ -55,36 +57,72 @@ async function updateRatingAggregate(courseId: string): Promise<void> {
 }
 
 // ----------------------------------------------------------------------------
-// Get paginated reviews for a course (visible only for public)
+// Get paginated reviews for a course (visible only for public listings)
 // ----------------------------------------------------------------------------
-export async function getCourseReviews(
-  courseId: string,
-  page: number = 1,
-  limit: number = 10
+async function resolveViewableCourse(
+  idOrSlug: string,
+  viewer?: { sub: string; role: string } | null
 ) {
+  const course = await prisma.course.findFirst({
+    where: { OR: [{ id: idOrSlug }, { slug: idOrSlug }] },
+    select: { id: true, status: true, isActive: true, instructorId: true },
+  });
+
+  if (!course) {
+    const error = new Error("Course not found");
+    (error as any).statusCode = 404;
+    throw error;
+  }
+
+  const isAdmin = viewer?.role === "ADMIN";
+  const isOwner = !!viewer?.sub && viewer.sub === course.instructorId;
+  const isPubliclyVisible = course.status === "PUBLISHED" && course.isActive;
+
+  if (!isPubliclyVisible && !isAdmin && !isOwner) {
+    const error = new Error("Course not found");
+    (error as any).statusCode = 404;
+    throw error;
+  }
+
+  return course;
+}
+
+export async function getCourseReviews(
+  courseIdOrSlug: string,
+  page: number = 1,
+  limit: number = 10,
+  viewer?: { sub: string; role: string } | null
+) {
+  const course = await resolveViewableCourse(courseIdOrSlug, viewer);
   const skip = (page - 1) * limit;
 
-  const [reviews, total, aggregate] = await Promise.all([
+  const [reviews, total, aggregate, courseRatings, myReview] = await Promise.all([
     prisma.review.findMany({
-      where: { courseId, isVisible: true },
+      where: { courseId: course.id, isVisible: true },
       select: reviewSelect,
       orderBy: { createdAt: "desc" },
       skip,
       take: limit,
     }),
-    prisma.review.count({ where: { courseId, isVisible: true } }),
-    prisma.ratingAggregate.findUnique({ where: { courseId } }),
+    prisma.review.count({ where: { courseId: course.id, isVisible: true } }),
+    prisma.ratingAggregate.findUnique({ where: { courseId: course.id } }),
+    prisma.course.findUnique({
+      where: { id: course.id },
+      select: { averageRating: true, reviewCount: true },
+    }),
+    viewer?.sub
+      ? prisma.review.findUnique({
+          where: { userId_courseId: { userId: viewer.sub, courseId: course.id } },
+          select: reviewSelect,
+        })
+      : Promise.resolve(null),
   ]);
-
-  const course = await prisma.course.findUnique({
-    where: { id: courseId },
-    select: { averageRating: true, reviewCount: true },
-  });
 
   return {
     reviews,
-    averageRating: course?.averageRating || 0,
-    totalReviews: course?.reviewCount || 0,
+    myReview,
+    averageRating: courseRatings?.averageRating || 0,
+    totalReviews: total,
     distribution: aggregate || {
       oneStar: 0, twoStar: 0, threeStar: 0, fourStar: 0, fiveStar: 0,
     },

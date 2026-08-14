@@ -2,23 +2,37 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { FeaturedCoursesSection } from "@/components/home/FeaturedCoursesSection";
 
 export default function HomePage() {
   return (
     <div className="w-full bg-[#F4F9F7]">
       
       {/* 1. HERO SECTION */}
-      <section className="relative min-h-[90vh] flex items-center pt-24 pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden bg-[#0A4A3A]">
-        
-        <div className="absolute inset-0 z-0 opacity-20">
-          <div className="absolute inset-0" style={{ backgroundImage: 'radial-gradient(#196A54 2px, transparent 2px)', backgroundSize: '32px 32px' }}></div>
-          <div className="absolute right-0 top-0 w-1/2 h-full bg-gradient-to-l from-[#C2F25B]/10 to-transparent blur-3xl transform rotate-12"></div>
+      <section className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center pt-20 sm:pt-24 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        <Image
+          src="https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80&w=1920"
+          alt=""
+          fill
+          priority
+          className="object-cover"
+          sizes="100vw"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0A4A3A]/95 via-[#0A4A3A]/88 to-[#196A54]/75" />
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
+          <div
+            className="absolute inset-0"
+            style={{
+              backgroundImage: "radial-gradient(#196A54 2px, transparent 2px)",
+              backgroundSize: "32px 32px",
+            }}
+          />
         </div>
 
         <div className="mx-auto max-w-7xl w-full relative z-10">
           <div className="max-w-3xl">
             
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] mb-6 drop-shadow-lg">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white leading-[1.1] mb-6 drop-shadow-lg">
               Master Practical <br/>
               <span className="text-[#C2F25B]">Engineering Skills</span>
             </h1>
@@ -57,9 +71,12 @@ export default function HomePage() {
                   className="w-full pl-11 pr-4 py-4 rounded-xl text-slate-900 outline-none shadow-xl focus:ring-4 focus:ring-[#C2F25B]/50 transition-all border-none bg-white/95 focus:bg-white backdrop-blur-sm"
                 />
               </div>
-              <button className="bg-[#196A54] hover:bg-[#12503F] text-white px-8 py-4 rounded-xl font-bold text-lg shadow-xl transition-all border border-transparent hover:border-white/20 whitespace-nowrap">
+              <Link
+                href="/courses"
+                className="bg-[#196A54] hover:bg-[#12503F] text-white px-8 py-4 rounded-xl font-bold text-lg shadow-xl transition-all border border-transparent hover:border-white/20 whitespace-nowrap text-center"
+              >
                 Browse Courses
-              </button>
+              </Link>
             </div>
 
             <div className="mt-8 flex flex-wrap items-center gap-3 text-sm text-white font-medium drop-shadow-md">
@@ -72,7 +89,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-20 md:mt-32 pt-10 border-t border-white/20 backdrop-blur-sm relative z-10">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 mt-12 sm:mt-20 md:mt-32 pt-8 sm:pt-10 border-t border-white/20 backdrop-blur-sm relative z-10">
             {[
               { num: "50k+", label: "Active Students" },
               { num: "200+", label: "Expert Instructors" },
@@ -155,75 +172,7 @@ export default function HomePage() {
       </section>
 
       {/* 3. FEATURED COURSES */}
-      <section className="bg-white py-24 px-4 sm:px-6 lg:px-8 border-y border-slate-100">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-end mb-12">
-            <div>
-              <p className="text-sm font-bold text-[#196A54] tracking-wider uppercase mb-2">Handpicked by Experts</p>
-              <h2 className="text-4xl font-extrabold text-[#0A4A3A]">Featured Courses</h2>
-              <p className="text-slate-500 mt-2 text-lg">Start with the most popular engineering programmes</p>
-            </div>
-            <Link href="/courses" className="hidden md:flex items-center gap-2 px-6 py-3 border-2 border-slate-200 rounded-full font-bold text-slate-700 hover:border-[#196A54] hover:text-[#196A54] transition-colors">
-              Browse Courses
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
-            </Link>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              { img: "https://images.unsplash.com/photo-1537462715879-360eeb61a0ad?auto=format&fit=crop&q=80", tag: "Mechanical", title: "Advanced Mechanical Systems Design", prof: "Dr. James Walker", rating: "4.9", students: "3,420", hours: "42h", level: "Advanced", price: "$149" },
-              { img: "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&q=80", tag: "CNC", title: "CNC Programming & Machining Fundamentals", prof: "Prof. Sarah Chen", rating: "4.8", students: "5,180", hours: "28h", level: "Beginner", price: "$99" },
-              { img: "https://images.unsplash.com/photo-1591115765373-5207764f72e7?auto=format&fit=crop&q=80", tag: "CAD", title: "AutoCAD & SolidWorks Masterclass", prof: "Emily Torres", rating: "4.9", students: "8,340", hours: "56h", level: "All Levels", price: "$79" },
-              { img: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80", tag: "Robotics", title: "Industrial Robotics & Automation", prof: "Dr. Kwame Osei", rating: "4.8", students: "1,960", hours: "48h", level: "Advanced", price: "$199" },
-            ].map((course, i) => (
-              <div key={i} className="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-xl transition-shadow flex flex-col group cursor-pointer">
-                <div className="relative h-48 overflow-hidden animate-pulse bg-slate-200">
-                  <Image 
-                    src={course.img} 
-                    alt={course.title} 
-                    fill 
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                    className="object-cover group-hover:scale-105 transition-transform duration-500"
-                    onLoad={(e) => {
-                      const target = e.target as HTMLElement;
-                      target.parentElement?.classList.remove('animate-pulse');
-                    }}
-                  />
-                  <div className="absolute top-3 left-3 bg-white px-2 py-1 rounded text-xs font-bold text-slate-700 shadow-sm">{course.tag}</div>
-                </div>
-                <div className="p-5 flex flex-col flex-1">
-                  <h3 className="font-bold text-slate-900 text-lg leading-tight mb-2 group-hover:text-[#196A54] transition-colors line-clamp-2">{course.title}</h3>
-                  <p className="text-sm text-slate-500 mb-3">{course.prof}</p>
-                  
-                  <div className="flex items-center gap-2 mb-4 text-sm">
-                    <svg className="w-4 h-4 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" /></svg>
-                    <span className="font-bold text-slate-900">{course.rating}</span>
-                    <span className="text-slate-400">({course.students} students)</span>
-                  </div>
-
-                  <div className="flex items-center gap-4 text-xs font-medium text-slate-500 mb-6">
-                    <div className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      {course.hours}
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
-                      {course.level}
-                    </div>
-                  </div>
-
-                  <div className="mt-auto flex items-center justify-between pt-4 border-t border-slate-100">
-                    <span className="text-2xl font-extrabold text-[#0A4A3A]">{course.price}</span>
-                    <div className="flex gap-2">
-                      <button className="px-4 py-2 bg-[#196A54] text-white rounded-lg text-sm font-bold hover:bg-[#12503F] transition-colors">Enroll</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <FeaturedCoursesSection />
 
       {/* 4. WHY CHOOSE MECH SPEC */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">

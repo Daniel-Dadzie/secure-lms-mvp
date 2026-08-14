@@ -18,10 +18,12 @@ import adminRouter from "./modules/admin/admin.routes";
 import quizzesRouter from "./modules/quizzes/quizzes.routes";
 import instructorRoutes from './modules/instructors/instructors.routes';
 import instructorAnalyticsRouter from "./modules/instructor-analytics/instructor-analytics.routes";
+import instructorPortalRouter from "./modules/instructor-portal/instructor-portal.routes";
+import searchRouter from "./modules/search/search.routes";
 import notificationsRouter from "./modules/notifications/notifications.routes";
 import studentRoutes from "./modules/students/student.routes";
 import uploadRouter from "./modules/uploads/upload.router"; // or check your relative path to the upload router file
-import searchRoutes from "./modules/search/search.routes";
+import helpRouter from "./modules/help/help.routes";
 
 export const app = express();
 
@@ -65,13 +67,16 @@ app.use("/api/payments", paymentsRouter);
 app.use("/api/enrollments", enrolmentsRouter);
 app.use("/api/progress", progressRouter);
 app.use("/api/support", supportRouter);
+app.use("/api/help", helpRouter);
 app.use("/api/admin", adminRouter);
 app.use('/api/instructors', instructorRoutes);
 app.use("/api/instructor/analytics", instructorAnalyticsRouter);
+app.use("/api/instructor", instructorPortalRouter);
+app.use("/api/search", searchRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/student", studentRoutes);
 app.use("/api/uploads", uploadRouter);
-app.use("/api/search", searchRoutes);
+
 // ----------------------------------------------------------------------------
 // Health check
 // ----------------------------------------------------------------------------

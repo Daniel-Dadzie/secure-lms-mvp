@@ -1,8 +1,15 @@
 import crypto from "crypto";
 import { prisma } from "../../config/prisma";
 import { firebaseMessaging } from "../../config/firebase";
+import { PLATFORM_CURRENCY } from "../../config/platform";
 import { initializeTransaction, verifyTransaction } from "../../services/paystack.service";
 import { createNotification } from "../notifications/notifications.service";
+import { logActivity } from "../../lib/activityLog";
+import { resolveUserRegion } from "../../lib/resolveUserRegion";
+
+function resolveCheckoutRegion(timezone?: string) {
+  return resolveUserRegion({ timezone });
+}
 
 // ----------------------------------------------------------------------------
 // Initiate checkout for a single course. Creates a PENDING purchase and
@@ -13,7 +20,8 @@ import { createNotification } from "../notifications/notifications.service";
 export async function checkout(
   userId: string,
   courseId: string,
-  couponCode?: string
+  couponCode?: string,
+  timezone?: string
 ) {
   const course = await prisma.course.findFirst({
     where: { id: courseId, status: "PUBLISHED", isActive: true },
@@ -98,6 +106,7 @@ export async function checkout(
 
   const finalAmountCents = amountCents - discountCents;
   const reference = `PSK-${crypto.randomUUID()}`;
+  const { region: buyerRegion, timezone: buyerTimezone } = resolveCheckoutRegion(timezone);
 
   const purchase = await prisma.purchase.create({
     data: {
@@ -107,12 +116,24 @@ export async function checkout(
       discountCents,
       finalAmountCents,
       couponId: coupon?.id,
-      currency: "GHS",
+      currency: PLATFORM_CURRENCY,
       status: "PENDING",
       provider: "PAYSTACK",
       providerReference: reference,
+      buyerRegion: buyerRegion ?? undefined,
+      buyerTimezone: buyerTimezone ?? undefined,
     },
   });
+
+  if (buyerRegion || buyerTimezone) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(buyerRegion ? { region: buyerRegion } : {}),
+        ...(buyerTimezone ? { detectedTimezone: buyerTimezone } : {}),
+      },
+    });
+  }
 
   const { authorizationUrl } = await initializeTransaction({
     email: user.email,
@@ -131,7 +152,7 @@ export async function checkout(
 // Coupons are not supported here, matching the existing single-coupon
 // design constraint (@@unique([couponId, userId]) on CouponUsage).
 // ----------------------------------------------------------------------------
-export async function checkoutCart(userId: string) {
+export async function checkoutCart(userId: string, timezone?: string) {
   const cart = await prisma.cart.findUnique({
     where: { userId },
     include: { items: { include: { course: true } } },
@@ -176,6 +197,7 @@ export async function checkoutCart(userId: string) {
 
   const totalAmountCents = eligibleItems.reduce((sum, item) => sum + item.course.priceCents, 0);
   const reference = `PSK-CART-${crypto.randomUUID()}`;
+  const { region: buyerRegion, timezone: buyerTimezone } = resolveCheckoutRegion(timezone);
 
   const purchases = await prisma.$transaction(
     eligibleItems.map((item) =>
@@ -186,14 +208,26 @@ export async function checkoutCart(userId: string) {
           amountCents: item.course.priceCents,
           discountCents: 0,
           finalAmountCents: item.course.priceCents,
-          currency: "GHS",
+          currency: PLATFORM_CURRENCY,
           status: "PENDING",
           provider: "PAYSTACK",
           providerReference: reference,
+          buyerRegion: buyerRegion ?? undefined,
+          buyerTimezone: buyerTimezone ?? undefined,
         },
       })
     )
   );
+
+  if (buyerRegion || buyerTimezone) {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(buyerRegion ? { region: buyerRegion } : {}),
+        ...(buyerTimezone ? { detectedTimezone: buyerTimezone } : {}),
+      },
+    });
+  }
 
   const { authorizationUrl } = await initializeTransaction({
     email: user.email,
@@ -217,7 +251,7 @@ export async function checkoutCart(userId: string) {
 export async function completePurchasesByReference(reference: string): Promise<void> {
   const pendingPurchases = await prisma.purchase.findMany({
     where: { providerReference: reference, status: "PENDING" },
-    include: { course: { select: { title: true, modules: { select: { lessons: { select: { id: true } } } } } } },
+    include: { course: { select: { title: true, instructorId: true, modules: { select: { lessons: { select: { id: true } } } } } } },
   });
 
   if (pendingPurchases.length === 0) {
@@ -300,6 +334,21 @@ export async function completePurchasesByReference(reference: string): Promise<v
         `You're now enrolled in ${purchase.course.title}.`,
         { courseId: purchase.courseId }
       );
+
+      await createNotification(
+        purchase.course.instructorId,
+        "NEW_ENROLLMENT",
+        "New student enrolled",
+        `A student enrolled in your course "${purchase.course.title}".`,
+        { courseId: purchase.courseId, enrollmentId: enrollment.id }
+      );
+    });
+
+    await logActivity({
+      userId: purchase.userId,
+      title: `Enrolled in "${purchase.course.title}"`,
+      description: "Purchase confirmed",
+      iconType: "enrolled",
     });
 
     // Best-effort push notification — never block payment completion on this

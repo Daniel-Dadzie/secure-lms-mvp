@@ -87,7 +87,7 @@ export default function CheckoutSuccessPage() {
         {/* Call to Actions */}
         <div className="flex flex-col justify-center gap-4 sm:flex-row">
           <Link
-            href="/dashboard/student"
+            href="/student"
             className="rounded-xl bg-[#196A54] px-8 py-3.5 font-bold text-white shadow-md transition-all hover:-translate-y-0.5 hover:bg-[#12503F]"
           >
             Go to Dashboard

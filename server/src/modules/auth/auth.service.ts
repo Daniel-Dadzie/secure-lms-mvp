@@ -310,17 +310,6 @@ export async function refresh(
       },
     });
 
-    // Create audit event within transaction
-    await tx.auditEvent.create({
-      data: {
-        userId: user.id,
-        action: "auth.token_refresh",
-        entityType: "User",
-        entityId: user.id,
-        ipAddress,
-      },
-    });
-
     return tokens;
   });
 
