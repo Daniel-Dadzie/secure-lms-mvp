@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2017",
+    
     "lib": [
       "dom",
       "dom.iterable",
@@ -17,6 +18,10 @@
     "isolatedModules": true,
     "jsx": "react-jsx",
     "incremental": true,
+    "types": [
+      "vitest/globals",
+       "node"
+      ],
     "plugins": [
       {
         "name": "next"

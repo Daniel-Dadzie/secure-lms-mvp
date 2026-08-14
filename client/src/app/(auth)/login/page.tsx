@@ -147,10 +147,13 @@ function LoginForm() {
 
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  <label htmlFor="email"
+                         className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1"
+                  >
                     Email address
                   </label>
                   <input
+                    id="email"
                     type="email"
                     required
                     value={email}
@@ -161,11 +164,14 @@ function LoginForm() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
+                  <label htmlFor="password"
+                         className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1"
+                  >
                     Password
                   </label>
                   <div className="relative">
                     <input
+                      id="password"
                       type={showPassword ? "text" : "password"}
                       required
                       value={password}
