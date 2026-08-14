@@ -13,11 +13,17 @@ import {
   buildResponseCacheKey,
 } from "../../src/lib/chatbotCache";
 
-vi.mock("axios", () => ({
-  default: {
-    post: vi.fn(),
-  },
-}));
+vi.mock("axios", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("axios")>();
+  return {
+    ...actual,
+    default: {
+      ...actual.default,
+      post: vi.fn(),
+    },
+    AxiosError: actual.AxiosError,
+  };
+});
 
 function mockOpenRouterResponse(content: string) {
   return {

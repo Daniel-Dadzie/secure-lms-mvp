@@ -91,12 +91,6 @@ export const FloatingFAQAssistant = () => {
     };
   }, [isOpen]);
 
-  useEffect(() => {
-    if (isOpen && messages.length === 0) {
-      setMessages([createWelcomeMessage()]);
-    }
-  }, [isOpen, messages.length]);
-
   function resetChat() {
     setMessages([]);
     setQuestion("");
@@ -111,6 +105,7 @@ export const FloatingFAQAssistant = () => {
   function openChat() {
     resetChat();
     setIsOpen(true);
+    setMessages([createWelcomeMessage()]);
   }
 
   useEffect(() => {

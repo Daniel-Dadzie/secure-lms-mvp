@@ -188,7 +188,9 @@ async function pipeExternalVideo(
     return;
   }
 
-  Readable.fromWeb(upstream.body as ReadableStream<Uint8Array>).pipe(res);
+  // Cast through unknown/any to satisfy TypeScript's Web/Node stream type incompatibility
+  const nodeStream = Readable.fromWeb(upstream.body as unknown as any);
+  nodeStream.pipe(res as any);
 }
 
 export async function streamLessonVideo(
