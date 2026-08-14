@@ -1,4 +1,5 @@
 import { prisma } from "../../config/prisma";
+import { buildLessonStreamUrl } from "./lesson-stream.service";
 import type { CreateLessonInput, UpdateLessonInput, ReorderLessonsInput } from "./lessons.schemas";
 
 const lessonSelect = {
@@ -45,10 +46,13 @@ export async function getLessonById(lessonId: string, userId: string, userRole: 
 
   // Instructors and admins always have full access
   if (isInstructor || isAdmin) {
-    return lesson;
+    const contentUrl = lesson.contentUrl
+      ? buildLessonStreamUrl(courseId, lesson.moduleId, lesson.id, userId)
+      : null;
+    return { ...lesson, contentUrl };
   }
 
-  // Students need active enrollment to access contentUrl
+  // Students need active or completed enrollment to access contentUrl
   const enrollment = await prisma.enrollment.findUnique({
     where: {
       userId_courseId: { userId, courseId },
@@ -56,13 +60,19 @@ export async function getLessonById(lessonId: string, userId: string, userRole: 
     select: { status: true },
   });
 
-  if (!enrollment || enrollment.status !== "ACTIVE") {
+  const canAccessContent =
+    enrollment?.status === "ACTIVE" || enrollment?.status === "COMPLETED";
+
+  if (!canAccessContent) {
     // Return lesson metadata without video URL
     // 404 not 403 — avoids confirming lesson exists to non-enrolled users
     return { ...lesson, contentUrl: null };
   }
 
-  return lesson;
+  const contentUrl = lesson.contentUrl
+    ? buildLessonStreamUrl(courseId, lesson.moduleId, lesson.id, userId)
+    : null;
+  return { ...lesson, contentUrl };
 }
 
 export async function createLesson(
@@ -159,3 +169,5 @@ export async function reorderLessons(
     },
   });
 }
+
+export { verifyLessonStreamToken, streamLessonVideo } from "./lesson-stream.service";

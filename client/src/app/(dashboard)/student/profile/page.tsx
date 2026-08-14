@@ -5,6 +5,7 @@ import { User, Mail, Shield, CheckCircle2, Save, Lock, Upload, FileText } from "
 import { useAuthStore } from "@/store/auth.store";
 import { Avatar } from "@/components/ui/Avatar";
 import api from "@/lib/api";
+import { uploadAvatar } from "@/lib/upload.api";
 
 export default function StudentProfilePage() {
   const authStore = useAuthStore() as any;
@@ -26,6 +27,7 @@ export default function StudentProfilePage() {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [passwordMessage, setPasswordMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
 
   // Update Profile Details Handler
@@ -56,15 +58,10 @@ export default function StudentProfilePage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const formData = new FormData();
-    formData.append("image", file);
-
     setIsUploadingImage(true);
+    setUploadError(null);
     try {
-      const res = await api.post("/uploads", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      const uploadedUrl = res.data.url;
+      const uploadedUrl = await uploadAvatar(file);
       setAvatarUrl(uploadedUrl);
 
       // Save to user profile on the backend
@@ -82,6 +79,7 @@ export default function StudentProfilePage() {
       setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err) {
       console.error("Failed to upload image", err);
+      setUploadError("Failed to upload photo. Please try again.");
     } finally {
       setIsUploadingImage(false);
     }
@@ -125,6 +123,12 @@ export default function StudentProfilePage() {
         <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl text-sm font-semibold shadow-sm">
           <CheckCircle2 className="w-5 h-5 text-emerald-600" />
           <span>{successMessage}</span>
+        </div>
+      )}
+
+      {uploadError && (
+        <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-xl text-sm font-semibold shadow-sm">
+          <span>{uploadError}</span>
         </div>
       )}
 

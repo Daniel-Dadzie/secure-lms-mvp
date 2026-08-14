@@ -32,6 +32,13 @@ const ArrowLeftIcon = ({ className = "" }: { className?: string }) => (
   </svg>
 );
 
+const ArrowRightIcon = ({ className = "" }: { className?: string }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    <line x1="5" y1="12" x2="19" y2="12" />
+    <polyline points="12 5 19 12 12 19" />
+  </svg>
+);
+
 interface Lesson {
   id: string;
   title: string;
@@ -87,6 +94,90 @@ function findResumeLesson(
   return null;
 }
 
+function findNextLesson(
+  modules: Module[],
+  currentLessonId: string
+): { moduleId: string; lesson: Lesson } | null {
+  const sortedModules = [...modules].sort((a, b) => a.order - b.order);
+  let foundCurrent = false;
+
+  for (const mod of sortedModules) {
+    const sortedLessons = [...mod.lessons].sort((a, b) => a.order - b.order);
+    for (const lesson of sortedLessons) {
+      if (foundCurrent) {
+        return { moduleId: mod.id, lesson };
+      }
+      if (lesson.id === currentLessonId) {
+        foundCurrent = true;
+      }
+    }
+  }
+
+  return null;
+}
+
+function CourseCompletionOverlay({
+  courseTitle,
+  courseId,
+  onClose,
+}: {
+  courseTitle: string;
+  courseId: string;
+  onClose: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div
+        className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="course-complete-title"
+        className="relative w-full max-w-md rounded-2xl border border-[#C2F25B]/30 bg-gradient-to-b from-[#0A4A3A] to-[#062E24] p-8 shadow-2xl text-center"
+      >
+        <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-[#C2F25B]/20 text-3xl">
+          🎉
+        </div>
+        <h2
+          id="course-complete-title"
+          className="text-2xl font-extrabold text-white"
+        >
+          Congratulations!
+        </h2>
+        <p className="mt-2 text-sm text-teal-100/80">
+          You&apos;ve completed{" "}
+          <span className="font-semibold text-white">{courseTitle}</span>.
+          Your certificate is ready.
+        </p>
+        <div className="mt-6 flex flex-col gap-3">
+          <Link
+            href={`/student/certificates?courseId=${courseId}`}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#C2F25B] px-5 py-3 text-sm font-bold text-[#0A4A3A] hover:bg-[#d4f76e] transition"
+          >
+            View Certificate
+          </Link>
+          <Link
+            href="/"
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/20 bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/20 transition"
+          >
+            Go to Home
+          </Link>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="mt-4 text-xs font-medium text-teal-100/60 hover:text-teal-100 transition"
+        >
+          Continue reviewing course
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function CoursePlayerPage({
   params,
 }: {
@@ -104,6 +195,7 @@ export default function CoursePlayerPage({
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCompletionOverlay, setShowCompletionOverlay] = useState(false);
 
   const loadAuthorizedLesson = useCallback(
     async (moduleId: string, lesson: Lesson) => {
@@ -214,6 +306,15 @@ export default function CoursePlayerPage({
     const currentStatus = progressMap[lessonId];
     const newStatus = currentStatus === "COMPLETED" ? "NOT_STARTED" : "COMPLETED";
 
+    let courseJustCompleted = false;
+    if (newStatus === "COMPLETED" && course) {
+      const allLessons = course.modules.flatMap((m) => m.lessons ?? []);
+      const completedAfter = allLessons.filter(
+        (l) => l.id === lessonId || progressMap[l.id] === "COMPLETED"
+      ).length;
+      courseJustCompleted = completedAfter === allLessons.length;
+    }
+
     setProgressMap((prev) => ({ ...prev, [lessonId]: newStatus }));
 
     try {
@@ -221,6 +322,9 @@ export default function CoursePlayerPage({
         status: newStatus,
         progressSeconds: 0,
       });
+      if (courseJustCompleted) {
+        setShowCompletionOverlay(true);
+      }
     } catch (err) {
       console.error("Failed to update lesson progress:", err);
       setProgressMap((prev) => ({ ...prev, [lessonId]: currentStatus }));
@@ -232,22 +336,16 @@ export default function CoursePlayerPage({
   const goToNextLesson = useCallback(() => {
     if (!course || !currentLesson) return;
 
-    const sortedModules = [...course.modules].sort((a, b) => a.order - b.order);
-    let foundCurrent = false;
-
-    for (const mod of sortedModules) {
-      const sortedLessons = [...mod.lessons].sort((a, b) => a.order - b.order);
-      for (const lesson of sortedLessons) {
-        if (foundCurrent) {
-          void loadAuthorizedLesson(mod.id, lesson);
-          return;
-        }
-        if (lesson.id === currentLesson.id) {
-          foundCurrent = true;
-        }
-      }
+    const next = findNextLesson(course.modules, currentLesson.id);
+    if (next) {
+      void loadAuthorizedLesson(next.moduleId, next.lesson);
     }
   }, [course, currentLesson, loadAuthorizedLesson]);
+
+  const nextLesson = useMemo(() => {
+    if (!course || !currentLesson) return null;
+    return findNextLesson(course.modules, currentLesson.id);
+  }, [course, currentLesson]);
 
   if (isLoading) {
     return (
@@ -273,9 +371,17 @@ export default function CoursePlayerPage({
   }
 
   const isCurrentComplete = currentLesson && progressMap[currentLesson.id] === "COMPLETED";
+  const courseId = resolvedCourseId ?? course.id;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
+      {showCompletionOverlay && (
+        <CourseCompletionOverlay
+          courseTitle={course.title}
+          courseId={courseId}
+          onClose={() => setShowCompletionOverlay(false)}
+        />
+      )}
       {/* Top bar with progress */}
       <header className="border-b border-slate-800 bg-[#0A4A3A] shrink-0">
         <div className="px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
@@ -414,7 +520,16 @@ export default function CoursePlayerPage({
                       {isCurrentComplete ? "Completed" : "Mark Complete"}
                     </button>
                   )}
-                  {currentLesson && !isCurrentComplete && (
+                  {currentLesson && isCurrentComplete && nextLesson && (
+                    <button
+                      onClick={goToNextLesson}
+                      className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-[#C2F25B] text-[#0A4A3A] hover:bg-[#d4f76e] transition shadow-sm"
+                    >
+                      Next Lesson
+                      <ArrowRightIcon className="w-4 h-4" />
+                    </button>
+                  )}
+                  {currentLesson && !isCurrentComplete && nextLesson && (
                     <button
                       onClick={goToNextLesson}
                       className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-slate-800 text-slate-200 hover:bg-slate-700 transition"

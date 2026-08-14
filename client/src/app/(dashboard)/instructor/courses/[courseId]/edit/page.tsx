@@ -271,10 +271,10 @@ useEffect(() => {
     }
   };
 
-  const handleVideoUpload = async (lessonId: string, file: File) => {
+  const handleVideoUpload = async (moduleId: string, lessonId: string, file: File) => {
     setVideoUploadProgress((prev) => ({ ...prev, [lessonId]: 0 }));
     try {
-      await uploadLessonVideo(courseId, lessonId, file, (percent) => {
+      await uploadLessonVideo(courseId, moduleId, lessonId, file, (percent) => {
         setVideoUploadProgress((prev) => ({ ...prev, [lessonId]: percent }));
       });
       showToast("Video uploaded.");
@@ -602,7 +602,7 @@ useEffect(() => {
                                 className="sr-only"
                                 onChange={(e) => {
                                   const file = e.target.files?.[0];
-                                  if (file) void handleVideoUpload(lesson.id, file);
+                                  if (file) void handleVideoUpload(module.id, lesson.id, file);
                                 }}
                               />
                             </label>
