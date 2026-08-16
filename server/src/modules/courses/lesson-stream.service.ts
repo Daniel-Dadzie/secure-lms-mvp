@@ -167,30 +167,49 @@ async function pipeExternalVideo(
     headers.Range = req.headers.range;
   }
 
-  const upstream = await fetch(url, { headers });
+  // Add timeout to prevent hanging on slow/unresponsive external URLs
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 120000); // 2 minute timeout for large videos
 
-  if (!upstream.ok && upstream.status !== 206) {
-    res.status(upstream.status).end();
-    return;
-  }
+  try {
+    const upstream = await fetch(url, {
+      headers,
+      signal: controller.signal,
+    });
 
-  for (const header of ["content-type", "content-length", "content-range", "accept-ranges"]) {
-    const value = upstream.headers.get(header);
-    if (value) {
-      res.setHeader(header, value);
+    clearTimeout(timeout);
+
+    if (!upstream.ok && upstream.status !== 206) {
+      res.status(upstream.status).end();
+      return;
+    }
+
+    for (const header of ["content-type", "content-length", "content-range", "accept-ranges"]) {
+      const value = upstream.headers.get(header);
+      if (value) {
+        res.setHeader(header, value);
+      }
+    }
+
+    res.status(upstream.status);
+
+    if (!upstream.body) {
+      res.end();
+      return;
+    }
+
+    // Cast through unknown/any to satisfy TypeScript's Web/Node stream type incompatibility
+    const nodeStream = Readable.fromWeb(upstream.body as unknown as any);
+    nodeStream.pipe(res as any);
+  } catch (error: any) {
+    clearTimeout(timeout);
+    if (error.name === 'AbortError') {
+      res.status(504).json({ message: "Video stream timeout - external video source not responding" });
+    } else {
+      console.error('Error streaming external video:', error);
+      res.status(502).json({ message: "Failed to stream video from external source" });
     }
   }
-
-  res.status(upstream.status);
-
-  if (!upstream.body) {
-    res.end();
-    return;
-  }
-
-  // Cast through unknown/any to satisfy TypeScript's Web/Node stream type incompatibility
-  const nodeStream = Readable.fromWeb(upstream.body as unknown as any);
-  nodeStream.pipe(res as any);
 }
 
 export async function streamLessonVideo(

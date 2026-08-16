@@ -7,6 +7,7 @@ import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
 import { detectTimezone } from "@/lib/detectTimezone";
+import { formatPrice, formatPriceInGHS } from "@/lib/currency";
 
 const FALLBACK_IMAGE = "/images/course-fallback.jpg";
 
@@ -254,9 +255,7 @@ export default function CartPage() {
 
                     <div className="shrink-0 text-right">
                       <span className="font-bold text-slate-900">
-                        {item.course.priceCents === 0
-                          ? "Free"
-                          : `₵${(item.course.priceCents / 100).toFixed(2)}`}
+                        {formatPrice(item.course.priceCents)}
                       </span>
                     </div>
                   </div>
@@ -276,18 +275,22 @@ export default function CartPage() {
                     </span>
 
                     <span>
-                      ₵{(cart.summary.subtotalCents / 100).toFixed(2)}
+                      {formatPriceInGHS(cart.summary.subtotalCents)}
                     </span>
                   </div>
                 </div>
 
                 <div className="mb-6 flex justify-between text-base font-bold text-slate-900">
-                  <span>Total</span>
+                  <span>Total (GHS)</span>
 
                   <span>
-                    ₵{(cart.summary.totalCents / 100).toFixed(2)}
+                    {formatPriceInGHS(cart.summary.totalCents)}
                   </span>
                 </div>
+
+                <p className="text-xs text-slate-500 text-center">
+                  * Prices displayed in USD for reference. Payment will be processed in Ghana Cedis (GHS).
+                </p>
 
                 <button
                   type="button"

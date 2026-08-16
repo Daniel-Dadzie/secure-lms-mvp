@@ -1,6 +1,7 @@
 import { prisma } from "../../config/prisma";
 import { createNotification } from "../notifications/notifications.service";
 import { logActivity, logActivityOnce } from "../../lib/activityLog";
+import type { Prisma } from "@prisma/client";
 
 // ----------------------------------------------------------------------------
 // Update lesson progress — marks IN_PROGRESS or COMPLETED.
@@ -110,9 +111,14 @@ async function notifyProgressMilestones(
 
   const percent = Math.round((completedLessons / totalLessons) * 100);
 
-  for (const milestone of PROGRESS_MILESTONES) {
-    if (percent < milestone) continue;
+  // Calculate the previous percentage (before this lesson was completed)
+  const previousPercent = Math.round(((completedLessons - 1) / totalLessons) * 100);
 
+  for (const milestone of PROGRESS_MILESTONES) {
+    // Only notify if we just crossed this milestone (previous < milestone <= current)
+    if (previousPercent >= milestone || percent < milestone) continue;
+
+    // Check if notification already exists for this specific enrollment and milestone
     const existing = await prisma.notification.findFirst({
       where: {
         userId,
@@ -122,6 +128,7 @@ async function notifyProgressMilestones(
             kind: "progress_milestone",
             courseId,
             milestone,
+            enrollmentId,
           },
         },
       },
@@ -129,25 +136,65 @@ async function notifyProgressMilestones(
 
     if (existing) continue;
 
-    await createNotification(
-      userId,
-      "PLATFORM_ALERT",
-      `${milestone}% milestone reached`,
-      `You've completed ${milestone}% of "${courseTitle}". Keep up the great work!`,
-      {
-        kind: "progress_milestone",
-        courseId,
-        milestone,
-        enrollmentId,
-        progressPercent: percent,
-      }
-    );
+    // Use transaction to ensure atomic notification creation
+    await prisma.$transaction(async (tx) => {
+      // Double-check within transaction to prevent race conditions
+      const existingInTx = await tx.notification.findFirst({
+        where: {
+          userId,
+          type: "PLATFORM_ALERT",
+          metadata: {
+            equals: {
+              kind: "progress_milestone",
+              courseId,
+              milestone,
+              enrollmentId,
+            },
+          },
+        },
+      });
 
-    await logActivityOnce({
-      userId,
-      title: `Reached ${milestone}% in "${courseTitle}"`,
-      description: `${completedLessons} of ${totalLessons} lessons complete`,
-      iconType: "badge",
+      if (existingInTx) return;
+
+      await createNotification(
+        userId,
+        "PLATFORM_ALERT",
+        `${milestone}% milestone reached`,
+        `You've completed ${milestone}% of "${courseTitle}". Keep up the great work!`,
+        {
+          kind: "progress_milestone",
+          courseId,
+          milestone,
+          enrollmentId,
+          progressPercent: percent,
+        }
+      );
+
+      // Log activity with enrollmentId to prevent duplicates for same enrollment
+      const existingActivity = await tx.activity.findFirst({
+        where: {
+          userId,
+          iconType: "badge",
+          title: `Reached ${milestone}% in "${courseTitle}"`,
+        },
+        select: { id: true },
+      });
+
+      if (!existingActivity) {
+        await tx.activity.create({
+          data: {
+            userId,
+            title: `Reached ${milestone}% in "${courseTitle}"`,
+            description: `${completedLessons} of ${totalLessons} lessons complete`,
+            iconType: "badge",
+            metadata: {
+              courseId,
+              milestone,
+              enrollmentId,
+            } as Prisma.InputJsonValue,
+          },
+        });
+      }
     });
   }
 }
