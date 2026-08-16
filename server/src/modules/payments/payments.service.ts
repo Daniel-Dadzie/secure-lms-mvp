@@ -372,29 +372,51 @@ export async function completePurchasesByReference(reference: string): Promise<v
 // Re-checks with Paystack directly (never trusts the redirect alone) —
 // covers the case where the user lands back before the webhook has arrived.
 // ----------------------------------------------------------------------------
-export async function verifyAndComplete(reference: string, userId: string) {
+export async function verifyAndComplete(reference: string, userId: string | null) {
   const purchases = await prisma.purchase.findMany({
     where: { providerReference: reference },
+    include: {
+      course: {
+        select: {
+          id: true,
+          title: true,
+          slug: true,
+        },
+      },
+    },
   });
 
-  if (purchases.length === 0 || purchases[0].userId !== userId) {
+  if (purchases.length === 0) {
+    const error = new Error("Purchase not found");
+    (error as any).statusCode = 404;
+    throw error;
+  }
+
+  // If userId is provided, verify ownership
+  if (userId && purchases[0].userId !== userId) {
     const error = new Error("Purchase not found");
     (error as any).statusCode = 404;
     throw error;
   }
 
   if (purchases[0].status === "COMPLETED") {
-    return { status: "COMPLETED" as const };
+    return {
+      status: "COMPLETED" as const,
+      courses: purchases.map((p) => ({ id: p.course.id, title: p.course.title, slug: p.course.slug })),
+    };
   }
 
   const result = await verifyTransaction(reference);
 
   if (result.status === "success") {
     await completePurchasesByReference(reference);
-    return { status: "COMPLETED" as const };
+    return {
+      status: "COMPLETED" as const,
+      courses: purchases.map((p) => ({ id: p.course.id, title: p.course.title, slug: p.course.slug })),
+    };
   }
 
-  return { status: purchases[0].status as string };
+  return { status: purchases[0].status as string, courses: [] };
 }
 
 // ----------------------------------------------------------------------------

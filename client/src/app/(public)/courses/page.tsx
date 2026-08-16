@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
+import { formatPrice } from "@/lib/currency";
 
 interface Course {
   id: string;
@@ -489,11 +490,7 @@ function CoursesContent() {
 
                     <div className="mt-auto flex items-center justify-between border-t border-slate-100 pt-4">
                       <span className="text-2xl font-extrabold text-[#0A4A3A]">
-                        {course.priceCents === 0
-                          ? "Free"
-                          : `$${(
-                              course.priceCents / 100
-                            ).toFixed(0)}`}
+                        {formatPrice(course.priceCents)}
                       </span>
 
                       <div className="flex gap-2">

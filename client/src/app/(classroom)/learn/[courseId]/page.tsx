@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, use, useCallback, useMemo } from "react";
+import React, { useState, useEffect, use, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
@@ -68,6 +68,7 @@ interface LessonProgressMap {
 interface LessonProgressItem {
   lessonId: string;
   status: string;
+  progressSeconds?: number;
 }
 
 function findResumeLesson(
@@ -196,6 +197,10 @@ export default function CoursePlayerPage({
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showCompletionOverlay, setShowCompletionOverlay] = useState(false);
+  const [videoWatchTime, setVideoWatchTime] = useState<Record<string, number>>(() => ({}));
+  const [currentVideoTime, setCurrentVideoTime] = useState(() => 0);
+  const [lastSaveTime, setLastSaveTime] = useState(() => Date.now());
+  const currentLessonRef = useRef<Lesson | null>(null);
 
   const loadAuthorizedLesson = useCallback(
     async (moduleId: string, lesson: Lesson) => {
@@ -318,9 +323,11 @@ export default function CoursePlayerPage({
     setProgressMap((prev) => ({ ...prev, [lessonId]: newStatus }));
 
     try {
+      // Use accumulated watch time for this lesson
+      const accumulatedTime = videoWatchTime[lessonId] || 0;
       await api.patch(`/progress/lessons/${lessonId}`, {
         status: newStatus,
-        progressSeconds: 0,
+        progressSeconds: accumulatedTime,
       });
       if (courseJustCompleted) {
         setShowCompletionOverlay(true);
@@ -332,6 +339,62 @@ export default function CoursePlayerPage({
       setIsUpdating(false);
     }
   };
+
+  const handleVideoTimeUpdate = (lessonId: string, currentTime: number) => {
+    setCurrentVideoTime(currentTime);
+    const now = Date.now();
+
+    // Only accumulate time if at least 1 second has passed since last save
+    if (lastSaveTime > 0 && now - lastSaveTime >= 1000) {
+      setVideoWatchTime((prev) => ({
+        ...prev,
+        [lessonId]: Math.floor((prev[lessonId] || 0) + 1), // Increment by 1 second
+      }));
+      setLastSaveTime(now);
+    }
+  };
+
+  // Update ref when current lesson changes
+  useEffect(() => {
+    currentLessonRef.current = currentLesson;
+  }, [currentLesson]);
+
+  // Save progress periodically (every 30 seconds)
+  useEffect(() => {
+    let cancelled = false;
+
+    const interval = setInterval(() => {
+      if (cancelled) return;
+
+      const lesson = currentLessonRef.current;
+      if (!lesson) return;
+
+      const accumulatedTime = videoWatchTime[lesson.id] || 0;
+      if (accumulatedTime === 0) return; // Don't save if no time accumulated
+
+      async function saveProgress() {
+        if (cancelled) return;
+
+        try {
+          if (lesson) {
+            await api.patch(`/progress/lessons/${lesson.id}`, {
+              status: "IN_PROGRESS",
+              progressSeconds: accumulatedTime,
+            });
+          }
+        } catch (err) {
+          console.error("Failed to save video progress:", err);
+        }
+      }
+
+      void saveProgress();
+    }, 30000); // Save every 30 seconds
+
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [videoWatchTime]);
 
   const goToNextLesson = useCallback(() => {
     if (!course || !currentLesson) return;
@@ -428,8 +491,14 @@ export default function CoursePlayerPage({
                     controls
                     autoPlay
                     playsInline
+                    preload="metadata"
                     className="absolute inset-0 w-full h-full object-contain"
                     src={currentLesson.contentUrl}
+                    onTimeUpdate={() => {
+                      if (currentLesson) {
+                        handleVideoTimeUpdate(currentLesson.id, currentVideoTime);
+                      }
+                    }}
                     onEnded={() => {
                       if (progressMap[currentLesson.id] !== "COMPLETED") {
                         void handleToggleComplete(currentLesson.id);

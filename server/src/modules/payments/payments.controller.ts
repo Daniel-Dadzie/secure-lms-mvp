@@ -85,6 +85,8 @@ export async function webhook(req: Request, res: Response): Promise<void> {
 
 export async function verifyPayment(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
+    // Allow verification without authentication for the callback page
+    // The reference is enough to identify and verify the purchase
     const userId = (req as any).user?.sub;
     const result = await paymentsService.verifyAndComplete(req.params.reference as string, userId);
     res.status(200).json(result);

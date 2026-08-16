@@ -150,7 +150,55 @@ function CertificatesContent() {
           id="certificate-document"
           className="bg-white border-2 border-slate-800 rounded-3xl p-10 shadow-xl relative overflow-hidden text-center space-y-6"
         >
-          <div className="absolute inset-0 opacity-5 pointer-events-none bg-[radial-gradient(#0a3832_1px,transparent_1px)] [background-size:16px_16px]" />
+          {/* Geometric background patterns with brand colors */}
+          <div className="absolute inset-0 opacity-10 pointer-events-none">
+            <div className="absolute inset-0 bg-[radial-gradient(#0A4A3A_2px,transparent_2px)] [background-size:24px_24px]" />
+            <div className="absolute inset-0 bg-[radial-gradient(#84cc16_1px,transparent_1px)] [background-size:32px_32px]" />
+          </div>
+
+          {/* Top left geometric design */}
+          <div className="absolute top-0 left-0 w-32 h-32 pointer-events-none">
+            <div className="absolute top-4 left-4 w-16 h-16 border-4 border-[#0A4A3A] rounded-full opacity-60" />
+            <div className="absolute top-8 left-8 w-8 h-8 bg-[#84cc16] rounded-full opacity-40" />
+            <div className="absolute top-0 left-20 w-0 h-0 border-l-[20px] border-l-transparent border-t-[30px] border-t-[#0A4A3A] opacity-50" />
+            <div className="absolute top-12 left-0 w-0 h-0 border-r-[15px] border-r-transparent border-b-[25px] border-b-[#C2F25B] opacity-40" />
+            <div className="absolute top-2 left-2 w-20 h-1 bg-[#84cc16] opacity-30 transform -rotate-45" />
+            <div className="absolute top-6 left-6 w-16 h-1 bg-[#0A4A3A] opacity-30 transform -rotate-45" />
+          </div>
+
+          {/* Top right geometric design */}
+          <div className="absolute top-0 right-0 w-32 h-32 pointer-events-none">
+            <div className="absolute top-4 right-4 w-16 h-16 border-4 border-[#0A4A3A] rounded-full opacity-60" />
+            <div className="absolute top-8 right-8 w-8 h-8 bg-[#84cc16] rounded-full opacity-40" />
+            <div className="absolute top-0 right-20 w-0 h-0 border-r-[20px] border-r-transparent border-t-[30px] border-t-[#0A4A3A] opacity-50" />
+            <div className="absolute top-12 right-0 w-0 h-0 border-l-[15px] border-l-transparent border-b-[25px] border-b-[#C2F25B] opacity-40" />
+            <div className="absolute top-2 right-2 w-20 h-1 bg-[#84cc16] opacity-30 transform rotate-45" />
+            <div className="absolute top-6 right-6 w-16 h-1 bg-[#0A4A3A] opacity-30 transform rotate-45" />
+          </div>
+
+          {/* Bottom left geometric design */}
+          <div className="absolute bottom-0 left-0 w-32 h-32 pointer-events-none">
+            <div className="absolute bottom-4 left-4 w-16 h-16 border-4 border-[#0A4A3A] rounded-full opacity-60" />
+            <div className="absolute bottom-8 left-8 w-8 h-8 bg-[#84cc16] rounded-full opacity-40" />
+            <div className="absolute bottom-0 left-20 w-0 h-0 border-l-[20px] border-l-transparent border-b-[30px] border-b-[#0A4A3A] opacity-50" />
+            <div className="absolute bottom-12 left-0 w-0 h-0 border-r-[15px] border-r-transparent border-t-[25px] border-t-[#C2F25B] opacity-40" />
+            <div className="absolute bottom-2 left-2 w-20 h-1 bg-[#84cc16] opacity-30 transform rotate-45" />
+            <div className="absolute bottom-6 left-6 w-16 h-1 bg-[#0A4A3A] opacity-30 transform rotate-45" />
+          </div>
+
+          {/* Bottom right geometric design */}
+          <div className="absolute bottom-0 right-0 w-32 h-32 pointer-events-none">
+            <div className="absolute bottom-4 right-4 w-16 h-16 border-4 border-[#0A4A3A] rounded-full opacity-60" />
+            <div className="absolute bottom-8 right-8 w-8 h-8 bg-[#84cc16] rounded-full opacity-40" />
+            <div className="absolute bottom-0 right-20 w-0 h-0 border-r-[20px] border-r-transparent border-b-[30px] border-b-[#0A4A3A] opacity-50" />
+            <div className="absolute bottom-12 right-0 w-0 h-0 border-l-[15px] border-l-transparent border-t-[25px] border-t-[#C2F25B] opacity-40" />
+            <div className="absolute bottom-2 right-2 w-20 h-1 bg-[#84cc16] opacity-30 transform -rotate-45" />
+            <div className="absolute bottom-6 right-6 w-16 h-1 bg-[#0A4A3A] opacity-30 transform -rotate-45" />
+          </div>
+
+          {/* Subtle gradient borders */}
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#0A4A3A] to-transparent opacity-30" />
+          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#84cc16] to-transparent opacity-30" />
 
           <div className="flex justify-center items-center space-x-2 text-[#0A4A3A]">
             <Award className="w-10 h-10" />

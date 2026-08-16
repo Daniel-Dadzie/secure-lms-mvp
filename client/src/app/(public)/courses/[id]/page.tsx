@@ -17,6 +17,7 @@ import {
 import api from "@/lib/api";
 import { CourseReviewsSection } from "@/components/courses/CourseReviewsSection";
 import { useAuthStore } from "@/store/auth.store";
+import { formatPrice } from "@/lib/currency";
 import type { PublicCourseDetail } from "@/types/course";
 
 function formatDuration(seconds?: number | null) {
@@ -314,9 +315,7 @@ export default function CourseDetailsPage() {
                 <div>
                   <p className="text-xs font-bold uppercase tracking-wider text-slate-400">Enrollment</p>
                   <p className="text-3xl font-extrabold text-[#0A4A3A] mt-1">
-                    {course.priceCents === 0
-                      ? "Free"
-                      : `$${(course.priceCents / 100).toFixed(0)}`}
+                    {formatPrice(course.priceCents)}
                   </p>
                 </div>
                 <div className="w-12 h-12 rounded-xl bg-emerald-50 text-[#0A4A3A] flex items-center justify-center font-bold border border-emerald-100">
