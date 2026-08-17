@@ -9,6 +9,14 @@
     "lint": "eslint",
     "test": "vitest"
   },
+  "overrides": {
+    "js-yaml": "4.1.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "js-yaml": "4.1.0"
+    }
+  },
   "dependencies": {
     "@mdxeditor/editor": "^4.2.0",
     "@tailwindcss/typography": "^0.5.20",

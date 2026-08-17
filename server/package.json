@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "Secure LMS Backend",
   "main": "src/index.js",
+  "overrides": {
+    "uuid": "^11.1.1"
+  },
   "scripts": {
     "dev": "tsx watch --env-file=../.env src/server.ts",
     "build": "npx dotenv-cli -e .env -- prisma generate && tsc",

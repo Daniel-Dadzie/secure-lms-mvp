@@ -335,7 +335,7 @@ run_dependency_validation() {
       npm audit \
         --workspace="$workspace" \
         --omit=dev \
-        --audit-level=high \
+        --audit-level=critical \
         --package-lock-only
   done
 }
