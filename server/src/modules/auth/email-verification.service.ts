@@ -56,7 +56,7 @@ export async function verifyEmail(token: string): Promise<void> {
   }
 
   if (verification.usedAt) {
-    const error = new Error("Verification link already used");
+    const error = new Error("Verification link already used or expired");
     (error as any).statusCode = 400;
     throw error;
   }

@@ -93,8 +93,11 @@ export default function CreateCoursePage() {
         setIsUploading(true);
         try {
           await uploadCourseThumbnail(newCourseId, thumbnailFile);
-        } catch (uploadErr) {
-          console.warn("Thumbnail upload failed, continuing:", uploadErr);
+        } catch (uploadErr: any) {
+          console.error("Thumbnail upload failed:", uploadErr);
+          const errorMsg = uploadErr?.response?.data?.message || uploadErr?.message || "Thumbnail upload failed";
+          setError(`Course created but thumbnail upload failed: ${errorMsg}. You can add it in the edit page.`);
+          // Continue anyway - course is created
         } finally {
           setIsUploading(false);
         }

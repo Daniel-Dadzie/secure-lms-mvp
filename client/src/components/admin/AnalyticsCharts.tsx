@@ -30,7 +30,7 @@ interface EnrollmentCompletionChartProps {
 }
 
 export function EnrollmentCompletionChart({ data }: EnrollmentCompletionChartProps) {
-  const chartData = data.map((d) => ({
+  const chartData = (data || []).map((d) => ({
     month: d.month.slice(5),
     enrollments: d.enrollments,
     completions: d.completions,
@@ -61,7 +61,7 @@ interface CategoryBarChartProps {
 }
 
 export function CategoryBarChart({ data }: CategoryBarChartProps) {
-  const chartData = [...data]
+  const chartData = [...(data || [])]
     .sort((a, b) => b.count - a.count)
     .slice(0, 8)
     .map((d) => ({ category: d.category, students: d.count }));
@@ -90,7 +90,7 @@ interface RegionDonutChartProps {
 }
 
 export function RegionDonutChart({ title, data }: RegionDonutChartProps) {
-  const chartData = data.filter((d) => d.count > 0).map((d) => ({
+  const chartData = (data || []).filter((d) => d.count > 0).map((d) => ({
     name: d.label,
     value: d.count,
     region: d.region,
@@ -134,10 +134,10 @@ interface UserGrowthRevenueChartProps {
 }
 
 export function UserGrowthRevenueChart({ registrations, revenue }: UserGrowthRevenueChartProps) {
-  const chartData = registrations.map((reg, i) => ({
+  const chartData = (registrations || []).map((reg, i) => ({
     month: reg.month.slice(5),
     users: reg.count ?? 0,
-    revenue: (revenue[i]?.revenueCents ?? 0) / 100,
+    revenue: (revenue?.[i]?.revenueCents ?? 0) / 100,
   }));
 
   return (

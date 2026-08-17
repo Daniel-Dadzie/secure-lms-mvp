@@ -7,8 +7,10 @@ const lessonSelect = {
   moduleId: true,
   title: true,
   order: true,
+  contentType: true,
   durationSeconds: true,
   contentUrl: true,
+  contentText: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -36,7 +38,7 @@ export async function getLessonById(lessonId: string, userId: string, userRole: 
 
   if (!lesson) {
     const error = new Error("Lesson not found");
-    (error as any).statusCode = 404;
+    (error as Error & { statusCode?: number }).statusCode = 404;
     throw error;
   }
 
@@ -85,8 +87,10 @@ export async function createLesson(
       moduleId,
       title: input.title,
       order: input.order,
+      contentType: input.contentType,
       durationSeconds: input.durationSeconds,
       contentUrl: input.contentUrl,
+      contentText: input.contentText,
     },
     select: lessonSelect,
   });
@@ -97,7 +101,7 @@ export async function createLesson(
       action: "lesson.create",
       entityType: "Lesson",
       entityId: lesson.id,
-      metadata: { moduleId, title: input.title },
+      metadata: { moduleId, title: input.title, contentType: input.contentType },
     },
   });
 
@@ -114,8 +118,10 @@ export async function updateLesson(
     data: {
       ...(input.title && { title: input.title }),
       ...(input.order !== undefined && { order: input.order }),
+      ...(input.contentType && { contentType: input.contentType }),
       ...(input.durationSeconds !== undefined && { durationSeconds: input.durationSeconds }),
       ...(input.contentUrl !== undefined && { contentUrl: input.contentUrl }),
+      ...(input.contentText !== undefined && { contentText: input.contentText }),
     },
     select: lessonSelect,
   });

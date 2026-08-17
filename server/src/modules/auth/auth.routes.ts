@@ -78,11 +78,9 @@ router.get(
         return;
       }
       await verifyEmail(token);
-      res.redirect(`${process.env.CLIENT_URL}/verify-email/success`);
+      res.status(200).json({ message: "Email verified successfully" });
     } catch (error: any) {
-      res.redirect(
-        `${process.env.CLIENT_URL}/verify-email/error?message=${encodeURIComponent(error.message)}`
-      );
+      res.status(400).json({ message: error.message || "Verification failed" });
     }
   }
 );

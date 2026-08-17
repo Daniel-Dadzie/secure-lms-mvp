@@ -11,7 +11,6 @@ export interface CategoryResponse {
 
 export async function getAllCategories(): Promise<CategoryResponse[]> {
   const categories = await prisma.category.findMany({
-    orderBy: { name: "asc" },
     select: {
       id: true,
       name: true,

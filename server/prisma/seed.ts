@@ -8,9 +8,9 @@ const adapter = new PrismaPg({
 const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log("Seeding database with full catalogue and course modules...");
-  
+
   const passwordHash = await bcrypt.hash("Password123!", 10);
-  
+
   // 1. Core Users (Admin & Student)
   const admin = await prisma.user.upsert({
     where: { email: "admin@mechlms.com" },
@@ -23,7 +23,7 @@ async function main() {
       isEmailVerified: true,
     },
   });
-  
+
   const student = await prisma.user.upsert({
     where: { email: "student@mechlms.com" },
     update: {
@@ -42,96 +42,96 @@ async function main() {
   });
   // 2. Expert Instructors
   const instructorData = [
-    { 
-      email: "james.walker@mechlms.com", 
-      fullName: "Dr. James Walker", 
-      specialization: "Mechanical Systems Expert", 
-      credentials: "MIT-trained | Ex-Boeing", 
-      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop", 
+    {
+      email: "james.walker@mechlms.com",
+      fullName: "Dr. James Walker",
+      specialization: "Mechanical Systems Expert",
+      credentials: "MIT-trained | Ex-Boeing",
+      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop",
       experienceYears: "15 yrs",
       shortBio: "Former lead mechanical engineer at Boeing with a PhD from MIT.",
       bio: "Dr. James Walker spent 15 years as a lead mechanical engineer at Boeing, specializing in aerospace structural integrity. He holds a Ph.D. from MIT and is passionate about bridging the gap between theoretical physics and practical engineering design.",
       expertise: ["Aerospace Structures", "Mechanical Design", "Systems Engineering"]
     },
-    { 
-      email: "sarah.chen@mechlms.com", 
-      fullName: "Prof. Sarah Chen", 
-      specialization: "CAD / CAM Specialist", 
-      credentials: "Stanford ME | Ex-Lockheed", 
-      avatarUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=400&auto=format&fit=crop", 
+    {
+      email: "sarah.chen@mechlms.com",
+      fullName: "Prof. Sarah Chen",
+      specialization: "CAD / CAM Specialist",
+      credentials: "Stanford ME | Ex-Lockheed",
+      avatarUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=400&auto=format&fit=crop",
       experienceYears: "12 yrs",
       shortBio: "Manufacturing engineer at Stanford University with deep expertise in CNC programming, precision machining, and CAM software.",
       bio: "Prof. Sarah Chen has 16 years of combined industry and academic experience in precision manufacturing. She has collaborated with Siemens, Fanuc, and Haas Automation on next-generation machine tool development, contributing to controller firmware optimisation and toolpath algorithms. At Stanford, she directs the Advanced Manufacturing Lab and teaches graduate courses in computational manufacturing.",
       expertise: ["CNC Milling & Turning", "G-Code Programming", "CAM Software (Fusion 360)", "Precision Metrology", "Cutting Tool Selection"]
     },
-    { 
-      email: "emily.torres@mechlms.com", 
-      fullName: "Emily Torres", 
-      specialization: "CNC & Robotics Engineer", 
-      credentials: "Georgia Tech | Fanuc Certified", 
-      avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400&auto=format&fit=crop", 
+    {
+      email: "emily.torres@mechlms.com",
+      fullName: "Emily Torres",
+      specialization: "CNC & Robotics Engineer",
+      credentials: "Georgia Tech | Fanuc Certified",
+      avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400&auto=format&fit=crop",
       experienceYears: "10 yrs",
       shortBio: "Certified robotics engineer specializing in automated assembly lines and robotic kinematics.",
       bio: "Emily Torres is an industry-leading robotics engineer who has spent the last decade designing automated work cells for automotive manufacturers. Certified by Fanuc, she bridges the gap between mechanical design and robotic programming.",
       expertise: ["Fanuc Robotics", "Assembly Automation", "PLC Integration", "Kinematics"]
     },
-    { 
-      email: "kwame.osei@mechlms.com", 
-      fullName: "Dr. Kwame Osei", 
-      specialization: "Industrial Automation Lead", 
-      credentials: "Delft | Ex-ABB & Siemens", 
-      avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop", 
+    {
+      email: "kwame.osei@mechlms.com",
+      fullName: "Dr. Kwame Osei",
+      specialization: "Industrial Automation Lead",
+      credentials: "Delft | Ex-ABB & Siemens",
+      avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop",
       experienceYears: "18 yrs",
       shortBio: "Expert in DCS and PLC systems, formerly leading automation projects at ABB.",
       bio: "Dr. Kwame Osei brings 18 years of global experience in industrial automation. Having led massive SCADA implementations for smart factories across Europe and Africa, he focuses on making complex control systems accessible to aspiring engineers.",
       expertise: ["SCADA Systems", "PLC Programming", "Industrial IoT", "Process Automation"]
     },
-    { 
-      email: "marcus.hill@mechlms.com", 
-      fullName: "Dr. Marcus Hill", 
-      specialization: "Fluid Dynamics Researcher", 
-      credentials: "Caltech | Ex-NASA JPL", 
-      avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400&auto=format&fit=crop", 
+    {
+      email: "marcus.hill@mechlms.com",
+      fullName: "Dr. Marcus Hill",
+      specialization: "Fluid Dynamics Researcher",
+      credentials: "Caltech | Ex-NASA JPL",
+      avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400&auto=format&fit=crop",
       experienceYears: "14 yrs",
       shortBio: "Former NASA JPL researcher specializing in computational fluid dynamics (CFD).",
       bio: "Dr. Marcus Hill spent over a decade at NASA's Jet Propulsion Laboratory working on propulsion systems. He is an expert in applied fluid mechanics and teaches advanced CFD simulation techniques.",
       expertise: ["CFD Analysis", "Propulsion Systems", "Hydraulics", "Aerodynamics"]
     },
-    { 
-      email: "liu.wei@mechlms.com", 
-      fullName: "Prof. Liu Wei", 
-      specialization: "Thermodynamics & Energy", 
-      credentials: "Tsinghua | Ex-GE Energy", 
-      avatarUrl: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?q=80&w=400&auto=format&fit=crop", 
+    {
+      email: "liu.wei@mechlms.com",
+      fullName: "Prof. Liu Wei",
+      specialization: "Thermodynamics & Energy",
+      credentials: "Tsinghua | Ex-GE Energy",
+      avatarUrl: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?q=80&w=400&auto=format&fit=crop",
       experienceYears: "16 yrs",
       shortBio: "Energy systems specialist with a focus on advanced thermal cycles.",
       bio: "Prof. Liu Wei brings extensive experience from GE Energy, where he optimized steam turbine efficiency. He currently researches sustainable energy transitions and teaches thermodynamics.",
       expertise: ["Heat Transfer", "Thermal Cycles", "Energy Systems", "Turbomachinery"]
     },
-    { 
-      email: "nina.patel@mechlms.com", 
-      fullName: "Dr. Nina Patel", 
-      specialization: "Electrical Systems Engineer", 
-      credentials: "IIT Delhi | Ex-Honeywell", 
-      avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=400&auto=format&fit=crop", 
+    {
+      email: "nina.patel@mechlms.com",
+      fullName: "Dr. Nina Patel",
+      specialization: "Electrical Systems Engineer",
+      credentials: "IIT Delhi | Ex-Honeywell",
+      avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=400&auto=format&fit=crop",
       experienceYears: "11 yrs",
       shortBio: "Cross-disciplinary engineer teaching electrical systems for mechanical engineers.",
       bio: "Dr. Nina Patel specializes in electromechanical systems. After a successful career at Honeywell designing avionics, she now focuses on educating mechanical engineers on critical electrical integrations.",
       expertise: ["Circuit Design", "Power Systems", "Avionics", "Electromechanics"]
     },
-    { 
-      email: "mark.sullivan@mechlms.com", 
-      fullName: "Mark Sullivan", 
-      specialization: "Quality & Six Sigma Master", 
-      credentials: "Black Belt | Ex-Caterpillar", 
-      avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=400&auto=format&fit=crop", 
+    {
+      email: "mark.sullivan@mechlms.com",
+      fullName: "Mark Sullivan",
+      specialization: "Quality & Six Sigma Master",
+      credentials: "Black Belt | Ex-Caterpillar",
+      avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=400&auto=format&fit=crop",
       experienceYears: "20 yrs",
       shortBio: "Six Sigma Master Black Belt with 20 years of manufacturing quality experience.",
       bio: "Mark Sullivan has saved millions in production waste at Caterpillar using Lean Six Sigma methodologies. He provides practical, hands-on training for quality control and process optimization.",
       expertise: ["Six Sigma Black Belt", "GD&T", "Lean Manufacturing", "Quality Management Systems"]
     },
   ];
-  
+
   const instructorRegions = [
     "NORTH_AMERICA",
     "ASIA_PACIFIC",
@@ -198,7 +198,7 @@ async function main() {
     { name: "Electrical Engineering", slug: "electrical-engineering", description: "Circuits, power systems & electronics for MEs" },
     { name: "Welding Technology", slug: "welding-technology", description: "MIG, TIG, arc welding & weld inspection" },
   ];
-  
+
   const createdCategories: Record<string, any> = {};
   for (const cat of categoriesData) {
     const catRecord = await prisma.category.upsert({
@@ -451,11 +451,11 @@ async function main() {
       ]
     },
   ];
-  
+
   for (const c of coursesData) {
     const instRecord = createdInstructors[c.instructor];
     const catRecord = createdCategories[c.categorySlug];
-    
+
     await prisma.course.upsert({
       where: { slug: c.slug },
       update: {
@@ -483,23 +483,58 @@ async function main() {
         thumbnailUrl: c.thumbnailUrl,
         highlights: c.highlights,
         modules: {
-          create: c.modules.map(m => ({
+          create: c.modules.map((m) => ({
             title: m.title,
             duration: m.duration,
             order: m.order,
             lessons: {
               create: [
-                { 
-                  title: m.title + " - Part 1", 
-                  order: 1, 
-                  durationSeconds: 1200, 
+                // Add a text lesson as the first lesson for demonstration
+                {
+                  title: "Introduction to " + m.title,
+                  order: 1,
+                  contentType: "TEXT",
+                  contentText: `# Welcome to ${m.title}
+
+This lesson provides an overview of what you'll learn in this module.
+
+## Learning Objectives
+
+By the end of this module, you will be able to:
+- Understand the fundamental concepts
+- Apply practical techniques
+- Solve real-world engineering problems
+
+## Key Concepts
+
+This module covers essential topics that form the foundation of advanced engineering practices. We'll explore both theoretical principles and hands-on applications.
+
+### Prerequisites
+
+- Basic understanding of engineering fundamentals
+- Familiarity with technical terminology
+- Access to recommended software tools
+
+## Getting Started
+
+Begin by reviewing the course materials and setting up your development environment. The subsequent video lessons will provide detailed walkthroughs and examples.
+
+*This text lesson demonstrates the new text-based lesson format. You can include **bold text**, *italic text*, \`code snippets\`, and more using Markdown formatting.*`,
+                  durationSeconds: 600,
+                },
+                {
+                  title: m.title + " - Part 1 (Video)",
+                  order: 2,
+                  contentType: "VIDEO",
+                  durationSeconds: 1200,
                   contentUrl: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"
                 },
-                { 
-                  title: m.title + " - Part 2", 
-                  order: 2, 
-                  durationSeconds: 1500, 
-                  contentUrl: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4" 
+                {
+                  title: m.title + " - Part 2 (Video)",
+                  order: 3,
+                  contentType: "VIDEO",
+                  durationSeconds: 1500,
+                  contentUrl: "https://test-videos.co.uk/vids/bigbuckbunny/mp4/h264/360/Big_Buck_Bunny_360_10s_1MB.mp4"
                 }
               ]
             }
