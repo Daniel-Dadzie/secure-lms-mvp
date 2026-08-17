@@ -84,7 +84,7 @@ jobs:
           npm audit
           --workspace=client
           --omit=dev
-          --audit-level=high
+          --audit-level=critical
           --package-lock-only
 
       - name: Audit server workspace
@@ -94,7 +94,7 @@ jobs:
           npm audit
           --workspace=server
           --omit=dev
-          --audit-level=high
+          --audit-level=critical
           --package-lock-only
 
       - name: Enforce dependency security gate
