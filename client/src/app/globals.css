@@ -1,3 +1,186 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Custom prose styling for light theme (default) */
+.prose {
+  color: #334155;
+}
+
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4,
+.prose h5,
+.prose h6 {
+  color: #0f172a;
+}
+
+.prose strong {
+  color: #0f172a;
+}
+
+.prose a {
+  color: #2563eb;
+}
+
+.prose a:hover {
+  color: #1d4ed8;
+}
+
+.prose code {
+  color: #dc2626;
+  background-color: #f1f5f9;
+  padding: 0.2em 0.4em;
+  border-radius: 0.25em;
+}
+
+.prose pre {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+}
+
+.prose pre code {
+  background-color: transparent;
+  padding: 0;
+  color: #334155;
+}
+
+.prose blockquote {
+  border-left-color: #6366f1;
+  color: #64748b;
+}
+
+.prose ul,
+.prose ol {
+  color: #334155;
+}
+
+.prose li {
+  color: #334155;
+}
+
+.prose th {
+  color: #0f172a;
+  border-bottom-color: #cbd5e1;
+}
+
+.prose td {
+  border-bottom-color: #e2e8f0;
+}
+
+.prose hr {
+  border-color: #e2e8f0;
+}
+
+/* Dark theme prose styling for dark backgrounds */
+.prose-invert {
+  color: #cbd5e1;
+}
+
+.prose-invert h1,
+.prose-invert h2,
+.prose-invert h3,
+.prose-invert h4,
+.prose-invert h5,
+.prose-invert h6 {
+  color: #f1f5f9;
+}
+
+.prose-invert strong {
+  color: #f1f5f9;
+}
+
+.prose-invert a {
+  color: #38bdf8;
+}
+
+.prose-invert a:hover {
+  color: #0ea5e9;
+}
+
+.prose-invert code {
+  color: #fbbf24;
+  background-color: #1e293b;
+  padding: 0.2em 0.4em;
+  border-radius: 0.25em;
+}
+
+.prose-invert pre {
+  background-color: #0f172a;
+  border: 1px solid #334155;
+}
+
+.prose-invert pre code {
+  background-color: transparent;
+  padding: 0;
+  color: #e2e8f0;
+}
+
+.prose-invert blockquote {
+  border-left-color: #6366f1;
+  color: #94a3b8;
+}
+
+.prose-invert ul,
+.prose-invert ol {
+  color: #cbd5e1;
+}
+
+.prose-invert li {
+  color: #cbd5e1;
+}
+
+.prose-invert th {
+  color: #f1f5f9;
+  border-bottom-color: #475569;
+}
+
+.prose-invert td {
+  border-bottom-color: #334155;
+}
+
+.prose-invert hr {
+  border-color: #334155;
+}
+
+/* Custom scrollbar styling for better editor experience */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.custom-scrollbar::-webkit-scrollbar-corner {
+  background: #f1f5f9;
+}
+
+/* Dark theme scrollbar */
+.dark .custom-scrollbar::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-corner {
+  background: #1e293b;
+}

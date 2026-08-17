@@ -19,7 +19,7 @@ const clientEmail =
 const rawPrivateKey =
   process.env.FIREBASE_PRIVATE_KEY ||
   (isTest
-    ? "-----BEGIN PRIVATE KEY-----\nMIIB\n-----END PRIVATE KEY-----\n"
+    ? "TEST_PRIVATE_KEY_PLACEHOLDER_FOR_CI"
     : undefined);
 const storageBucket =
   process.env.FIREBASE_STORAGE_BUCKET ||

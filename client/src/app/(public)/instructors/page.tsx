@@ -10,6 +10,7 @@ import CtaBanner from "@/components/shared/CtaBanner";
 
 interface Instructor {
   id: string;
+  slug: string;
   fullName: string;
   specialization: string;
   credentials: string;
@@ -22,7 +23,7 @@ interface Instructor {
 }
 
 const CATEGORIES = [
-  "All", "Mechanical", "CAD", "Robotics", "Automation", 
+  "All", "General", "Mechanical", "CAD", "Robotics", "Automation",
   "Fluid", "Thermal", "Electrical", "Quality",
 ];
 
@@ -38,22 +39,10 @@ export default function InstructorsPage() {
     const fetchInstructors = async () => {
       setIsLoading(true);
       try {
-        const res = await api.get("/instructors").catch(() => ({
-          data: {
-            instructors: [
-              { id: "1", fullName: "Dr. James Walker", specialization: "Mechanical Systems Expert", credentials: "MIT-trained | Ex-Boeing", avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop", rating: 4.9, studentsCount: "12,400", coursesCount: 8, experienceYears: "15 yrs", category: "Mechanical" },
-              { id: "2", fullName: "Prof. Sarah Chen", specialization: "CAD / CAM Specialist", credentials: "Stanford ME | Ex-Lockheed", avatarUrl: "https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=400&auto=format&fit=crop", rating: 4.8, studentsCount: "9,800", coursesCount: 6, experienceYears: "12 yrs", category: "CAD" },
-              { id: "3", fullName: "Emily Torres", specialization: "CNC & Robotics Engineer", credentials: "Georgia Tech | Fanuc Certified", avatarUrl: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=400&auto=format&fit=crop", rating: 4.9, studentsCount: "8,200", coursesCount: 5, experienceYears: "10 yrs", category: "Robotics" },
-              { id: "4", fullName: "Dr. Kwame Osei", specialization: "Industrial Automation Lead", credentials: "Delft | Ex-ABB & Siemens", avatarUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=400&auto=format&fit=crop", rating: 4.8, studentsCount: "6,500", coursesCount: 7, experienceYears: "18 yrs", category: "Automation" },
-              { id: "5", fullName: "Dr. Marcus Hill", specialization: "Fluid Dynamics Researcher", credentials: "Caltech | Ex-NASA JPL", avatarUrl: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=400&auto=format&fit=crop", rating: 4.7, studentsCount: "5,900", coursesCount: 4, experienceYears: "14 yrs", category: "Fluid" },
-              { id: "6", fullName: "Prof. Liu Wei", specialization: "Thermodynamics & Energy", credentials: "Tsinghua | Ex-GE Energy", avatarUrl: "https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?q=80&w=400&auto=format&fit=crop", rating: 4.6, studentsCount: "4,800", coursesCount: 3, experienceYears: "16 yrs", category: "Thermal" },
-              { id: "7", fullName: "Dr. Nina Patel", specialization: "Electrical Systems Engineer", credentials: "IIT Delhi | Ex-Honeywell", avatarUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=400&auto=format&fit=crop", rating: 4.7, studentsCount: "3,100", coursesCount: 4, experienceYears: "11 yrs", category: "Electrical" },
-              { id: "8", fullName: "Mark Sullivan", specialization: "Quality & Six Sigma Master", credentials: "Black Belt | Ex-Caterpillar", avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=400&auto=format&fit=crop", rating: 4.8, studentsCount: "2,240", coursesCount: 3, experienceYears: "20 yrs", category: "Quality" },
-            ],
-          },
-        }));
-        setInstructors(res.data?.instructors || res.data || []);
+        const res = await api.get("/instructors");
+        setInstructors(res.data.data || []);
       } catch (err) {
+        console.error("Error fetching instructors:", err);
         setInstructors([]);
       } finally {
         setIsLoading(false);
@@ -70,13 +59,17 @@ export default function InstructorsPage() {
     return matchesSearch && matchesCategory;
   });
 
+  // Extract unique categories from actual instructors
+  const availableCategories = Array.from(new Set(instructors.map(inst => inst.category)));
+  const categoriesToDisplay = CATEGORIES.filter(cat => cat === "All" || availableCategories.includes(cat));
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Clean Hero Without Overlap */}
-      <PageHero 
-        badge="World-Class Educators" 
-        title="Meet Our Instructors" 
-        subtitle="Learn from 200+ engineers with deep industry experience at Boeing, Tesla, NASA, Siemens, and beyond." 
+      <PageHero
+        badge="World-Class Educators"
+        title="Meet Our Instructors"
+        subtitle="Learn from 200+ engineers with deep industry experience at Boeing, Tesla, NASA, Siemens, and beyond."
       />
 
       {/* Sticky Search & Filter Bar Section */}
@@ -97,7 +90,7 @@ export default function InstructorsPage() {
             </div>
 
             <div className="flex items-center gap-2 overflow-x-auto w-full lg:w-auto pb-2 lg:pb-0 scrollbar-none">
-              {CATEGORIES.map((cat) => (
+              {categoriesToDisplay.map((cat) => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
@@ -150,8 +143,8 @@ export default function InstructorsPage() {
                   <div><p className="font-bold text-slate-900 text-sm">{inst.experienceYears}</p><p className="text-[10px] text-slate-400 font-medium">Exp.</p></div>
                 </div>
 
-                <Link href={`/courses?instructor=${inst.id}`} className="w-full bg-[#0A4A3A] hover:bg-[#12503F] text-white py-2.5 rounded-xl font-semibold text-xs flex items-center justify-center transition-all shadow-sm">
-                  View Courses
+                <Link href={`/instructors/${inst.slug}`} className="w-full border-2 border-slate-200 text-slate-700 hover:border-[#196A54] hover:text-[#196A54] py-2.5 rounded-xl font-semibold text-xs flex items-center justify-center transition-all">
+                  View Profile
                 </Link>
               </div>
             ))}
@@ -163,7 +156,7 @@ export default function InstructorsPage() {
           </div>
         )}
 
-        <CtaBanner 
+        <CtaBanner
           badge="Teach With Us"
           title="Are You an Engineering Expert?"
           description="Join our global network of instructors. Earn revenue teaching what you know best."

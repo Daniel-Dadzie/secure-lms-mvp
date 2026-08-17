@@ -275,7 +275,7 @@ describe("Login Page", () => {
     const loginMock = vi.fn().mockRejectedValue({
       response: {
         data: {
-          message: "Invalid credentials",
+          message: "Invalid email or password. Please try again.",
         },
       },
     });
@@ -304,7 +304,7 @@ describe("Login Page", () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByText("Invalid credentials")).toBeInTheDocument();
+      expect(screen.getByText("Invalid email or password. Please try again.")).toBeInTheDocument();
     });
   });
 

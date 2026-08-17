@@ -274,7 +274,7 @@ Do not invent features, prices, policies, or steps not described in the articles
 
           if (status === 401 || status === 403) {
             throw new Error(
-              `OpenRouter authentication failed. Check OPENROUTER_API_KEY in .env — get a key at https://openrouter.ai/keys. Details: ${message}`,
+              "Authentication failed. Please contact support.",
               { cause: error }
             );
           }

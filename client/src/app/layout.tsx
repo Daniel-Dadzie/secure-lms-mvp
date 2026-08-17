@@ -15,7 +15,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="font-sans min-h-screen flex flex-col bg-slate-50 text-slate-900 antialiased">
+      <body className="font-sans min-h-screen flex flex-col bg-slate-50 text-slate-900 antialiased" suppressHydrationWarning>
         <AuthProvider>
           {children}
           <GlobalSupportWidget />

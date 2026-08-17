@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
+import { Video, FileText } from "lucide-react";
 
 const CheckCircleIcon = ({ className = "" }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -42,7 +43,9 @@ const ArrowRightIcon = ({ className = "" }: { className?: string }) => (
 interface Lesson {
   id: string;
   title: string;
+  contentType: "VIDEO" | "TEXT";
   contentUrl?: string | null;
+  contentText?: string | null;
   durationSeconds: number;
   order: number;
 }
@@ -482,43 +485,54 @@ export default function CoursePlayerPage({
         {/* Main content — uses full width beside sidebar on large screens */}
         <div className="flex-1 flex flex-col overflow-y-auto bg-slate-950 min-w-0">
           <div className="w-full px-3 sm:px-5 md:px-6 lg:px-8 py-4 sm:py-6 flex flex-col gap-4 sm:gap-5">
-            {/* Video + progress stack — shared width */}
+            {/* Video/Text + progress stack — shared width */}
             <div className="w-full flex flex-col gap-3">
-              <div className="relative aspect-video w-full bg-black rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl border border-slate-800">
-                {currentLesson?.contentUrl ? (
-                  <video
-                    key={currentLesson.id}
-                    controls
-                    autoPlay
-                    playsInline
-                    preload="metadata"
-                    className="absolute inset-0 w-full h-full object-contain"
-                    src={currentLesson.contentUrl}
-                    onTimeUpdate={() => {
-                      if (currentLesson) {
-                        handleVideoTimeUpdate(currentLesson.id, currentVideoTime);
-                      }
+              {currentLesson?.contentType === "VIDEO" ? (
+                <div className="relative aspect-video w-full bg-black rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl border border-slate-800">
+                  {currentLesson?.contentUrl ? (
+                    <video
+                      key={currentLesson.id}
+                      controls
+                      autoPlay
+                      playsInline
+                      preload="metadata"
+                      className="absolute inset-0 w-full h-full object-contain"
+                      src={currentLesson.contentUrl}
+                      onTimeUpdate={() => {
+                        if (currentLesson) {
+                          handleVideoTimeUpdate(currentLesson.id, currentVideoTime);
+                        }
+                      }}
+                      onEnded={() => {
+                        if (progressMap[currentLesson.id] !== "COMPLETED") {
+                          void handleToggleComplete(currentLesson.id);
+                        }
+                      }}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  ) : (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 sm:p-6">
+                      <PlayIcon className="w-10 h-10 sm:w-12 sm:h-12 text-slate-600 mb-3" />
+                      <p className="text-sm sm:text-base font-medium text-slate-400">
+                        No video content for this lesson
+                      </p>
+                      <p className="text-xs sm:text-sm text-slate-500 mt-1">
+                        Mark the lesson complete when you&apos;re done reviewing the material.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="w-full bg-slate-900 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl border border-slate-800">
+                  <div
+                    className="p-4 sm:p-6 md:p-8 prose prose-invert prose-slate max-w-none"
+                    dangerouslySetInnerHTML={{
+                      __html: currentLesson?.contentText || "No content available for this lesson."
                     }}
-                    onEnded={() => {
-                      if (progressMap[currentLesson.id] !== "COMPLETED") {
-                        void handleToggleComplete(currentLesson.id);
-                      }
-                    }}
-                  >
-                    Your browser does not support the video tag.
-                  </video>
-                ) : (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4 sm:p-6">
-                    <PlayIcon className="w-10 h-10 sm:w-12 sm:h-12 text-slate-600 mb-3" />
-                    <p className="text-sm sm:text-base font-medium text-slate-400">
-                      No video content for this lesson
-                    </p>
-                    <p className="text-xs sm:text-sm text-slate-500 mt-1">
-                      Mark the lesson complete when you&apos;re done reviewing the material.
-                    </p>
-                  </div>
-                )}
-              </div>
+                  />
+                </div>
+              )}
 
               {/* Course progress tracker — matches player width */}
               <div className="w-full bg-slate-900/80 border border-slate-800 rounded-xl sm:rounded-2xl px-4 sm:px-5 py-3 sm:py-4">
@@ -685,7 +699,14 @@ export default function CoursePlayerPage({
                               )}
                             </span>
                             <span className="truncate flex-1 text-left">{lesson.title}</span>
-                            {lesson.durationSeconds ? (
+                            <span className="text-[10px] text-slate-500 shrink-0">
+                              {lesson.contentType === "VIDEO" ? (
+                                <Video className="w-3.5 h-3.5" />
+                              ) : (
+                                <FileText className="w-3.5 h-3.5" />
+                              )}
+                            </span>
+                            {lesson.durationSeconds && lesson.contentType === "VIDEO" ? (
                               <span className="text-[10px] text-slate-500 shrink-0">
                                 {Math.round(lesson.durationSeconds / 60)}m
                               </span>

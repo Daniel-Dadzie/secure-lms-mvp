@@ -72,7 +72,12 @@ export default function InstructorAnalyticsPage() {
         </select>
       </div>
 
-      {trends && (
+      {!trends ? (
+        <div className="bg-white rounded-2xl border border-slate-200 p-8 shadow-sm text-center">
+          <h3 className="text-lg font-bold text-slate-900 mb-2">No Analytics Data Yet</h3>
+          <p className="text-sm text-slate-500">Once you publish courses and students start enrolling, your analytics will appear here.</p>
+        </div>
+      ) : (
         <>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard label="Total Enrollments" value={trends.summary.totalEnrollments} />
@@ -81,18 +86,30 @@ export default function InstructorAnalyticsPage() {
             <StatCard label="Average Rating" value={trends.averageRating || "—"} />
           </div>
 
-          <EnrollmentCompletionChart data={trends.enrollmentVsCompletion} />
+          {trends.enrollmentVsCompletion && trends.enrollmentVsCompletion.length > 0 && (
+            <EnrollmentCompletionChart data={trends.enrollmentVsCompletion} />
+          )}
+          {!trends.enrollmentVsCompletion || trends.enrollmentVsCompletion.length === 0 ? (
+            <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+              <h3 className="text-lg font-bold text-slate-900 mb-4">Enrollments vs Completions</h3>
+              <p className="text-sm text-slate-500">No enrollment data available yet. Once students start enrolling in your courses, this chart will display your enrollment and completion trends.</p>
+            </div>
+          ) : null}
 
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
             <h3 className="text-lg font-bold text-slate-900 mb-4">Monthly Revenue</h3>
-            <div className="space-y-2">
-              {trends.revenueByMonth.slice(-6).map((row) => (
-                <div key={row.month} className="flex justify-between text-sm">
-                  <span className="text-slate-600">{row.month}</span>
-                  <span className="font-semibold text-slate-900">{formatCurrency(row.revenueCents)}</span>
-                </div>
-              ))}
-            </div>
+            {trends.revenueByMonth && trends.revenueByMonth.length > 0 ? (
+              <div className="space-y-2">
+                {trends.revenueByMonth.slice(-6).map((row) => (
+                  <div key={row.month} className="flex justify-between text-sm">
+                    <span className="text-slate-600">{row.month}</span>
+                    <span className="font-semibold text-slate-900">{formatCurrency(row.revenueCents)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-slate-500">No revenue data available yet. Once you start earning from course sales, this section will display your monthly revenue breakdown.</p>
+            )}
           </div>
         </>
       )}

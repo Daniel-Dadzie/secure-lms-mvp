@@ -4,19 +4,20 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { 
-  Star, 
-  Users, 
-  BookOpen, 
-  CheckSquare, 
-  Clock, 
-  ChevronRight 
+import {
+  Star,
+  Users,
+  BookOpen,
+  CheckSquare,
+  Clock,
+  ChevronRight
 } from "lucide-react";
 import api from "@/lib/api";
 
 // Fallback Mock Data matching the screenshots
 const mockInstructor = {
-  id: "sarah-chen",
+  id: "prof-sarah-chen",
+  slug: "prof-sarah-chen",
   fullName: "Prof. Sarah Chen",
   specialization: "Manufacturing Engineer & CNC Specialist",
   credentials: "Stanford University",
@@ -67,17 +68,19 @@ export default function InstructorProfilePage() {
  useEffect(() => {
   async function fetchInstructor() {
     if (!instructorId) return;
-    
+
     try {
       setIsLoading(true);
       // Calls your new Express route
       const res = await api.get(`/instructors/${instructorId}`);
-      
-      // Axios puts the response in res.data, and our Express controller 
+
+      // Axios puts the response in res.data, and our Express controller
       // wraps the payload in a 'data' object (res.status(200).json({ success: true, data: profile }))
       setInstructor(res.data.data);
     } catch (error) {
       console.error("Failed to fetch instructor", error);
+      // Fallback to mock data for development
+      setInstructor(mockInstructor);
     } finally {
       setIsLoading(false);
     }
@@ -87,7 +90,7 @@ export default function InstructorProfilePage() {
 
   if (isLoading) return <div className="min-h-screen bg-[#F4F9F7] flex items-center justify-center">Loading...</div>;
   if (!instructor) return <div className="min-h-screen bg-[#F4F9F7] flex items-center justify-center">Instructor not found.</div>;
-  
+
   const lastName = instructor.fullName.split(" ").pop();
 
   return (
@@ -95,7 +98,7 @@ export default function InstructorProfilePage() {
       {/* 1. HERO SECTION */}
       <section className="bg-[#0A4A3A] text-white pt-12 pb-20 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#C2F25B_1px,transparent_1px)] [background-size:24px_24px]" />
-        
+
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="flex items-center gap-2 text-xs font-semibold text-teal-100/70 mb-10">
             <Link href="/" className="hover:text-white transition-colors">Home</Link>
@@ -121,12 +124,12 @@ export default function InstructorProfilePage() {
             <div className="flex-1 space-y-4 pt-2">
               <span className="text-[#C2F25B] text-xs font-extrabold tracking-widest uppercase">Instructor Profile</span>
               <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">{instructor.fullName}</h1>
-              
+
               <div className="space-y-1">
                 <p className="text-lg font-bold text-teal-50">{instructor.specialization}</p>
                 <p className="text-sm text-teal-200/80">{instructor.credentials}</p>
               </div>
-              
+
               <p className="text-sm text-teal-100 leading-relaxed max-w-2xl pt-2">
                 {instructor.shortBio}
               </p>
@@ -162,10 +165,10 @@ export default function InstructorProfilePage() {
       {/* 2. MAIN CONTENT GRID */}
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 w-full flex-1">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
+
           {/* LEFT COLUMN: About, Courses, Reviews */}
           <div className="lg:col-span-2 space-y-12">
-            
+
             {/* About Section */}
             <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
               <h2 className="text-xl font-extrabold text-[#0A4A3A] mb-4">About {lastName}</h2>
@@ -180,7 +183,7 @@ export default function InstructorProfilePage() {
                 <h2 className="text-2xl font-extrabold text-[#0A4A3A]">Published Courses</h2>
                 <span className="text-sm font-medium text-slate-500">{instructor.courses.length} course{instructor.courses.length !== 1 && 's'}</span>
               </div>
-              
+
               <div className="grid sm:grid-cols-2 gap-6">
                 {instructor.courses.map((course: any) => (
                   <div key={course.id} className="bg-white rounded-3xl border border-slate-200 overflow-hidden hover:shadow-xl transition-shadow flex flex-col">
@@ -192,7 +195,7 @@ export default function InstructorProfilePage() {
                     </div>
                     <div className="p-6 flex flex-col flex-1">
                       <h3 className="font-extrabold text-slate-900 text-lg leading-tight mb-3 line-clamp-2">{course.title}</h3>
-                      
+
                       <div className="flex items-center gap-2 mb-4 text-sm">
                         <div className="flex items-center text-amber-400">
                           <Star className="w-4 h-4 fill-current" />
@@ -272,7 +275,7 @@ export default function InstructorProfilePage() {
 
           {/* RIGHT COLUMN: Achievements, Expertise */}
           <div className="space-y-6">
-            
+
             {/* Achievements Card */}
             <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
               <h3 className="font-extrabold text-[#0A4A3A] mb-6">Achievements</h3>
@@ -320,7 +323,7 @@ export default function InstructorProfilePage() {
       <section className="px-4 sm:px-6 lg:px-8 py-12 max-w-7xl mx-auto w-full">
         <div className="bg-[#0A4A3A] rounded-[2.5rem] py-16 px-6 relative overflow-hidden text-center border-b-8 border-[#C2F25B]">
           <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#C2F25B_1px,transparent_1px)] [background-size:24px_24px]" />
-          
+
           <div className="relative z-10 max-w-2xl mx-auto">
             <p className="text-[#C2F25B] text-xs font-extrabold tracking-widest uppercase mb-4">Learn From The Best</p>
             <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-4">
@@ -329,7 +332,7 @@ export default function InstructorProfilePage() {
             <p className="text-teal-100 mb-10">
               Join {instructor.stats.students} students already learning from one of the platform&apos;s highest-rated instructors.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link href="/courses" className="w-full sm:w-auto bg-[#C2F25B] text-[#0A4A3A] px-8 py-4 rounded-xl font-extrabold hover:bg-[#b0df4e] transition-colors shadow-lg">
                 Browse Courses

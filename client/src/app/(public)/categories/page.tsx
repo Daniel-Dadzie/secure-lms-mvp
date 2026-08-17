@@ -3,18 +3,18 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import api from "@/lib/api";
-import { 
-  Search, 
-  Wrench, 
-  Cpu, 
-  Factory, 
-  Flame, 
-  Zap, 
-  Bot, 
-  Droplets, 
-  ShieldCheck, 
-  PenTool, 
-  Terminal, 
+import {
+  Search,
+  Wrench,
+  Cpu,
+  Factory,
+  Flame,
+  Zap,
+  Bot,
+  Droplets,
+  ShieldCheck,
+  PenTool,
+  Terminal,
   ArrowRight,
   BookOpen
 } from "lucide-react";
@@ -89,10 +89,10 @@ export default function CategoriesPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Hero with Search Bar Embedded Inside */}
-      <PageHero 
-        badge="Explore Topics" 
-        title="Browse by Category" 
-        subtitle="Find courses in your area of engineering expertise. 12 specialised disciplines to choose from." 
+      <PageHero
+        badge="Explore Topics"
+        title="Browse by Category"
+        subtitle="Find courses in your area of engineering expertise. 12 specialised disciplines to choose from."
       >
         <div className="relative mt-2">
           <span className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400">
@@ -126,7 +126,7 @@ export default function CategoriesPage() {
               return (
                 <Link
                   key={category.id}
-                  href={`/courses?category=${category.slug}`}
+                  href={`/courses?categoryId=${category.id}`}
                   className="group bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-emerald-600/40 transition-all flex flex-col justify-between space-y-4"
                 >
                   <div className="space-y-3">
@@ -156,7 +156,7 @@ export default function CategoriesPage() {
           </div>
         )}
 
-        <CtaBanner 
+        <CtaBanner
           badge="Teach With Us"
           title="Not sure where to start?"
           description="Take our free skills assessment and get a personalised engineering learning path tailored to your professional level."
