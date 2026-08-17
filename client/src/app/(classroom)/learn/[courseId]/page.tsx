@@ -5,8 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { Video, FileText } from "lucide-react";
 
 const CheckCircleIcon = ({ className = "" }: { className?: string }) => (
@@ -527,13 +525,12 @@ export default function CoursePlayerPage({
                 </div>
               ) : (
                 <div className="w-full bg-slate-900 rounded-xl sm:rounded-2xl overflow-hidden shadow-2xl border border-slate-800">
-                  <div className="p-4 sm:p-6 md:p-8 prose prose-invert prose-slate max-w-none">
-                    <ReactMarkdown
-                      remarkPlugins={[remarkGfm]}
-                    >
-                      {currentLesson?.contentText || "No content available for this lesson."}
-                    </ReactMarkdown>
-                  </div>
+                  <div
+                    className="p-4 sm:p-6 md:p-8 prose prose-invert prose-slate max-w-none"
+                    dangerouslySetInnerHTML={{
+                      __html: currentLesson?.contentText || "No content available for this lesson."
+                    }}
+                  />
                 </div>
               )}
 

@@ -494,32 +494,7 @@ async function main() {
                   title: "Introduction to " + m.title,
                   order: 1,
                   contentType: "TEXT",
-                  contentText: `# Welcome to ${m.title}
-
-This lesson provides an overview of what you'll learn in this module.
-
-## Learning Objectives
-
-By the end of this module, you will be able to:
-- Understand the fundamental concepts
-- Apply practical techniques
-- Solve real-world engineering problems
-
-## Key Concepts
-
-This module covers essential topics that form the foundation of advanced engineering practices. We'll explore both theoretical principles and hands-on applications.
-
-### Prerequisites
-
-- Basic understanding of engineering fundamentals
-- Familiarity with technical terminology
-- Access to recommended software tools
-
-## Getting Started
-
-Begin by reviewing the course materials and setting up your development environment. The subsequent video lessons will provide detailed walkthroughs and examples.
-
-*This text lesson demonstrates the new text-based lesson format. You can include **bold text**, *italic text*, \`code snippets\`, and more using Markdown formatting.*`,
+                  contentText: `<h1>Welcome to ${m.title}</h1><p>This lesson provides an overview of what you'll learn in this module.</p><h2>Learning Objectives</h2><p>By the end of this module, you will be able to:</p><ul><li>Understand the fundamental concepts</li><li>Apply practical techniques</li><li>Solve real-world engineering problems</li></ul><h2>Key Concepts</h2><p>This module covers essential topics that form the foundation of advanced engineering practices. We'll explore both theoretical principles and hands-on applications.</p><h3>Prerequisites</h3><ul><li>Basic understanding of engineering fundamentals</li><li>Familiarity with technical terminology</li><li>Access to recommended software tools</li></ul><h2>Getting Started</h2><p>Begin by reviewing the course materials and setting up your development environment. The subsequent video lessons will provide detailed walkthroughs and examples.</p><p><em>This text lesson demonstrates the new text-based lesson format. You can include <strong>bold text</strong>, <em>italic text</em>, <code>code snippets</code>, and more using HTML formatting.</em></p>`,
                   durationSeconds: 600,
                 },
                 {
