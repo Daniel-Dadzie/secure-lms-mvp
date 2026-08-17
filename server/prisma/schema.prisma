@@ -101,7 +101,7 @@ model User {
   isEmailVerified Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  
+
 
   // Relations
   coursesTaught       Course[]              @relation("InstructorCourses")
@@ -730,6 +730,7 @@ model Activity {
   title       String
   description String?
   iconType    String // enrolled | completed | badge | certificate
+  metadata    Json?
   createdAt   DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

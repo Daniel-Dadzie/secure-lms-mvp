@@ -1,4 +1,5 @@
 import { prisma } from "../config/prisma";
+import type { Prisma } from "@prisma/client";
 
 export type ActivityIconType = "enrolled" | "completed" | "badge" | "certificate";
 
@@ -7,6 +8,7 @@ export async function logActivity(params: {
   title: string;
   description?: string;
   iconType: ActivityIconType;
+  metadata?: Prisma.InputJsonValue;
 }): Promise<void> {
   await prisma.activity.create({
     data: {
@@ -14,6 +16,7 @@ export async function logActivity(params: {
       title: params.title,
       description: params.description,
       iconType: params.iconType,
+      metadata: params.metadata,
     },
   });
 }
@@ -24,6 +27,7 @@ export async function logActivityOnce(params: {
   title: string;
   description?: string;
   iconType: ActivityIconType;
+  metadata?: Prisma.InputJsonValue;
 }): Promise<void> {
   const existing = await prisma.activity.findFirst({
     where: {

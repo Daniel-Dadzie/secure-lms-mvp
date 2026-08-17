@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
 import { uploadCourseThumbnail, uploadLessonVideo } from "@/lib/upload.api";
+import { convertUSDToGHS, convertGHSToUSD } from "@/lib/currency";
 
 interface Category { id: string; name: string; }
 interface Lesson { id: string; title: string; order: number; durationSeconds?: number; }
@@ -67,7 +68,9 @@ export default function EditCoursePage() {
       setCourse(data);
       setTitle(data.title || "");
       setDescription(data.description || "");
-      setPriceInput(data.priceCents ? (data.priceCents / 100).toFixed(2) : "");
+      // Convert stored GHS to USD for display (whole number)
+      const priceGHS = data.priceCents ? data.priceCents / 100 : 0;
+      setPriceInput(priceGHS > 0 ? Math.round(convertGHSToUSD(priceGHS)).toString() : "");
       setCategoryId(data.categoryId || "");
       setThumbnailPreview(data.thumbnailUrl || null);
       setLearningObjectives(Array.isArray(data.learningObjectives) ? data.learningObjectives : []);
@@ -99,9 +102,9 @@ useEffect(() => {
       setCourse(data);
       setTitle(data.title || "");
       setDescription(data.description || "");
-      setPriceInput(
-        data.priceCents ? (data.priceCents / 100).toFixed(2) : ""
-      );
+      // Convert stored GHS to USD for display (whole number)
+      const priceGHS = data.priceCents ? data.priceCents / 100 : 0;
+      setPriceInput(priceGHS > 0 ? Math.round(convertGHSToUSD(priceGHS)).toString() : "");
       setCategoryId(data.categoryId || "");
       setThumbnailPreview(data.thumbnailUrl || null);
       setLearningObjectives(Array.isArray(data.learningObjectives) ? data.learningObjectives : []);
@@ -154,10 +157,11 @@ useEffect(() => {
     if (!title.trim()) { setError("Course title is required."); return; }
 
     const priceNumber = parseFloat(priceInput);
-    const priceCents =
-      !priceInput.trim() || isNaN(priceNumber) || priceNumber <= 0
-        ? 0
-        : Math.round(priceNumber * 100);
+    // Convert USD input to GHS for storage (transactions remain in GHS)
+    const priceGHS = !priceInput.trim() || isNaN(priceNumber) || priceNumber <= 0
+      ? 0
+      : convertUSDToGHS(priceNumber);
+    const priceCents = Math.round(priceGHS * 100);
 
     setIsSaving(true);
     try {
@@ -333,7 +337,8 @@ useEffect(() => {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-3xl mx-auto pb-20 space-y-8">
+    <div className="min-h-screen bg-slate-50">
+      <div className="p-6 md:p-8 max-w-3xl mx-auto pb-20 space-y-8">
         {toast && (
           <div className="fixed top-4 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-xl">
             {toast}
@@ -412,10 +417,10 @@ useEffect(() => {
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <div>
                     <label htmlFor="price" className="block text-sm font-semibold text-slate-700 mb-1.5">
-                      Price (GH₵)
+                      Price (USD)
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">₵</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
                       <input
                         id="price"
                         type="number"
@@ -669,6 +674,7 @@ useEffect(() => {
               </button>
             </div>
           </section>
+      </div>
     </div>
   );
 }

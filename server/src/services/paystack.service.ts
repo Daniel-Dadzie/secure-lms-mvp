@@ -54,11 +54,16 @@ export async function verifyTransaction(reference: string): Promise<{
   status: "success" | "failed" | "abandoned" | string;
   amount: number;
 }> {
-  const response = await paystack.get(`/transaction/verify/${reference}`);
-  return {
-    status: response.data.data.status,
-    amount: response.data.data.amount,
-  };
+  try {
+    const response = await paystack.get(`/transaction/verify/${reference}`);
+    return {
+      status: response.data.data.status,
+      amount: response.data.data.amount,
+    };
+  } catch (error: any) {
+    console.error(`[Paystack] Verification failed for reference ${reference}:`, error.response?.data || error.message);
+    throw error;
+  }
 }
 
 // ----------------------------------------------------------------------------

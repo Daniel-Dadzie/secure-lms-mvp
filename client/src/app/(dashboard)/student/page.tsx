@@ -49,7 +49,7 @@ interface DashboardData {
 }
 
 export default function StudentDashboard() {
-  const { user } = useAuthStore(); 
+  const { user } = useAuthStore();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("search")?.toLowerCase() || "";
 
@@ -87,11 +87,11 @@ export default function StudentDashboard() {
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
-      
+
       {/* 1. HERO BANNER */}
       <section className="bg-[#196A54] rounded-2xl p-8 text-white relative overflow-hidden shadow-lg border border-[#12503F]">
         <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
-        
+
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
           <div className="flex-1">
             <p className="text-teal-100 font-medium mb-1">Welcome back 👋</p>
@@ -103,7 +103,7 @@ export default function StudentDashboard() {
                 ? "Loading your progress..."
                 : `${data?.stats?.activeCoursesCount ?? 0} in progress · ${data?.stats?.completedCoursesCount ?? data?.stats?.certificates ?? 0} completed`}
             </p>
-            
+
             {loading ? (
               <div className="flex flex-wrap gap-8">
                 <LoadingSkeleton className="h-16 w-24 bg-white/20" />
@@ -113,10 +113,9 @@ export default function StudentDashboard() {
               </div>
             ) : (
               <div className="flex flex-wrap gap-8">
-                <StatCard label="Avg Progress" value={data?.stats?.avgProgress || "0%"} variant="transparent" />
-                <StatCard label="Lessons Done" value={data?.stats?.lessonsDone || 0} variant="transparent" />
-                <StatCard label="Certificates" value={data?.stats?.certificates || 0} variant="transparent" />
-                <StatCard label="Time Invested" value={data?.stats?.timeInvested || "0h"} variant="transparent" />
+                <StatCard label="Avg Progress" value={data?.stats?.avgProgress || "0%"} variant="transparent" icon={<BookOpen className="w-7 h-7" />} />
+                <StatCard label="Lessons Done" value={data?.stats?.lessonsDone || 0} variant="transparent" icon={<CheckCircle2 className="w-7 h-7" />} />
+                <StatCard label="Certificates" value={data?.stats?.certificates || 0} variant="transparent" icon={<Award className="w-7 h-7" />} />
               </div>
             )}
           </div>
@@ -135,7 +134,7 @@ export default function StudentDashboard() {
           <h2 className="text-xl font-bold text-slate-900">Continue Learning</h2>
           <Link href="/student/my-learning" className="text-sm font-semibold text-[#196A54] hover:underline">View all</Link>
         </div>
-        
+
         {loading ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <LoadingSkeleton className="h-64 w-full" />
@@ -178,7 +177,7 @@ export default function StudentDashboard() {
                 <div className="mt-auto">
                   <ProgressBar value={course.progress} showPercent color="brand" />
                   <p className="text-xs text-slate-500 mt-3 mb-4">Next: {course.nextLesson}</p>
-                  <Link 
+                  <Link
                     href={`/learn/${course.id}`}
                     className="block text-center w-full py-2.5 bg-[#0A4A3A] text-white rounded-lg text-sm font-bold hover:bg-[#12503F] transition-colors"
                   >
@@ -194,7 +193,7 @@ export default function StudentDashboard() {
       {/* 3. BOTTOM GRID: Recommended & Activity */}
       {!loading && !error && (
         <div className="grid lg:grid-cols-3 gap-8">
-          
+
           {/* Recommended Courses */}
           <section className="lg:col-span-2">
             <div className="flex justify-between items-center mb-6">
@@ -203,7 +202,7 @@ export default function StudentDashboard() {
                 Browse all
               </Link>
             </div>
-            
+
             {filteredRecommendedCourses.length === 0 ? (
               <div className="bg-slate-50 border border-slate-200 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center h-[280px]">
                 <p className="text-slate-600 text-sm font-medium mb-2">
@@ -231,7 +230,7 @@ export default function StudentDashboard() {
                       <div className="font-extrabold text-slate-900">
                         {course.price != null ? formatPrice(Math.round(course.price * 100)) : "Free"}
                       </div>
-                      <Link 
+                      <Link
                         href={`/student/courses/${course.id}`}
                         className="px-4 py-2 bg-[#0A4A3A] text-white rounded-lg text-xs font-bold hover:bg-[#12503F] transition-colors"
                       >
