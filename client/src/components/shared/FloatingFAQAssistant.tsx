@@ -150,15 +150,12 @@ export const FloatingFAQAssistant = () => {
 
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { message?: string } } };
       setMessages((prev) => [
         ...prev,
         {
           id: createMessageId(),
           role: "assistant",
-          content:
-            err?.response?.data?.message ||
-            "Could not reach Help Assistant. Please try again.",
+          content: "Could not reach Help Assistant. Please try again.",
           isError: true,
         },
       ]);

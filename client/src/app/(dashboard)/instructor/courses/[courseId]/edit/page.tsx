@@ -5,9 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
 import { uploadCourseThumbnail, uploadLessonVideo } from "@/lib/upload.api";
+import { convertUSDToGHS, convertGHSToUSD } from "@/lib/currency";
+import TextLessonModal from "@/components/shared/TextLessonModal";
+import { Video, FileText } from "lucide-react";
 
 interface Category { id: string; name: string; }
-interface Lesson { id: string; title: string; order: number; durationSeconds?: number; }
+interface Lesson { id: string; title: string; order: number; contentType: "VIDEO" | "TEXT"; durationSeconds?: number; contentText?: string | null; }
 interface Module { id: string; title: string; order: number; lessons: Lesson[]; }
 
 interface CourseDetail {
@@ -48,10 +51,19 @@ export default function EditCoursePage() {
   const [isAddingModule, setIsAddingModule] = useState(false);
   const [expandedModuleId, setExpandedModuleId] = useState<string | null>(null);
   const [newLessonTitle, setNewLessonTitle] = useState("");
+  const [newLessonContentType, setNewLessonContentType] = useState<"VIDEO" | "TEXT">("VIDEO");
+  const [newLessonContentText, setNewLessonContentText] = useState("");
+  const [newLessonVideoFile, setNewLessonVideoFile] = useState<File | null>(null);
   const [isAddingLesson, setIsAddingLesson] = useState(false);
   const [learningObjectives, setLearningObjectives] = useState<string[]>([]);
   const [objectiveInput, setObjectiveInput] = useState("");
   const [videoUploadProgress, setVideoUploadProgress] = useState<Record<string, number>>({});
+  const [editingLessonText, setEditingLessonText] = useState<Record<string, string>>({});
+  const [isTextModalOpen, setIsTextModalOpen] = useState(false);
+  const [editingLessonId, setEditingLessonId] = useState<string | null>(null);
+  const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
+  const [addingLessonModuleId, setAddingLessonModuleId] = useState<string | null>(null);
+  const [videoInputKey, setVideoInputKey] = useState(0);
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -67,7 +79,9 @@ export default function EditCoursePage() {
       setCourse(data);
       setTitle(data.title || "");
       setDescription(data.description || "");
-      setPriceInput(data.priceCents ? (data.priceCents / 100).toFixed(2) : "");
+      // Convert stored GHS to USD for display (whole number)
+      const priceGHS = data.priceCents ? data.priceCents / 100 : 0;
+      setPriceInput(priceGHS > 0 ? Math.round(convertGHSToUSD(priceGHS)).toString() : "");
       setCategoryId(data.categoryId || "");
       setThumbnailPreview(data.thumbnailUrl || null);
       setLearningObjectives(Array.isArray(data.learningObjectives) ? data.learningObjectives : []);
@@ -99,9 +113,9 @@ useEffect(() => {
       setCourse(data);
       setTitle(data.title || "");
       setDescription(data.description || "");
-      setPriceInput(
-        data.priceCents ? (data.priceCents / 100).toFixed(2) : ""
-      );
+      // Convert stored GHS to USD for display (whole number)
+      const priceGHS = data.priceCents ? data.priceCents / 100 : 0;
+      setPriceInput(priceGHS > 0 ? Math.round(convertGHSToUSD(priceGHS)).toString() : "");
       setCategoryId(data.categoryId || "");
       setThumbnailPreview(data.thumbnailUrl || null);
       setLearningObjectives(Array.isArray(data.learningObjectives) ? data.learningObjectives : []);
@@ -154,10 +168,11 @@ useEffect(() => {
     if (!title.trim()) { setError("Course title is required."); return; }
 
     const priceNumber = parseFloat(priceInput);
-    const priceCents =
-      !priceInput.trim() || isNaN(priceNumber) || priceNumber <= 0
-        ? 0
-        : Math.round(priceNumber * 100);
+    // Convert USD input to GHS for storage (transactions remain in GHS)
+    const priceGHS = !priceInput.trim() || isNaN(priceNumber) || priceNumber <= 0
+      ? 0
+      : convertUSDToGHS(priceNumber);
+    const priceCents = Math.round(priceGHS * 100);
 
     setIsSaving(true);
     try {
@@ -232,17 +247,73 @@ useEffect(() => {
 
   const handleAddLesson = async (moduleId: string) => {
     if (!newLessonTitle.trim()) return;
+    if (newLessonContentType === "TEXT" && !newLessonContentText.trim()) {
+      setError("Text lessons must have content.");
+      return;
+    }
+    if (newLessonContentType === "VIDEO" && !newLessonVideoFile) {
+      setError("Video lessons must have a video file.");
+      return;
+    }
     setIsAddingLesson(true);
     try {
       const targetModule = course?.modules?.find((m) => m.id === moduleId);
-      await api.post(`/courses/${courseId}/modules/${moduleId}/lessons`, {
-        title: newLessonTitle.trim(),
-        order: (targetModule?.lessons?.length ?? 0) + 1,
-      });
+
+      // For video lessons, try to upload first before creating the lesson
+      let lessonId: string | null = null;
+
+      if (newLessonContentType === "VIDEO" && newLessonVideoFile) {
+        // Create lesson first to get lessonId
+        const lessonResponse = await api.post(`/courses/${courseId}/modules/${moduleId}/lessons`, {
+          title: newLessonTitle.trim(),
+          contentType: newLessonContentType,
+          order: (targetModule?.lessons?.length ?? 0) + 1,
+        });
+
+        lessonId = lessonResponse.data.lesson?.id || lessonResponse.data.id;
+
+        if (!lessonId) {
+          throw new Error("Failed to create lesson - no ID returned");
+        }
+
+        const validLessonId: string = lessonId;
+
+        // Upload video
+        try {
+          if (!newLessonVideoFile) {
+            throw new Error("Video file is required");
+          }
+          await handleVideoUpload(moduleId, validLessonId, newLessonVideoFile!);
+        } catch (videoError) {
+          // If video upload fails, delete the lesson and don't proceed
+          console.error("Video upload failed, deleting lesson:", videoError);
+          await api.delete(`/courses/${courseId}/modules/${moduleId}/lessons/${validLessonId}`);
+          setError("Video upload failed. Please try again or choose a different file.");
+          setIsAddingLesson(false);
+          return;
+        }
+      } else {
+        // For text lessons, create with content
+        const lessonResponse = await api.post(`/courses/${courseId}/modules/${moduleId}/lessons`, {
+          title: newLessonTitle.trim(),
+          contentType: newLessonContentType,
+          contentText: newLessonContentType === "TEXT" ? newLessonContentText.trim() : undefined,
+          order: (targetModule?.lessons?.length ?? 0) + 1,
+        });
+        lessonId = lessonResponse.data.lesson?.id || lessonResponse.data.id;
+      }
+
+      // Reset all lesson creation state
       setNewLessonTitle("");
+      setNewLessonContentText("");
+      setNewLessonContentType("VIDEO");
+      setNewLessonVideoFile(null);
+      setAddingLessonModuleId(null);
+      setVideoInputKey((prev) => prev + 1); // Reset video input
       showToast("Lesson added.");
       await fetchCourse();
     } catch (err: any) {
+      console.error("Error adding lesson:", err);
       setError(err?.response?.data?.message || "Failed to add lesson.");
     } finally {
       setIsAddingLesson(false);
@@ -271,7 +342,10 @@ useEffect(() => {
     }
   };
 
-  const handleVideoUpload = async (moduleId: string, lessonId: string, file: File) => {
+  const handleVideoUpload = async (moduleId: string, lessonId: string, file: File | null) => {
+    if (!file) {
+      throw new Error("Video file is required");
+    }
     setVideoUploadProgress((prev) => ({ ...prev, [lessonId]: 0 }));
     try {
       await uploadLessonVideo(courseId, moduleId, lessonId, file, (percent) => {
@@ -314,6 +388,18 @@ useEffect(() => {
     }
   };
 
+  const handleUpdateLessonText = async (moduleId: string, lessonId: string, contentText: string) => {
+    try {
+      await api.patch(`/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`, {
+        contentText,
+      });
+      showToast("Lesson content updated.");
+      await fetchCourse();
+    } catch (err: any) {
+      setError(err?.response?.data?.message || "Failed to update lesson content.");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="p-6 md:p-8 max-w-3xl mx-auto animate-pulse space-y-6">
@@ -333,7 +419,8 @@ useEffect(() => {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-3xl mx-auto pb-20 space-y-8">
+    <div className="min-h-screen bg-slate-50">
+      <div className="p-6 md:p-8 max-w-3xl mx-auto pb-20 space-y-8">
         {toast && (
           <div className="fixed top-4 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-xl">
             {toast}
@@ -412,10 +499,10 @@ useEffect(() => {
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <div>
                     <label htmlFor="price" className="block text-sm font-semibold text-slate-700 mb-1.5">
-                      Price (GH₵)
+                      Price (USD)
                     </label>
                     <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">₵</span>
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-sm">$</span>
                       <input
                         id="price"
                         type="number"
@@ -584,7 +671,22 @@ useEffect(() => {
                       {module.lessons?.map((lesson) => (
                         <div key={lesson.id} className="py-2 border-b border-slate-100 last:border-0 space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="text-sm text-slate-700">{lesson.title}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 flex items-center gap-1">
+                                {lesson.contentType === "VIDEO" ? (
+                                  <>
+                                    <Video className="w-3 h-3" />
+                                    Video
+                                  </>
+                                ) : (
+                                  <>
+                                    <FileText className="w-3 h-3" />
+                                    Text
+                                  </>
+                                )}
+                              </span>
+                              <span className="text-sm text-slate-700">{lesson.title}</span>
+                            </div>
                             <button
                               type="button"
                               onClick={() => handleDeleteLesson(module.id, lesson.id)}
@@ -594,18 +696,37 @@ useEffect(() => {
                             </button>
                           </div>
                           <div className="flex flex-wrap items-center gap-2">
-                            <label className="text-xs font-semibold text-[#196A54] cursor-pointer">
-                              Upload video
-                              <input
-                                type="file"
-                                accept="video/*"
-                                className="sr-only"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0];
-                                  if (file) void handleVideoUpload(module.id, lesson.id, file);
+                            {lesson.contentType === "VIDEO" && (
+                              <label className="text-xs font-semibold text-[#196A54] cursor-pointer">
+                                Upload video
+                                <input
+                                  type="file"
+                                  accept="video/*"
+                                  className="sr-only"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) void handleVideoUpload(module.id, lesson.id, file);
+                                  }}
+                                />
+                              </label>
+                            )}
+                            {lesson.contentType === "TEXT" && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingLessonId(lesson.id);
+                                  setEditingModuleId(module.id);
+                                  setEditingLessonText((prev) => ({
+                                    ...prev,
+                                    [lesson.id]: lesson.contentText || "",
+                                  }));
+                                  setIsTextModalOpen(true);
                                 }}
-                              />
-                            </label>
+                                className="text-xs font-semibold text-blue-600 hover:underline"
+                              >
+                                Edit content
+                              </button>
+                            )}
                             {videoUploadProgress[lesson.id] !== undefined && (
                               <span className="text-xs text-slate-500">{videoUploadProgress[lesson.id]}%</span>
                             )}
@@ -617,11 +738,43 @@ useEffect(() => {
                               + Add quiz
                             </button>
                           </div>
+                          {editingLessonText[lesson.id] !== undefined && (
+                            <div className="mt-3 space-y-2">
+                              <div className="border border-slate-300 rounded-lg p-4 min-h-[200px] bg-slate-50">
+                                <textarea
+                                  value={editingLessonText[lesson.id]}
+                                  onChange={(e) => setEditingLessonText((prev) => ({ ...prev, [lesson.id]: e.target.value }))}
+                                  className="w-full h-40 min-h-[160px] p-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono text-sm resize-none"
+                                  placeholder="Write your lesson content here using Markdown..."
+                                />
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateLessonText(module.id, lesson.id, editingLessonText[lesson.id])}
+                                  className="text-xs font-semibold bg-blue-600 text-white px-3 py-1.5 rounded hover:bg-blue-700"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingLessonText((prev) => {
+                                    const next = { ...prev };
+                                    delete next[lesson.id];
+                                    return next;
+                                  })}
+                                  className="text-xs font-semibold border border-slate-300 px-3 py-1.5 rounded hover:bg-slate-50"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       ))}
 
                       {/* Add lesson inline */}
-                      <div className="flex gap-2 pt-2">
+                      <div className="pt-2 space-y-3">
                         <input
                           type="text"
                           value={newLessonTitle}
@@ -630,8 +783,65 @@ useEffect(() => {
                           onKeyDown={(e) => {
                             if (e.key === "Enter") { e.preventDefault(); handleAddLesson(module.id); }
                           }}
-                          className="flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
+                          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600"
                         />
+                        <div className="flex items-center gap-4">
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="radio"
+                              value="VIDEO"
+                              checked={newLessonContentType === "VIDEO"}
+                              onChange={(e) => setNewLessonContentType(e.target.value as "VIDEO" | "TEXT")}
+                              className="text-blue-600"
+                            />
+                            Video lesson
+                          </label>
+                          <label className="flex items-center gap-2 text-sm">
+                            <input
+                              type="radio"
+                              value="TEXT"
+                              checked={newLessonContentType === "TEXT"}
+                              onChange={(e) => setNewLessonContentType(e.target.value as "VIDEO" | "TEXT")}
+                              className="text-blue-600"
+                            />
+                            Text lesson
+                          </label>
+                        </div>
+                        {newLessonContentType === "TEXT" && (
+                          <div className="space-y-2">
+                            <button
+                              type="button"
+                              onClick={() => setIsTextModalOpen(true)}
+                              className="w-full px-4 py-3 border-2 border-dashed border-slate-300 rounded-lg text-slate-600 hover:border-blue-600 hover:text-blue-600 transition-colors text-sm font-medium"
+                            >
+                              {newLessonContentText ? "Edit lesson content" : "Write lesson content"}
+                            </button>
+                            {newLessonContentText && (
+                              <p className="text-xs text-slate-500">
+                                {newLessonContentText.length} characters
+                              </p>
+                            )}
+                          </div>
+                        )}
+                        {newLessonContentType === "VIDEO" && (
+                          <div className="space-y-2">
+                            <label className="block">
+                              <span className="text-sm font-medium text-slate-700">Video file</span>
+                              <input
+                                key={videoInputKey}
+                                type="file"
+                                accept="video/*"
+                                onChange={(e) => setNewLessonVideoFile(e.target.files?.[0] || null)}
+                                className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                              />
+                            </label>
+                            {newLessonVideoFile && (
+                              <p className="text-xs text-slate-500">
+                                {newLessonVideoFile.name} ({(newLessonVideoFile.size / (1024 * 1024)).toFixed(2)} MB)
+                              </p>
+                            )}
+                          </div>
+                        )}
                         <button
                           type="button"
                           onClick={() => handleAddLesson(module.id)}
@@ -669,6 +879,33 @@ useEffect(() => {
               </button>
             </div>
           </section>
+      </div>
+
+      {/* Text Lesson Modal */}
+      <TextLessonModal
+        isOpen={isTextModalOpen}
+        onClose={() => {
+          setIsTextModalOpen(false);
+          setEditingLessonId(null);
+          setEditingModuleId(null);
+        }}
+        onSave={(content) => {
+          if (editingLessonId && editingModuleId) {
+            // Editing existing lesson
+            handleUpdateLessonText(editingModuleId, editingLessonId, content);
+            setEditingLessonText((prev) => {
+              const next = { ...prev };
+              delete next[editingLessonId];
+              return next;
+            });
+          } else {
+            // Creating new lesson
+            setNewLessonContentText(content);
+          }
+        }}
+        initialContent={editingLessonId ? editingLessonText[editingLessonId] || "" : newLessonContentText}
+        title={editingLessonId ? "Edit Lesson Content" : "Write Lesson Content"}
+      />
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
-import ProtectedRoute from "@/components/shared/ProtectedRoute";
+import { useAuthStore } from "@/store/auth.store";
 
 function SupportContact() {
   const [question, setQuestion] = useState("");
@@ -62,6 +62,7 @@ function SupportContact() {
 
 function PaymentVerification() {
   const searchParams = useSearchParams();
+  const { isAuthenticated } = useAuthStore();
 
   // Paystack can send either "reference" or "trxref".
   const reference =
@@ -91,6 +92,7 @@ function PaymentVerification() {
     const verifyPayment = async () => {
       try {
         // Backend verifies the transaction directly with Paystack.
+        // This endpoint now works without authentication for the callback page
         const res = await api.get(`/payments/verify/${reference}`);
 
         if (cancelled) return;
@@ -108,15 +110,18 @@ function PaymentVerification() {
 
         const error = err as {
           response?: {
+            status?: number;
             data?: {
               message?: string;
             };
           };
+          message?: string;
         };
 
         setStatus("error");
         setErrorMessage(
           error.response?.data?.message ||
+            error.message ||
             "We could not verify your payment. If you were charged, please contact support."
         );
       }
@@ -159,15 +164,24 @@ function PaymentVerification() {
 
           <p className="mb-8 text-slate-600">
             Your enrollment has been confirmed. You can now access your new
-            courses from your student dashboard.
+            courses from your learning dashboard.
           </p>
 
-          <Link
-            href="/student"
-            className="inline-flex rounded-xl bg-[#196A54] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#12503F]"
-          >
-            Go to My Dashboard →
-          </Link>
+          {isAuthenticated ? (
+            <Link
+              href="/student/my-learning"
+              className="inline-flex rounded-xl bg-[#196A54] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#12503F]"
+            >
+              Go to My Learning →
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="inline-flex rounded-xl bg-[#196A54] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#12503F]"
+            >
+              Sign In to Access Your Courses →
+            </Link>
+          )}
         </div>
       </div>
     );
@@ -187,16 +201,16 @@ function PaymentVerification() {
 
           <p className="mb-8 text-slate-600">
             Your payment is being processed. This usually takes a few seconds.
-            Your enrollment will appear in your dashboard automatically once
+            Your enrollment will appear in your learning dashboard automatically once
             confirmed — you don&apos;t need to do anything else.
           </p>
 
           <div className="flex flex-col justify-center gap-3 sm:flex-row">
             <Link
-              href="/student"
+              href="/student/my-learning"
               className="rounded-xl bg-[#196A54] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#12503F]"
             >
-              Go to Dashboard
+              Go to My Learning
             </Link>
 
             <button
@@ -253,36 +267,34 @@ function PaymentVerification() {
 
 export default function PaymentCallbackPage() {
   return (
-    <ProtectedRoute allowedRoles={["STUDENT"]}>
-      <div className="min-h-screen bg-slate-50">
-        <header className="border-b border-slate-200 bg-white">
-          <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
-            <Link
-              href="/"
-              className="text-lg font-extrabold text-[#196A54]"
-            >
-              Mech Spec Technologies
-            </Link>
-          </div>
-        </header>
+    <div className="min-h-screen bg-slate-50">
+      <header className="border-b border-slate-200 bg-white">
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
+          <Link
+            href="/"
+            className="text-lg font-extrabold text-[#196A54]"
+          >
+            Mech Spec Technologies
+          </Link>
+        </div>
+      </header>
 
-        <Suspense
-          fallback={
-            <div className="flex min-h-[60vh] items-center justify-center px-4">
-              <div className="text-center">
-                <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#196A54]" />
+      <Suspense
+        fallback={
+          <div className="flex min-h-[60vh] items-center justify-center px-4">
+            <div className="text-center">
+              <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#196A54]" />
 
-                <p className="text-sm font-medium text-slate-600">
-                  Loading...
-                </p>
-              </div>
+              <p className="text-sm font-medium text-slate-600">
+                Loading...
+              </p>
             </div>
-          }
-        >
-          <PaymentVerification />
-        </Suspense>
+          </div>
+        }
+      >
+        <PaymentVerification />
+      </Suspense>
       </div>
-    </ProtectedRoute>
   );
 }
- 
+

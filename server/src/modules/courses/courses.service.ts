@@ -241,6 +241,21 @@ export async function createCourse(
   instructorId: string,
   input: CreateCourseInput
 ): Promise<CourseResponse> {
+  // Check for duplicate title + category combination
+  const existingCourse = await prisma.course.findFirst({
+    where: {
+      title: input.title,
+      categoryId: input.categoryId,
+      isActive: true,
+    },
+  });
+
+  if (existingCourse) {
+    const error = new Error("A course with this title already exists in this category. Please choose a different title or category.");
+    (error as any).statusCode = 409;
+    throw error;
+  }
+
   const slug = await generateUniqueSlug(input.title);
 
   const course = await prisma.course.create({
@@ -278,6 +293,24 @@ export async function updateCourse(
   input: UpdateCourseInput,
   userId: string
 ): Promise<CourseResponse> {
+  // Check for duplicate title + category combination (excluding current course)
+  if (input.title && input.categoryId) {
+    const existingCourse = await prisma.course.findFirst({
+      where: {
+        title: input.title,
+        categoryId: input.categoryId,
+        isActive: true,
+        id: { not: courseId },
+      },
+    });
+
+    if (existingCourse) {
+      const error = new Error("A course with this title already exists in this category. Please choose a different title or category.");
+      (error as any).statusCode = 409;
+      throw error;
+    }
+  }
+
   const slug = input.title
     ? await generateUniqueSlug(input.title, courseId)
     : undefined;

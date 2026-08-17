@@ -3,8 +3,9 @@
   "version": "1.0.0",
   "description": "Secure LMS Backend",
   "main": "src/index.js",
+
   "scripts": {
-    "dev": "tsx watch --env-file=.env src/server.ts",
+    "dev": "tsx watch --env-file=../.env src/server.ts",
     "build": "npx dotenv-cli -e .env -- prisma generate && tsc",
     "start": "node dist/server.js",
     "lint": "eslint .",
@@ -37,7 +38,7 @@
     "pg": "^8.22.0",
     "resend": "^6.18.1",
     "slugify": "^1.6.9",
-    "uuid": "^9.0.1",
+    "uuid": "^11.1.1",
     "zod": "^4.4.3"
   },
   "devDependencies": {
@@ -50,7 +51,6 @@
     "@types/multer": "^2.2.0",
     "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.20.0",
-    "@types/uuid": "^10.0.0",
     "dotenv": "^17.4.2",
     "dotenv-cli": "^11.0.0",
     "eslint": "^10.7.0",

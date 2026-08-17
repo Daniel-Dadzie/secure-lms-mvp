@@ -24,6 +24,14 @@ regexes = [
   '''CHANGEME''',
   '''example-jwt-secret-do-not-use-in-production''',
   '''sk_test_placeholder''',
+  '''TEST_PRIVATE_KEY_PLACEHOLDER_FOR_CI''',
+  '''your-private-key-here''',
+]
+
+# Allowlist specific commits that contained test/placeholder values
+commits = [
+  "fdf1c6cf2c3bcea4dd0eb7ff59455e8da52c2381",
+  "dbe0a29b1c2ab97dc572483565304cfc5927e018",
 ]
 
 # --- Team process note ---

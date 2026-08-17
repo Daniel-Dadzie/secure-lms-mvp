@@ -2,7 +2,9 @@ export interface CourseLessonPreview {
   id: string;
   title: string;
   order: number;
+  contentType: "VIDEO" | "TEXT";
   durationSeconds?: number | null;
+  contentText?: string | null;
 }
 
 export interface CourseModulePreview {

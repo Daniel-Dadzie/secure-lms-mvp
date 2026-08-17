@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
 import { uploadCourseThumbnail } from "@/lib/upload.api";
+import { convertUSDToGHS } from "@/lib/currency";
 
 interface Category {
   id: string;
@@ -71,10 +72,11 @@ export default function CreateCoursePage() {
     }
 
     const priceNumber = parseFloat(priceInput);
-    const priceCents =
-      !priceInput.trim() || isNaN(priceNumber) || priceNumber <= 0
-        ? 0
-        : Math.round(priceNumber * 100);
+    // Convert USD input to GHS for storage (transactions remain in GHS)
+    const priceGHS = !priceInput.trim() || isNaN(priceNumber) || priceNumber <= 0
+      ? 0
+      : convertUSDToGHS(priceNumber);
+    const priceCents = Math.round(priceGHS * 100);
 
     setIsSubmitting(true);
     try {
@@ -91,8 +93,11 @@ export default function CreateCoursePage() {
         setIsUploading(true);
         try {
           await uploadCourseThumbnail(newCourseId, thumbnailFile);
-        } catch (uploadErr) {
-          console.warn("Thumbnail upload failed, continuing:", uploadErr);
+        } catch (uploadErr: any) {
+          console.error("Thumbnail upload failed:", uploadErr);
+          const errorMsg = uploadErr?.response?.data?.message || uploadErr?.message || "Thumbnail upload failed";
+          setError(`Course created but thumbnail upload failed: ${errorMsg}. You can add it in the edit page.`);
+          // Continue anyway - course is created
         } finally {
           setIsUploading(false);
         }
@@ -159,7 +164,7 @@ export default function CreateCoursePage() {
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
             <div>
               <label htmlFor="price" className="block text-sm font-semibold text-slate-700 mb-1.5">
-                Price (GH₵)
+                Price (USD)
               </label>
               <input
                 id="price"

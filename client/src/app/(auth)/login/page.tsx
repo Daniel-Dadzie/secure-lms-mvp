@@ -42,10 +42,7 @@ function LoginForm() {
       else if (role === "INSTRUCTOR") router.push("/instructor");
       else router.push("/student");
     } catch (err: any) {
-      setError(
-        err?.response?.data?.message ||
-          "Invalid email or password. Please try again."
-      );
+      setError("Invalid email or password. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -58,9 +55,9 @@ function LoginForm() {
         <AuthBackground overlay="panel" className="hidden lg:block" />
         <AuthBackground overlay="mobile" className="lg:hidden" />
 
-        <div className="relative z-10 w-full max-w-lg text-left space-y-4 lg:space-y-5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-lg bg-teal-800/80 border border-teal-600 flex items-center justify-center shrink-0">
+        <div className="relative z-10 w-full max-w-2xl text-left space-y-5 lg:space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-teal-800/80 border border-teal-600 flex items-center justify-center shrink-0">
               <svg className="w-5 h-5 text-[#C2F25B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
@@ -70,43 +67,43 @@ function LoginForm() {
                 />
               </svg>
             </div>
-            <span className="font-bold text-base lg:text-lg tracking-wide">Mech Spec Technologies</span>
+            <span className="font-bold text-lg lg:text-xl tracking-wide">Mech Spec Technologies</span>
           </div>
 
           <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight">
               Welcome Back, Engineer.
             </h1>
-            <p className="text-teal-100/90 text-sm lg:text-base mt-2 max-w-md">
-              Continue your learning journey and advance your engineering career.
+            <p className="text-teal-100/95 text-base lg:text-lg mt-3 max-w-md leading-relaxed">
+              Continue your learning journey and advance your engineering career with world-class courses.
             </p>
           </div>
 
-          <ul className="hidden lg:block space-y-2 text-sm text-teal-50">
+          <ul className="hidden lg:block space-y-3 text-base text-teal-50/90">
             {[
               "Access 500+ engineering courses",
               "Track progress and earn certificates",
               "AI-powered learning assistant",
             ].map((item) => (
-              <li key={item} className="flex items-center gap-2.5">
-                <span className="p-0.5 rounded bg-[#196A54] text-[#C2F25B] text-xs">✓</span>
-                {item}
+              <li key={item} className="flex items-center gap-3">
+                <span className="p-1 rounded-full bg-[#196A54] text-[#C2F25B] text-sm shadow-md">✓</span>
+                <span className="font-medium">{item}</span>
               </li>
             ))}
           </ul>
 
-          <div className="hidden lg:block mt-6 bg-[#12503F]/75 border border-teal-700/40 p-4 rounded-xl backdrop-blur-sm text-left">
-            <div className="flex text-amber-400 text-sm mb-1.5">★★★★★</div>
-            <p className="text-sm italic text-teal-50 mb-3">
+          <div className="hidden lg:block mt-10 bg-[#12503F]/80 border border-teal-700/50 p-5 rounded-2xl backdrop-blur-sm text-left shadow-2xl">
+            <div className="flex text-amber-400 text-base mb-2">★★★★★</div>
+            <p className="text-base italic text-teal-50 mb-4 leading-relaxed">
               &quot;The best engineering platform I&apos;ve used. Completely changed my career trajectory.&quot;
             </p>
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-[#196A54] border border-teal-600 flex items-center justify-center font-bold text-xs text-[#C2F25B]">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-[#196A54] border-2 border-teal-600 flex items-center justify-center font-bold text-sm text-[#C2F25B] shadow-lg">
                 AR
               </div>
               <div>
-                <p className="text-sm font-bold text-white">Alex Rivera</p>
-                <p className="text-xs text-teal-200">Mechanical Engineer · Boeing</p>
+                <p className="text-base font-bold text-white">Alex Rivera</p>
+                <p className="text-sm text-teal-200 font-medium">Mechanical Engineer · Boeing</p>
               </div>
             </div>
           </div>

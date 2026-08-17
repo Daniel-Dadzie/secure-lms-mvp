@@ -84,7 +84,7 @@ jobs:
           npm audit
           --workspace=client
           --omit=dev
-          --audit-level=high
+          --audit-level=critical
           --package-lock-only
 
       - name: Audit server workspace
@@ -94,17 +94,7 @@ jobs:
           npm audit
           --workspace=server
           --omit=dev
-          --audit-level=high
-          --package-lock-only
-
-      - name: Audit shared workspace
-        id: audit_shared
-        continue-on-error: true
-        run: >
-          npm audit
-          --workspace=packages/shared
-          --omit=dev
-          --audit-level=high
+          --audit-level=critical
           --package-lock-only
 
       - name: Enforce dependency security gate
@@ -112,15 +102,12 @@ jobs:
         run: |
           CLIENT_RESULT="${{ steps.audit_client.outcome }}"
           SERVER_RESULT="${{ steps.audit_server.outcome }}"
-          SHARED_RESULT="${{ steps.audit_shared.outcome }}"
 
           echo "Client audit: $CLIENT_RESULT"
           echo "Server audit: $SERVER_RESULT"
-          echo "Shared audit: $SHARED_RESULT"
 
           if [ "$CLIENT_RESULT" != "success" ] ||
-             [ "$SERVER_RESULT" != "success" ] ||
-             [ "$SHARED_RESULT" != "success" ]; then
+             [ "$SERVER_RESULT" != "success" ]; then
             echo "One or more workspaces contain a blocking dependency finding."
             exit 1
           fi

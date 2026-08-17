@@ -63,11 +63,11 @@ function renderInlineMarkdown(text: string, variant: ChatMessageContentProps["va
   return nodes.length > 0 ? nodes : [text];
 }
 
-function renderBlock(line: string, variant: ChatMessageContentProps["variant"]): ReactNode {
+function renderBlock(line: string, variant: ChatMessageContentProps["variant"], index: number): ReactNode {
   const bulletMatch = line.match(/^[-*]\s+(.*)$/);
   if (bulletMatch) {
     return (
-      <li className="ml-4 list-disc marker:text-slate-500">
+      <li key={`bullet-${index}`} className="ml-4 list-disc marker:text-slate-500">
         {renderInlineMarkdown(bulletMatch[1], variant)}
       </li>
     );
@@ -76,14 +76,14 @@ function renderBlock(line: string, variant: ChatMessageContentProps["variant"]):
   const numberedMatch = line.match(/^\d+\.\s+(.*)$/);
   if (numberedMatch) {
     return (
-      <li className="ml-4 list-decimal marker:text-slate-500">
+      <li key={`numbered-${index}`} className="ml-4 list-decimal marker:text-slate-500">
         {renderInlineMarkdown(numberedMatch[1], variant)}
       </li>
     );
   }
 
   return (
-    <p className="whitespace-pre-wrap">
+    <p key={`paragraph-${index}`} className="whitespace-pre-wrap">
       {renderInlineMarkdown(line, variant)}
     </p>
   );
@@ -120,27 +120,27 @@ export function ChatMessageContent({
     listType = null;
   }
 
-  for (const line of lines) {
-    const trimmed = line.trim();
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
 
     if (/^[-*]\s+/.test(trimmed)) {
       if (listType === "ol") flushList();
       listType = "ul";
-      listItems.push(renderBlock(trimmed, variant));
+      listItems.push(renderBlock(trimmed, variant, i));
       continue;
     }
 
     if (/^\d+\.\s+/.test(trimmed)) {
       if (listType === "ul") flushList();
       listType = "ol";
-      listItems.push(renderBlock(trimmed, variant));
+      listItems.push(renderBlock(trimmed, variant, i));
       continue;
     }
 
     flushList();
     blocks.push(
       <Fragment key={`block-${blocks.length}`}>
-        {renderBlock(trimmed, variant)}
+        {renderBlock(trimmed, variant, i)}
       </Fragment>
     );
   }

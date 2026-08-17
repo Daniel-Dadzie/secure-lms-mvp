@@ -52,10 +52,7 @@ function RegisterForm() {
       const destination = role === "INSTRUCTOR" ? "/instructor" : returnTo;
       router.push(destination);
     } catch (error: any) {
-      setErrorMessage(
-        error?.response?.data?.message ||
-          "Failed to create account. Please check your details and try again."
-      );
+      setErrorMessage("Failed to create account. Please check your details and try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -245,38 +242,38 @@ export default function RegisterPage() {
         <AuthBackground imageSrc={REGISTER_IMAGE} overlay="panel" className="hidden lg:block" />
         <AuthBackground imageSrc={REGISTER_IMAGE} overlay="mobile" className="lg:hidden" />
 
-        <div className="relative z-10 w-full max-w-lg text-left space-y-4 lg:space-y-5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-emerald-400/10 border border-emerald-400/30 flex items-center justify-center text-emerald-400">
+        <div className="relative z-10 w-full max-w-lg text-left space-y-6 lg:space-y-8">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-400/20 border border-emerald-400/40 flex items-center justify-center text-emerald-400 shadow-lg">
               <BookOpen className="w-5 h-5" />
             </div>
-            <span className="font-bold text-base lg:text-lg tracking-tight">Mech Spec Technologies</span>
+            <span className="font-bold text-lg lg:text-xl tracking-tight text-white">Mech Spec Technologies</span>
           </div>
 
           <div>
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight leading-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight leading-tight text-white drop-shadow-lg">
               Start Your Engineering Journey Today
             </h1>
-            <p className="text-emerald-100/90 text-sm lg:text-base mt-2 max-w-md leading-relaxed">
-              Create your free account and get instant access to 500+ engineering courses.
+            <p className="text-emerald-50/95 text-base lg:text-lg mt-3 max-w-md leading-relaxed font-medium">
+              Create your free account and get instant access to 500+ engineering courses taught by industry experts.
             </p>
           </div>
 
-          <ul className="hidden lg:block space-y-2 text-sm text-emerald-100">
+          <ul className="hidden lg:block space-y-3 text-base text-emerald-50/90">
             {[
               "Free access to starter courses",
               "Earn industry-recognized certificates",
               "Learn from top engineers worldwide",
               "Track progress with AI insights",
             ].map((item) => (
-              <li key={item} className="flex items-center gap-2.5">
-                <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>{item}</span>
+              <li key={item} className="flex items-center gap-3">
+                <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+                <span className="font-medium">{item}</span>
               </li>
             ))}
           </ul>
 
-          <p className="hidden lg:block text-xs text-emerald-300/90 pt-2">
+          <p className="hidden lg:block text-sm text-emerald-200/90 pt-2 font-medium">
             © 2026 Mech Spec Technologies Ltd. All rights reserved.
           </p>
         </div>

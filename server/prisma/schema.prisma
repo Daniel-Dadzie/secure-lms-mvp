@@ -78,6 +78,11 @@ enum LessonProgressStatus {
   COMPLETED
 }
 
+enum LessonContentType {
+  VIDEO
+  TEXT
+}
+
 enum UserRegion {
   NORTH_AMERICA
   LATIN_AMERICA
@@ -101,7 +106,7 @@ model User {
   isEmailVerified Boolean  @default(false)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  
+
 
   // Relations
   coursesTaught       Course[]              @relation("InstructorCourses")
@@ -262,15 +267,17 @@ model Module {
 }
 
 model Lesson {
-  id              String   @id @default(uuid())
+  id              String            @id @default(uuid())
   moduleId        String
-  module          Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  module          Module            @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   title           String
-  contentUrl      String? // Firebase Storage reference (video/asset) — see header note
-  durationSeconds Int      @default(0)
+  contentType     LessonContentType @default(VIDEO)
+  contentUrl      String?           // Firebase Storage reference (video/asset) — see header note
+  contentText     String?           @db.Text // Rich text content for text lessons
+  durationSeconds Int               @default(0)
   order           Int
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
   progress LessonProgress[]
   quizzes  Quiz[]
@@ -730,6 +737,7 @@ model Activity {
   title       String
   description String?
   iconType    String // enrolled | completed | badge | certificate
+  metadata    Json?
   createdAt   DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

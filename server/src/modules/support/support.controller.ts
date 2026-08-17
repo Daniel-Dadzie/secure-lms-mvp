@@ -73,7 +73,7 @@ export async function getMyTicket(
     res.status(200).json({ ticket });
   } catch (error: any) {
     if (error.statusCode === 404) {
-      res.status(404).json({ message: error.message });
+      res.status(404).json({ message: "Ticket not found" });
       return;
     }
     next(error);
@@ -98,11 +98,11 @@ export async function replyToMyTicket(
     res.status(201).json({ message });
   } catch (error: any) {
     if (error.statusCode === 404) {
-      res.status(404).json({ message: error.message });
+      res.status(404).json({ message: "Ticket not found" });
       return;
     }
     if (error.statusCode === 403) {
-      res.status(403).json({ message: error.message });
+      res.status(403).json({ message: "Access denied" });
       return;
     }
     next(error);
