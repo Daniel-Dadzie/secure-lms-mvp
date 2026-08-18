@@ -1,4 +1,3 @@
-import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -27,6 +26,8 @@ import uploadRouter from "./modules/uploads/upload.router"; // or check your rel
 import helpRouter from "./modules/help/help.routes";
 
 export const app = express();
+
+app.set("trust proxy", 1);
 
 // ----------------------------------------------------------------------------
 // Security middleware — must be first

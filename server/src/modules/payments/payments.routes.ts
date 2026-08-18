@@ -22,10 +22,8 @@ router.post(
 
 // Purchase history
 router.get(
-  "/purchases",
-  authenticate,
-  requireRole(["STUDENT"]),
-  paymentsController.getPurchaseHistory
+  "/verify/:reference",
+  paymentsController.verifyPayment
 );
 
 // Single purchase detail
