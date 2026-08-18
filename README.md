@@ -84,11 +84,11 @@ The production deployment is available through the links below.
 
 | Component | Link |
 |---|---|
-| 🌐 Web Application | [Open Secure LMS](https://your-frontend-url.com) |
-| ⚙️ Backend API | [API Server](https://your-backend-url.com) |
+| 🌐 Web Application | [Open Secure LMS] (http://54.229.212.77/) |
+> **Note:** The application is currently deployed on an AWS EC2 instance.
+
 | 📚 API Documentation | [OpenAPI Documentation](https://your-backend-url.com/api-docs) |
 
-> **Note:** Replace the placeholder URLs above with the actual production URLs after deployment.
 
 Protected Student, Instructor, and Admin functionality requires authentication.
 
@@ -109,7 +109,7 @@ Protected Student, Instructor, and Admin functionality requires authentication.
 - Append-only audit logging
 - Secure password hashing with bcrypt
 - CORS origin restrictions
-- Paystack webhook signature verification
+- Stripe webhook signature verification
 - Secret scanning with Gitleaks
 - Dependency auditing
 - Static Application Security Testing with Semgrep
@@ -120,7 +120,7 @@ Protected Student, Instructor, and Admin functionality requires authentication.
 - Course enrolment
 - Shopping cart
 - Coupon support
-- Paystack payment checkout
+- Stripe payment checkout
 - Course progress tracking
 - Quizzes and assessments
 - Course reviews and ratings
@@ -218,7 +218,7 @@ Protected Student, Instructor, and Admin functionality requires authentication.
 ### External Services
 
 <p align="left">
-  <img src="https://img.shields.io/badge/Paystack-checkout-0f172a?logo=stripe&logoColor=white" alt="Paystack"/>
+  <img src="https://img.shields.io/badge/Stripe-payments-635bff?logo=stripe&logoColor=white" alt="Stripe"/>
   <img src="https://img.shields.io/badge/Cloudinary-media-3448c5?logo=cloudinary" alt="Cloudinary"/>
   <img src="https://img.shields.io/badge/Firebase-storage_&_FCM-ffca28?logo=firebase&logoColor=black" alt="Firebase"/>
   <img src="https://img.shields.io/badge/Nodemailer-email-6b7280?logo=gmail&logoColor=white" alt="Nodemailer"/>
@@ -264,7 +264,7 @@ secure-lms-mvp/
 │   │   │   ├── email.ts
 │   │   │   ├── firebase.ts
 │   │   │   ├── jwt.ts
-│   │   │   ├── paystack.ts
+│   │   │   ├── stripe.ts
 │   │   │   └── prisma.ts
 │   │   ├── lib/                             # Shared backend utilities
 │   │   ├── middleware/                      # Authentication, RBAC, validation, uploads
@@ -352,7 +352,7 @@ server/src/modules/
 | `quizzes` | Quiz creation, attempts, and scoring |
 | `cart` | Shopping cart management |
 | `coupons` | Discount coupon validation |
-| `payments` | Paystack checkout and webhook verification |
+| `payments` | Stripe checkout and webhook verification |
 | `reviews` | Course ratings and reviews |
 | `instructors` | Instructor onboarding and management |
 | `instructor-portal` | Instructor dashboard workflows |
@@ -380,7 +380,7 @@ Security is implemented as a layered defense model across the application.
 | Password Storage | bcrypt hashing |
 | Input Validation | Zod schemas on incoming requests |
 | Authorization | RBAC using `requireRole` and `requireOwnership` middleware |
-| Payment Integrity | Paystack webhooks verified using HMAC signatures |
+| Payment Integrity | Stripe webhooks verified using HMAC signatures |
 | Secret Scanning | Gitleaks on every PR and push |
 | Dependency Auditing | `npm audit` with high-severity checks |
 | Static Analysis | Semgrep security rules |
@@ -406,7 +406,7 @@ Before running the project locally, make sure the following are installed:
 - Git
 - Cloudinary account
 - Firebase project
-- Paystack account
+- Stripe account
 
 The project uses the Node.js version specified in `.node-version`.
 
@@ -527,7 +527,7 @@ Environment variables are documented in:
 | `CLOUDINARY_*` | Cloudinary configuration |
 | `FIREBASE_*` | Firebase Admin configuration |
 | `NEXT_PUBLIC_FIREBASE_*` | Firebase client configuration |
-| `PAYSTACK_*` | Paystack payment configuration |
+| `STRIPE_*` | Stripe payment configuration |
 | `SMTP_*` | SMTP email configuration |
 | `RESEND_*` | Resend email configuration |
 | `CLIENT_URL` | Allowed frontend origin for CORS |
@@ -655,7 +655,7 @@ A modular production deployment can use the following architecture:
                                │
                                ▼
                        ┌──────────────┐
-                       │   Paystack   │
+                       │   Stripe   │
                        │   Payments   │
                        └──────────────┘
 ```
@@ -670,7 +670,7 @@ Production deployment requires:
 - Node.js runtime
 - Production environment variables
 - Secure JWT secrets
-- Live Paystack keys
+- Live Stripe keys
 - `NODE_ENV=production`
 - Firebase configuration
 - Cloudinary configuration
@@ -701,7 +701,7 @@ Before declaring the application production-ready, verify the following.
 - [ ] Configure production database
 - [ ] Configure Firebase
 - [ ] Configure Cloudinary
-- [ ] Configure Paystack live credentials
+- [ ] Configure Stripe live credentials
 - [ ] Configure production email provider
 
 ### Database
@@ -736,7 +736,7 @@ Then verify:
 - [ ] Verify course creation and publishing
 - [ ] Verify enrolment
 - [ ] Verify payments
-- [ ] Verify Paystack webhooks
+- [ ] Verify Stripe webhooks
 - [ ] Verify media uploads
 - [ ] Verify email delivery
 - [ ] Verify Firebase notifications
