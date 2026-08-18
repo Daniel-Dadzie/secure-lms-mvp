@@ -507,7 +507,7 @@ model Notification {
 }
 
 model Activity {
-  id          String   @id
+  id          String   @id @default(uuid())
   userId      String
   title       String
   description String?
@@ -569,11 +569,14 @@ enum DiscountType {
 
 enum NotificationType {
   ENROLLMENT_CONFIRMED
-  NEW_ENROLLMENT
   CERTIFICATE_ISSUED
   NEW_REVIEW
   SUPPORT_TICKET_NEW
+  SUPPORT_TICKET_UPDATED
+  SUPPORT_TICKET_CLOSED
+  SUPPORT_TICKET_MESSAGE
   PLATFORM_ALERT
+  NEW_ENROLLMENT
 }
 
 enum TicketStatus {

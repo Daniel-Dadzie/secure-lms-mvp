@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 import { PrismaClient } from "@prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 const adapter = new PrismaPg({
   connectionString: process.env.DATABASE_URL,
 });
@@ -806,9 +807,14 @@ async function main() {
   }>;
 
   if (activityEntries.length > 0) {
-    await prisma.activity.createMany({ data: activityEntries });
-    console.log("✅ Primary student activity feed seeded");
-  }
+      await prisma.activity.createMany({ 
+        data: activityEntries.map((entry) => ({
+          id: crypto.randomUUID(), // <-- This satisfies Prisma's type checker
+          ...entry,
+        }))
+      });
+      console.log("✅ Primary student activity feed seeded");
+    }
 
   console.log("Database successfully seeded with 12 courses, modules, and video streams!");
 
