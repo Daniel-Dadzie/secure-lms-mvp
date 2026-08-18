@@ -361,7 +361,7 @@ export async function completePurchasesByReference(reference: string): Promise<v
 
       await createNotification(
         purchase.course.instructorId,
-        "PLATFORM_ALERT",
+        "NEW_ENROLLMENT",
         "New student enrolled",
         `A student enrolled in your course "${purchase.course.title}".`,
         { courseId: purchase.courseId, enrollmentId: enrollment.id }

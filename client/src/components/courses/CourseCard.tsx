@@ -64,7 +64,7 @@ export function CourseCard({
               By {course.instructor?.fullName || "MechSpec Staff"}
             </span>
             <span className={`font-bold ${isFree ? 'text-emerald-600' : 'text-slate-900 text-lg'}`}>
-              {isFree ? "FREE" : `GH₵ ${course.price.toFixed(2)}`}
+              {isFree ? "FREE" : `$ ${course.price.toFixed(2)}`}
             </span>
           </div>
 

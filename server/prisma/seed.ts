@@ -863,7 +863,7 @@ async function main() {
           amountCents: course.priceCents,
           finalAmountCents: course.priceCents,
           discountCents: 0,
-          currency: "GHS",
+          currency: "USD",
           status: "COMPLETED",
           provider: "PAYSTACK",
           providerReference: `seed-ref-${i}-${Date.now()}`,

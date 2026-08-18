@@ -7,7 +7,7 @@ import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
 import ProtectedRoute from "@/components/shared/ProtectedRoute";
 import { detectTimezone } from "@/lib/detectTimezone";
-import { formatPrice, formatPriceInGHS } from "@/lib/currency";
+import { formatPrice, formatPriceInUSD } from "@/lib/currency";
 
 const FALLBACK_IMAGE = "/images/course-fallback.jpg";
 
@@ -275,16 +275,16 @@ export default function CartPage() {
                     </span>
 
                     <span>
-                      {formatPriceInGHS(cart.summary.subtotalCents)}
+                      {formatPriceInUSD(cart.summary.subtotalCents)}
                     </span>
                   </div>
                 </div>
 
                 <div className="mb-6 flex justify-between text-base font-bold text-slate-900">
-                  <span>Total (GHS)</span>
+                  <span>Total (USD)</span>
 
                   <span>
-                    {formatPriceInGHS(cart.summary.totalCents)}
+                    {formatPriceInUSD(cart.summary.totalCents)}
                   </span>
                 </div>
 
