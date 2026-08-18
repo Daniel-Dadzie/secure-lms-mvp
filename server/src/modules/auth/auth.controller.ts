@@ -11,8 +11,8 @@ import { forgotPasswordSchema, resetPasswordSchema } from "./auth.schemas";
 // ----------------------------------------------------------------------------
 const REFRESH_COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "strict" as const,
+  secure: process.env.CLIENT_URL?.startsWith("https://") ?? false,
+  sameSite: "lax" as const,
   path: "/api/auth",
   maxAge: JWT_CONFIG.refreshExpiryMs,
 };
@@ -20,8 +20,8 @@ const REFRESH_COOKIE_OPTIONS = {
 function clearRefreshCookie(res: Response): void {
   res.clearCookie("refreshToken", {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict" as const,
+    secure: process.env.CLIENT_URL?.startsWith("https://") ?? false,
+    sameSite: "lax" as const,
     path: "/api/auth",
   });
 }

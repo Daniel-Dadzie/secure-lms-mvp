@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useAuthStore } from "@/store/auth.store";
 
 export default function AuthProvider({
@@ -9,14 +9,19 @@ export default function AuthProvider({
   children: React.ReactNode;
 }) {
   const loadUser = useAuthStore((state) => state.loadUser);
+  const hasLoaded = useRef(false);
 
   useEffect(() => {
-    // Attempt to restore session from httpOnly cookie on every page load.
-    // If the refresh cookie is valid, this silently re-authenticates the user
-    // without them needing to log in again.
-    loadUser();
+    if (hasLoaded.current) {
+      return;
+    }
+
+    hasLoaded.current = true;
+
+    console.log("[AUTH] AuthProvider: restoring session");
+
+    void loadUser();
   }, [loadUser]);
 
   return <>{children}</>;
 }
-

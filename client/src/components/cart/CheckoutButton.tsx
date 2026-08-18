@@ -15,7 +15,7 @@ export default function CheckoutButton({ total, onSuccessCallback }: Props) {
     reference: (new Date()).getTime().toString(),
     email: "student@example.com", // In a real app, grab this from your Auth context
     amount: total * 100, // Paystack strictly requires the lowest currency unit (cents/pesewas)
-    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY || "pk_test_your_key_here",
+    publicKey: process.env.NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY!,
   };
 
   const initializePayment = usePaystackPayment(config);
