@@ -60,6 +60,13 @@ services:
       SMTP_PASS: ${SMTP_PASS}
       SMTP_FROM: ${SMTP_FROM}
 
+      # Help Center Chatbot (OpenRouter)
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      OPENROUTER_MODEL: ${OPENROUTER_MODEL}
+      CHATBOT_RETRIEVAL_THRESHOLD: ${CHATBOT_RETRIEVAL_THRESHOLD}
+      CHATBOT_SKIP_LLM_THRESHOLD: ${CHATBOT_SKIP_LLM_THRESHOLD}
+      CHATBOT_LLM_ENABLED: ${CHATBOT_LLM_ENABLED}
+
     depends_on:
       postgres:
         condition: service_healthy

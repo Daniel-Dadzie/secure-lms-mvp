@@ -27,6 +27,8 @@ import helpRouter from "./modules/help/help.routes";
 
 export const app = express();
 
+app.set("trust proxy", 1);
+
 // ----------------------------------------------------------------------------
 // Security middleware — must be first
 // ----------------------------------------------------------------------------

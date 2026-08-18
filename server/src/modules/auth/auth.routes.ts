@@ -24,7 +24,7 @@ const authRateLimit = rateLimit({
 
 const refreshRateLimit = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 30, // refresh calls more frequently than login attempts
+  max: 300, // allow normal SPA session restoration and token refresh activity
   standardHeaders: true,
   legacyHeaders: false,
   message: {
