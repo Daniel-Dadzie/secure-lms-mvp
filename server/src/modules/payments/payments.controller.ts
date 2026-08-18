@@ -1,7 +1,12 @@
 import type { Request, Response, NextFunction } from "express";
 import * as paymentsService from "./payments.service";
-import { verifyWebhookSignature } from "../../services/paystack.service";
+
 import { z } from "zod";
+
+
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 const checkoutSchema = z.object({
   courseId: z.string().uuid("Invalid course ID"),
@@ -59,27 +64,49 @@ export async function checkoutCart(req: Request, res: Response, next: NextFuncti
 // verified, even if internal processing is still async, per Paystack's
 // requirements.
 // ----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
+// Stripe webhook — public, but every request is verified via Stripe's
+// digital signature before any data is trusted.
+// ----------------------------------------------------------------------------
 export async function webhook(req: Request, res: Response): Promise<void> {
-  const signature = req.headers["x-paystack-signature"] as string;
+  const signature = req.headers["stripe-signature"] as string;
   const rawBody = (req as any).rawBody;
 
-  if (!signature || !rawBody || !verifyWebhookSignature(rawBody, signature)) {
-    res.status(401).json({ message: "Invalid signature" });
+  if (!signature || !rawBody) {
+    res.status(400).json({ message: "Missing signature or payload body" });
     return;
   }
 
-  const event = req.body;
+  let event: Stripe.Event;
 
-  if (event.event === "charge.success") {
-    try {
-      await paymentsService.completePurchasesByReference(event.data.reference);
-    } catch (err) {
-      console.error("Webhook processing error:", err);
-      // Still ack 200 — Paystack will retry on non-2xx, but a processing
-      // error here needs investigation, not an infinite retry loop.
+  try {
+    // This verifies the signature and parses the raw data safely
+    event = stripe.webhooks.constructEvent(
+      rawBody,
+      signature,
+      process.env.STRIPE_WEBHOOK_SECRET as string
+    );
+  } catch (err: any) {
+    console.error("Stripe Webhook signature verification failed:", err.message);
+    res.status(401).send(`Webhook Error: ${err.message}`);
+    return;
+  }
+
+  // If the payment is completely successful, enroll the student!
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object as Stripe.Checkout.Session;
+    const reference = session.client_reference_id;
+
+    if (reference) {
+      try {
+        await paymentsService.completePurchasesByReference(reference);
+      } catch (err) {
+        console.error("Webhook database processing error:", err);
+      }
     }
   }
 
+  // Acknowledge receipt to Stripe immediately
   res.status(200).json({ received: true });
 }
 

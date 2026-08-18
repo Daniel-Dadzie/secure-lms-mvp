@@ -113,7 +113,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop Nav Links */}
-        <div className="hidden items-center gap-1 md:flex">
+        <div className="hidden items-center gap-1 lg:flex">
           {navLinks.map(({ href, label }) => {
             const active = isActive(href);
 
@@ -212,7 +212,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => setMobileOpen((open) => !open)}
-            className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 md:hidden"
+            className="rounded-lg p-2 text-slate-600 transition-colors hover:bg-slate-100 lg:hidden"
             aria-label="Toggle menu"
             aria-expanded={mobileOpen}
           >
@@ -251,7 +251,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileOpen && (
-        <div className="border-t border-slate-100 py-4 md:hidden">
+        <div className="border-t border-slate-100 py-4 lg:hidden">
           <div className="space-y-1 px-4">
             {navLinks.map(({ href, label }) => (
               <Link

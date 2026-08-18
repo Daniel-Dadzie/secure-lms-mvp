@@ -2,10 +2,12 @@ import crypto from "crypto";
 import { prisma } from "../../config/prisma";
 import { firebaseMessaging } from "../../config/firebase";
 import { PLATFORM_CURRENCY } from "../../config/platform";
-import { initializeTransaction, verifyTransaction } from "../../services/paystack.service";
 import { createNotification } from "../notifications/notifications.service";
 import { logActivity } from "../../lib/activityLog";
 import { resolveUserRegion } from "../../lib/resolveUserRegion";
+
+import Stripe from "stripe";
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 function resolveCheckoutRegion(timezone?: string) {
   return resolveUserRegion({ timezone });
@@ -135,15 +137,26 @@ export async function checkout(
     });
   }
 
-  const { authorizationUrl } = await initializeTransaction({
-    email: user.email,
-    amountInSubunit: finalAmountCents,
-    reference,
-    callbackUrl: `${process.env.CLIENT_URL}/payment/callback`,
-    metadata: { userId, courseId, purchaseId: purchase.id },
+const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    mode: 'payment',
+    customer_email: user.email,
+    client_reference_id: reference, 
+    line_items: [
+      {
+        price_data: {
+          currency: PLATFORM_CURRENCY.toLowerCase(),
+          product_data: { name: course.title },
+          unit_amount: finalAmountCents,
+        },
+        quantity: 1,
+      },
+    ],
+    success_url: `${process.env.CLIENT_URL}/payment/callback?reference=${reference}`,
+    cancel_url: `${process.env.CLIENT_URL}/course/${courseId}`,
   });
 
-  return { authorizationUrl, reference, purchase };
+  return { authorizationUrl: session.url, reference, purchase };
 }
 
 // ----------------------------------------------------------------------------
@@ -229,15 +242,26 @@ export async function checkoutCart(userId: string, timezone?: string) {
     });
   }
 
-  const { authorizationUrl } = await initializeTransaction({
-    email: user.email,
-    amountInSubunit: totalAmountCents,
-    reference,
-    callbackUrl: `${process.env.CLIENT_URL}/payment/callback`,
-    metadata: { userId, courseIds: eligibleItems.map((i) => i.courseId) },
+const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    mode: 'payment',
+    customer_email: user.email,
+    client_reference_id: reference,
+    line_items: [
+      {
+        price_data: {
+          currency: PLATFORM_CURRENCY.toLowerCase(),
+          product_data: { name: "Secure LMS Cart Checkout" },
+          unit_amount: totalAmountCents,
+        },
+        quantity: 1,
+      },
+    ],
+    success_url: `${process.env.CLIENT_URL}/payment/callback?reference=${reference}`,
+    cancel_url: `${process.env.CLIENT_URL}/cart`,
   });
 
-  return { authorizationUrl, reference, purchases, skipped };
+  return { authorizationUrl: session.url, reference, purchases, skipped };
 }
 
 // ----------------------------------------------------------------------------
@@ -261,9 +285,9 @@ export async function completePurchasesByReference(reference: string): Promise<v
   }
 
   for (const purchase of pendingPurchases) {
-    const lessonIds = purchase.course.modules.flatMap((m) => m.lessons.map((l) => l.id));
+    const lessonIds = purchase.course.modules.flatMap((m: any) => m.lessons.map((l: any) => l.id));
 
-    await prisma.$transaction(async (tx) => {
+    await prisma.$transaction(async (tx: any) => {
       await tx.purchase.update({
         where: { id: purchase.id },
         data: { status: "COMPLETED" },
@@ -280,7 +304,7 @@ export async function completePurchasesByReference(reference: string): Promise<v
 
       if (lessonIds.length > 0) {
         await tx.lessonProgress.createMany({
-          data: lessonIds.map((lessonId) => ({
+          data: lessonIds.map((lessonId: string) => ({
             userId: purchase.userId,
             lessonId,
             enrollmentId: enrollment.id,
@@ -337,7 +361,7 @@ export async function completePurchasesByReference(reference: string): Promise<v
 
       await createNotification(
         purchase.course.instructorId,
-        "NEW_ENROLLMENT",
+        "PLATFORM_ALERT",
         "New student enrolled",
         `A student enrolled in your course "${purchase.course.title}".`,
         { courseId: purchase.courseId, enrollmentId: enrollment.id }
@@ -402,22 +426,14 @@ export async function verifyAndComplete(reference: string, userId: string | null
   if (purchases[0].status === "COMPLETED") {
     return {
       status: "COMPLETED" as const,
-      courses: purchases.map((p) => ({ id: p.course.id, title: p.course.title, slug: p.course.slug })),
-    };
-  }
-
-  const result = await verifyTransaction(reference);
-
-  if (result.status === "success") {
-    await completePurchasesByReference(reference);
-    return {
-      status: "COMPLETED" as const,
-      courses: purchases.map((p) => ({ id: p.course.id, title: p.course.title, slug: p.course.slug })),
+      courses: purchases.map((p: any) => ({ id: p.course.id, title: p.course.title, slug: p.course.slug })),
     };
   }
 
   return { status: purchases[0].status as string, courses: [] };
 }
+
+
 
 // ----------------------------------------------------------------------------
 // Get student's purchase history (unchanged)
