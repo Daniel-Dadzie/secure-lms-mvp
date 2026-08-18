@@ -84,7 +84,7 @@ The production deployment is available through the links below.
 
 | Component | Link |
 |---|---|
-| 🌐 Web Application | [Open Secure LMS] (http://54.229.212.77/) |
+| 🌐 Web Application | [Open Secure LMS](http://54.229.212.77/) |
 > **Note:** The application is currently deployed on an AWS EC2 instance.
 
 | 📚 API Documentation | [OpenAPI Documentation](https://your-backend-url.com/api-docs) |
@@ -162,8 +162,13 @@ Protected Student, Instructor, and Admin functionality requires authentication.
 - Static Application Security Testing
 
 ---
-
 ## Screenshots
+
+### Live Application
+
+<p align="center">
+  <img src="docs/screenshots/homepage.png" alt="Secure LMS Live Application" width="900"/>
+</p>
 
 ### Student Dashboard
 
@@ -188,7 +193,6 @@ Protected Student, Instructor, and Admin functionality requires authentication.
 <p align="center">
   <img src="docs/screenshots/admin-dashboard.png" alt="Admin Dashboard" width="900"/>
 </p>
-
 ---
 
 ## Tech Stack
@@ -595,71 +599,67 @@ The project uses GitHub Actions for continuous integration, pull-request validat
 | Security Pipeline | Push / PR to `main` / `develop` | Gitleaks → npm audit → Semgrep blocking rules |
 
 ---
-
 ## Deployment
 
-The application supports flexible deployment patterns, including:
+The Secure LMS MVP is currently deployed on an **AWS EC2 instance**.
 
-| Component | Recommended Platform |
+### Current Production Deployment
+
+| Component | Platform |
 |---|---|
-| Frontend | Vercel |
-| Backend | Render or AWS EC2 |
-| Database | Managed PostgreSQL / Amazon RDS |
-| Media Storage | Cloudinary |
-| Push Notifications | Firebase Cloud Messaging |
-| Reverse Proxy | Nginx for EC2 deployments |
-| Process Management | PM2 for EC2 deployments |
-| SSL | Let's Encrypt for EC2 deployments |
+| 🌐 Frontend | AWS EC2 |
+| ⚙️ Backend | AWS EC2 |
+| 🗄️ Database | PostgreSQL |
+| 🖼️ Media Storage | Cloudinary |
+| 🔔 Notifications | Firebase Cloud Messaging |
+| 💳 Payments | Stripe |
+| 📧 Email | Nodemailer / Resend |
+| 🔄 Process Management | PM2 |
+| 🌐 Reverse Proxy | Nginx |
+| 🔒 SSL | Let's Encrypt |
 
-For the recommended modular deployment:
+### Live Application
 
-```text
-Next.js Frontend → Vercel
-        ↓
-Express API → Render
-        ↓
-PostgreSQL → Managed PostgreSQL
-```
+**Production URL:** [http://54.229.212.77/](http://54.229.212.77/)
 
----
+The frontend and backend are currently hosted on the same AWS EC2 infrastructure.
 
-## Production Architecture
-
-A modular production deployment can use the following architecture:
+### Deployment Architecture
 
 ```text
-                    ┌──────────────────────┐
-                    │      Users / Web     │
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │   Next.js Frontend   │
-                    │       Vercel         │
-                    └──────────┬───────────┘
-                               │
-                               │ HTTPS / API
-                               ▼
-                    ┌──────────────────────┐
-                    │    Express Backend   │
-                    │    Render / EC2      │
-                    └──────────┬───────────┘
-                               │
-              ┌────────────────┼─────────────────┐
-              │                │                 │
-              ▼                ▼                 ▼
-       ┌─────────────┐  ┌─────────────┐  ┌──────────────┐
-       │ PostgreSQL  │  │  Cloudinary │  │   Firebase   │
-       │  Database   │  │    Media    │  │ FCM / Storage│
-       └─────────────┘  └─────────────┘  └──────────────┘
-                               │
-                               ▼
-                       ┌──────────────┐
-                       │   Stripe   │
-                       │   Payments   │
-                       └──────────────┘
-```
-
+                         ┌──────────────────────┐
+                         │      Users / Web     │
+                         └──────────┬───────────┘
+                                    │
+                                    │ HTTP
+                                    ▼
+                         ┌──────────────────────┐
+                         │        Nginx         │
+                         │     AWS EC2           │
+                         └──────────┬───────────┘
+                                    │
+                    ┌───────────────┴───────────────┐
+                    │                               │
+                    ▼                               ▼
+          ┌──────────────────┐           ┌──────────────────┐
+          │  Next.js         │           │  Express         │
+          │  Frontend        │           │  Backend         │
+          │  AWS EC2         │           │  AWS EC2         │
+          └──────────────────┘           └────────┬─────────┘
+                                                   │
+                         ┌─────────────────────────┼────────────────────┐
+                         │                         │                    │
+                         ▼                         ▼                    ▼
+                  ┌─────────────┐          ┌─────────────┐      ┌─────────────┐
+                  │ PostgreSQL  │          │ Cloudinary  │      │  Firebase   │
+                  │  Database   │          │    Media    │      │ FCM/Storage │
+                  └─────────────┘          └─────────────┘      └─────────────┘
+                                                   │
+                                                   ▼
+                                            ┌─────────────┐
+                                            │   Stripe    │
+                                            │  Payments   │
+                                            └─────────────┘
 ---
 
 ## Production Deployment Requirements
