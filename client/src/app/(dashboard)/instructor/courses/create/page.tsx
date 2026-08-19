@@ -47,6 +47,7 @@ export default function CreateCoursePage() {
   }, []);
 
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
     const file = e.target.files?.[0];
     if (!file) return;
     const allowed = ["image/jpeg", "image/png", "image/webp"];
@@ -59,6 +60,7 @@ export default function CreateCoursePage() {
       return;
     }
     setError(null);
+
     setThumbnailFile(file);
     setThumbnailPreview(URL.createObjectURL(file));
   };

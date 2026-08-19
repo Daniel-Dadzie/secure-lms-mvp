@@ -49,9 +49,7 @@ export async function uploadLessonVideo(
     `/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}/video`,
     formData,
     {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
+       
       onUploadProgress: (progressEvent) => {
         if (progressEvent.total && onProgress) {
           const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
@@ -63,5 +61,3 @@ export async function uploadLessonVideo(
 
   return response.data.videoUrl;
 }
-
-

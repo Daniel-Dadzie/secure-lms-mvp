@@ -25,10 +25,18 @@ id: string;
   modules: Module[];
 }
 
+
 export default function EditCoursePage() {
   const params = useParams();
   const router = useRouter();
   const courseId = params.courseId as string;
+
+   const [deletePrompt, setDeletePrompt] = useState<{
+    type: "module" | "lesson";
+    moduleId: string;
+    lessonId?: string;
+  } | null>(null);
+
 
   const [course, setCourse] = useState<CourseDetail | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -327,25 +335,32 @@ useEffect(() => {
     }
   };
 
-  const handleDeleteModule = async (moduleId: string) => {
-    if (!confirm("Delete this module and all its lessons? This cannot be undone.")) return;
-    try {
-      await api.delete(`/courses/${courseId}/modules/${moduleId}`);
-      showToast("Module deleted.");
-      await fetchCourse();
-    } catch (err: any) {
-      setError(err?.response?.data?.message || "Failed to delete module.");
-    }
+const handleDeleteModule = (moduleId: string) => {
+    // Open the modal instead of window.confirm
+    setDeletePrompt({ type: "module", moduleId });
   };
 
-  const handleDeleteLesson = async (moduleId: string, lessonId: string) => {
-    if (!confirm("Delete this lesson? This cannot be undone.")) return;
+  const handleDeleteLesson = (moduleId: string, lessonId: string) => {
+    // Open the modal instead of window.confirm
+    setDeletePrompt({ type: "lesson", moduleId, lessonId });
+  };
+
+  const confirmDelete = async () => {
+    if (!deletePrompt) return;
+    
     try {
-      await api.delete(`/courses/${courseId}/modules/${moduleId}/lessons/${lessonId}`);
-      showToast("Lesson deleted.");
+      if (deletePrompt.type === "module") {
+        await api.delete(`/courses/${courseId}/modules/${deletePrompt.moduleId}`);
+        showToast("Module deleted.");
+      } else {
+        await api.delete(`/courses/${courseId}/modules/${deletePrompt.moduleId}/lessons/${deletePrompt.lessonId}`);
+        showToast("Lesson deleted.");
+      }
       await fetchCourse();
     } catch (err: any) {
-      setError(err?.response?.data?.message || "Failed to delete lesson.");
+      setError(err?.response?.data?.message || `Failed to delete ${deletePrompt.type}.`);
+    } finally {
+      setDeletePrompt(null); // Close modal
     }
   };
 
@@ -913,6 +928,43 @@ useEffect(() => {
         initialContent={editingLessonId ? editingLessonText[editingLessonId] || "" : newLessonContentText}
         title={editingLessonId ? "Edit Lesson Content" : "Write Lesson Content"}
       />
+
+      {/* Custom Delete Confirmation Modal */}
+      {deletePrompt && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div 
+            className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" 
+            onClick={() => setDeletePrompt(null)} 
+          />
+          <div className="relative w-full max-w-sm bg-white rounded-2xl shadow-xl p-6 animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
+              <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-slate-900 mb-2">
+              Delete {deletePrompt.type === "module" ? "Module" : "Lesson"}?
+            </h3>
+            <p className="text-sm text-slate-500 mb-6">
+              Are you sure you want to delete this {deletePrompt.type}? {deletePrompt.type === "module" && "This will also delete all lessons inside it. "}This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => setDeletePrompt(null)}
+                className="px-4 py-2 text-sm font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 text-sm font-semibold bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors shadow-sm"
+              >
+                Yes, Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
