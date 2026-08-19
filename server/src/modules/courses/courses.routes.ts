@@ -6,8 +6,8 @@ import * as lessonsController from "./lessons.controller";
 import * as quizzesController from "../quizzes/quizzes.controller";
 import { thumbnailUpload } from "../../middleware/upload";
 import reviewsRouter from "../reviews/reviews.routes";
-import { uploadThumbnailHandler, generateVideoUploadUrlHandler } from "./courses.upload.controller";
-
+import { uploadThumbnailHandler, generateVideoUploadUrlHandler, uploadLessonVideoHandler } from "./courses.upload.controller";
+import { videoUpload } from "../../middleware/upload";
 const router = Router();
 
 // ----------------------------------------------------------------------------
@@ -204,5 +204,11 @@ router.get(
 
 // Mount reviews as nested resource under courses
 router.use("/:courseId/reviews", reviewsRouter);
+
+router.post(
+  "/:courseId/modules/:moduleId/lessons/:lessonId/video",
+  videoUpload.single("video"),
+  uploadLessonVideoHandler
+);
 
 export default router;

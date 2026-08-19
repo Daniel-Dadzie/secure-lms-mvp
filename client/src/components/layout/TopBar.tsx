@@ -6,7 +6,6 @@ import { Avatar } from "@/components/ui/Avatar";
 import { useAuthStore } from "@/store/auth.store";
 import { Bell, Check, CheckCheck, Clock, ExternalLink } from "lucide-react";
 import api from "@/lib/api";
-
 interface TopBarProps {
   title?: string;
   breadcrumb?: { label: string; href?: string }[];
@@ -18,7 +17,6 @@ interface TopBarProps {
   searchPath?: string;
   notificationBadge?: number;
 }
-
 interface Notification {
   id: string;
   title: string;
@@ -26,7 +24,6 @@ interface Notification {
   isRead: boolean;
   createdAt: string;
 }
-
 export function TopBar({
   title,
   breadcrumb,
@@ -49,21 +46,20 @@ export function TopBar({
   const [unreadCount, setUnreadCount] = useState(0);
   
   const dropdownRef = useRef<HTMLDivElement>(null);
-
   // Fetch notifications for the dropdown
 const fetchNotifications = async () => {
     try {
-    
       const res = await api.get("/notifications");
       setNotifications(res.data.notifications || []);
       setUnreadCount(res.data.unreadCount || 0);
-    } catch (err) {
-      console.error("Failed to fetch notifications", err);
+    } catch (err: any) {
+      if (err.response?.status !== 401) {
+        console.error("Failed to fetch notifications", err);
+      }
     } finally {
        // Silently catch if unauthenticated; no need for loading state in a dropdown
     }
   };
-
 useEffect(() => {
     // Define the async function inside the effect
     const loadData = async () => {
@@ -72,14 +68,14 @@ useEffect(() => {
         // These calls are fine here because they are inside an async flow
         setNotifications(res.data.notifications || []);
         setUnreadCount(res.data.unreadCount || 0);
-      } catch (err) {
-        console.error("Failed to fetch notifications", err);
+      } catch (err: any) {
+        if (err.response?.status !== 401) {
+      	  console.error("Failed to fetch notifications", err);
+      	}
       }
     };
-
     loadData();
   }, []); // Empty dependency array ensures this runs only once on mount
-
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -90,7 +86,6 @@ useEffect(() => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
-
   const handleMarkAsRead = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
@@ -103,7 +98,6 @@ useEffect(() => {
       console.error("Failed to mark as read", err);
     }
   };
-
   const handleMarkAllAsRead = async () => {
     try {
       await api.patch("/notifications/read-all");
@@ -113,7 +107,6 @@ useEffect(() => {
       console.error("Failed to mark all as read", err);
     }
   };
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -122,12 +115,10 @@ useEffect(() => {
       router.push(`${base}?${param}=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
-
   const handleLogout = async () => {
     await logout();
     router.push("/login");
   };
-
   return (
     <header className="flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 lg:px-8 shadow-sm">
       
@@ -142,7 +133,6 @@ useEffect(() => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
-
         <div className="hidden md:flex flex-col flex-shrink-0 mr-8">
           {title && (
             <h1 className="text-lg font-extrabold text-slate-900 leading-tight">{title}</h1>
@@ -165,7 +155,6 @@ useEffect(() => {
           )}
         </div>
       </div>
-
       {/* Right Content Wrapper */}
       <div className="flex flex-1 items-center justify-end gap-6">
         <form onSubmit={handleSearch} className="w-full max-w-[320px] hidden sm:block">
@@ -185,9 +174,7 @@ useEffect(() => {
             />
           </div>
         </form>
-
         <div className="hidden sm:block w-px h-8 bg-slate-200"></div>
-
         <div className="flex items-center gap-4">
           
           {/* INTERACTIVE NOTIFICATION BELL & DROPDOWN */}
@@ -207,7 +194,6 @@ useEffect(() => {
                 </span>
               )}
             </button>
-
             {showNotifications && (
               <div className="absolute right-0 z-30 mt-2 w-80 sm:w-96 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl ring-1 ring-black/5">
                 
@@ -230,7 +216,6 @@ useEffect(() => {
                     </button>
                   )}
                 </div>
-
                 {/* Dropdown Notification List */}
                 <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
                   {notifications.length === 0 ? (
@@ -255,24 +240,22 @@ useEffect(() => {
                               day: "numeric",
                               hour: "2-digit",
                               minute: "2-digit",
-                            })}
-                          </span>
-                        </div>
-
-                        {!notif.isRead && (
-                          <button
-                            onClick={(e) => handleMarkAsRead(notif.id, e)}
-                            title="Mark as read"
-                            className="p-1.5 text-emerald-700 hover:bg-emerald-100 rounded-lg transition-all shrink-0 self-center"
-                          >
-                            <Check className="w-3.5 h-3.5" />
-                          </button>
+                          })}
+                        </span>
+                      </div>
+                      {!notif.isRead && (
+                        <button
+                          onClick={(e) => handleMarkAsRead(notif.id, e)}
+                          title="Mark as read"
+                          className="p-1.5 text-emerald-700 hover:bg-emerald-100 rounded-lg transition-all shrink-0 self-center"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
                         )}
                       </div>
                     ))
                   )}
                 </div>
-
                 {/* Dropdown Footer Link */}
                 <div className="border-t border-slate-100 bg-slate-50 p-2 text-center">
                   <Link
@@ -283,11 +266,9 @@ useEffect(() => {
                     View all notifications <ExternalLink className="w-3.5 h-3.5" />
                   </Link>
                 </div>
-
               </div>
             )}
           </div>
-
           {/* Avatar + Profile Dropdown Menu */}
           <div className="relative">
             <button
@@ -300,12 +281,11 @@ useEffect(() => {
               </div>
               <span className="hidden text-sm font-bold text-slate-700 sm:block">
                 {user?.fullName?.split(" ")[0] || "Student"}
-              </span>
+            </span>
               <svg className="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
-
             {showProfileMenu && (
               <>
                 <div
@@ -351,4 +331,4 @@ useEffect(() => {
       </div>
     </header>
   );
-}   
+}

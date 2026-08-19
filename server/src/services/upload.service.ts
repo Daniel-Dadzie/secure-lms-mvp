@@ -50,7 +50,13 @@ export async function generateVideoUploadUrl(
   lessonId: string,
   mimeType: string
 ): Promise<{ uploadUrl: string; filePath: string }> {
-  const allowedMimes = ["video/mp4", "video/quicktime", "video/webm"];
+  const allowedMimes = [
+    "video/mp4", 
+    "video/quicktime", 
+    "video/webm",
+    "video/x-matroska",  
+     "video/x-msvideo"
+];
   if (!allowedMimes.includes(mimeType)) {
     const error = new Error("Invalid file type. Only MP4, MOV and WebM allowed.");
     (error as any).statusCode = 400;
@@ -133,6 +139,37 @@ export async function uploadAvatar(
       (error, result) => {
         if (error || !result) return reject(error);
         resolve(result.secure_url);
+      }
+    );
+    uploadStream.end(fileBuffer);
+  });
+}
+
+
+export async function uploadVideoToCloudinary(
+  fileBuffer: Buffer,
+  mimeType: string
+): Promise<{ videoUrl: string; duration?: number }> {
+  const allowedMimes = ["video/mp4", "video/quicktime", "video/webm", "video/x-matroska"];
+  if (!allowedMimes.includes(mimeType)) {
+    const error = new Error("Invalid video file type.");
+    (error as any).statusCode = 400;
+    throw error;
+  }
+
+  return new Promise((resolve, reject) => {
+    const uploadStream = cloudinary.uploader.upload_stream(
+      {
+        folder: "secure-lms/videos",
+        resource_type: "video",
+        chunk_size: 6000000, // 6MB chunk buffer
+      },
+      (error, result) => {
+        if (error || !result) return reject(error);
+        resolve({
+          videoUrl: result.secure_url,
+          duration: result.duration ? Math.round(result.duration) : undefined,
+        });
       }
     );
     uploadStream.end(fileBuffer);

@@ -148,16 +148,18 @@ model Module {
 }
 
 model Lesson {
-  id              String           @id @default(uuid())
+  id              String            @id @default(uuid())
   moduleId        String
   title           String
+  contentType     LessonContentType @default(VIDEO)
   contentUrl      String?
-  durationSeconds Int              @default(0)
+  contentText     String?
+  durationSeconds Int               @default(0)
   order           Int
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
   progress        LessonProgress[]
-  module          Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  module          Module            @relation(fields: [moduleId], references: [id], onDelete: Cascade)
   quizzes         Quiz[]
 
   @@index([moduleId])
@@ -271,6 +273,9 @@ model Review {
   courseId  String
   rating    Int
   comment   String?
+
+  instructorReply String? @db.Text
+  instructorReplyAt DateTime?
   isVisible Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -510,10 +515,13 @@ model Activity {
   id          String   @id @default(uuid())
   userId      String
   title       String
+  metadata  Json?
   description String?
   iconType    String
   createdAt   DateTime @default(now())
   users       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("activities")
 }
 
 enum Role {
@@ -590,4 +598,9 @@ enum TicketPriority {
   LOW
   NORMAL
   HIGH
+}
+
+enum LessonContentType {
+  VIDEO
+  TEXT
 }

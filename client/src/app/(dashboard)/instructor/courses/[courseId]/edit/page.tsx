@@ -14,7 +14,7 @@ interface Lesson { id: string; title: string; order: number; contentType: "VIDEO
 interface Module { id: string; title: string; order: number; lessons: Lesson[]; }
 
 interface CourseDetail {
-  id: string;
+id: string;
   title: string;
   description: string;
   priceCents: number;
@@ -312,10 +312,17 @@ useEffect(() => {
       setVideoInputKey((prev) => prev + 1); // Reset video input
       showToast("Lesson added.");
       await fetchCourse();
-    } catch (err: any) {
-      console.error("Error adding lesson:", err);
-      setError(err?.response?.data?.message || "Failed to add lesson.");
-    } finally {
+} catch (err: any) {
+  console.error("Error adding lesson:", err);
+  console.error("STATUS:", err?.response?.status);
+  console.error("DATA:", err?.response?.data);
+  console.error("REQUEST:", err?.config?.data);
+
+  setError(
+    err?.response?.data?.message ||
+    "Failed to add lesson."
+  );
+} finally {
       setIsAddingLesson(false);
     }
   };
@@ -701,7 +708,7 @@ useEffect(() => {
                                 Upload video
                                 <input
                                   type="file"
-                                  accept="video/*"
+                                  accept="video/mp4,video/quicktime,video/webm"
                                   className="sr-only"
                                   onChange={(e) => {
                                     const file = e.target.files?.[0];
@@ -830,7 +837,7 @@ useEffect(() => {
                               <input
                                 key={videoInputKey}
                                 type="file"
-                                accept="video/*"
+                                accept="video/mp4,video/quicktime,video/webm"
                                 onChange={(e) => setNewLessonVideoFile(e.target.files?.[0] || null)}
                                 className="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                               />
