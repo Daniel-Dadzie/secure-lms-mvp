@@ -88,7 +88,6 @@ const publicCourseSelect = {
           id: true,
           title: true,
           contentType: true,
-          contentUrl: true,
           durationSeconds: true,
           order: true,
         },
