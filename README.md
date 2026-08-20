@@ -1,4 +1,3 @@
-````markdown
 <p align="center">
   <img src="docs/architecture/system-overview.png" alt="Secure LMS Architecture" width="600"/>
 </p>
@@ -893,4 +892,4 @@ This project is proprietary. Unauthorized copying, distribution, modification, o
 <p align="center">
   Built with Next.js, Node.js, Express, PostgreSQL, Prisma, and modern security practices.
 </p>
-```
+
