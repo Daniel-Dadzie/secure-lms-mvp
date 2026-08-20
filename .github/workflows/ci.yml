@@ -33,6 +33,7 @@ jobs:
       JWT_REFRESH_EXPIRES_IN: 7d
       NODE_ENV: test
       CLIENT_URL: http://localhost:3000
+      STRIPE_SECRET_KEY: sk_test_dummy_key_for_ci
 
     steps:
       - name: Checkout code
