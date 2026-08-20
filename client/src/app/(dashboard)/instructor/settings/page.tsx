@@ -52,7 +52,13 @@ export default function InstructorSettingsPage() {
         region: profile.region ?? undefined,
       });
       setProfile(res.data.profile);
-      if (authStore.setUser) authStore.setUser(res.data.profile);
+      if (authStore.setUser && authStore.user) {
+        authStore.setUser({ 
+          ...authStore.user, 
+          fullName: res.data.profile.fullName, 
+          avatarUrl: res.data.profile.avatarUrl 
+        });
+      }
       setSuccess("Profile updated successfully.");
       setTimeout(() => setSuccess(null), 4000);
     } finally {
@@ -60,15 +66,40 @@ export default function InstructorSettingsPage() {
     }
   }
 
-  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+ async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !profile) return;
+    
+    setSuccess(null);
     try {
       const url = await uploadAvatar(file);
-      setProfile({ ...profile, avatarUrl: url });
-    } catch {
-      setSuccess(null);
-      // Brief inline feedback — settings page has no dedicated error banner
+      
+      // 1. Update local form profile state
+      const updatedProfile = { ...profile, avatarUrl: url };
+      setProfile(updatedProfile);
+
+      // 2. Instantly persist to the instructor profile backend endpoint
+      await api.patch("/instructor/profile", {
+        fullName: updatedProfile.fullName,
+        avatarUrl: url,
+        specialization: updatedProfile.specialization ?? "",
+        credentials: updatedProfile.credentials ?? "",
+        shortBio: updatedProfile.shortBio ?? "",
+        bio: updatedProfile.bio ?? "",
+        expertise: updatedProfile.expertise,
+        experienceYears: updatedProfile.experienceYears ?? undefined,
+        instructorCategory: updatedProfile.instructorCategory ?? "",
+      });
+
+      // 3. Instantly update global auth store so the TopBar reflects it immediately
+      if (authStore.setUser && authStore.user) {
+        authStore.setUser({ ...authStore.user, avatarUrl: url });
+      }
+
+      setSuccess("Profile photo updated successfully.");
+      setTimeout(() => setSuccess(null), 4000);
+    } catch (err) {
+      console.error("Failed to upload photo", err);
       alert("Failed to upload photo. Please try again.");
     }
   }

@@ -276,8 +276,16 @@ useEffect(() => {
               className="flex items-center gap-2.5 rounded-full pl-1.5 pr-3 py-1.5 hover:bg-slate-50 border border-transparent hover:border-slate-200 transition-all"
               aria-label="Profile menu"
             >
-              <div className="ring-2 ring-white shadow-sm rounded-full">
-                <Avatar name={user?.fullName} size="sm" />
+              <div className="ring-2 ring-white shadow-sm rounded-full overflow-hidden w-8 h-8 flex items-center justify-center bg-slate-100">
+                {user?.avatarUrl ? (
+                  <img 
+                    src={user.avatarUrl} 
+                    alt={user?.fullName || "Avatar"} 
+                    className="w-full h-full object-cover" 
+                  />
+                ) : (
+                  <Avatar name={user?.fullName} size="sm" />
+                )}
               </div>
               <span className="hidden text-sm font-bold text-slate-700 sm:block">
                 {user?.fullName?.split(" ")[0] || "Student"}

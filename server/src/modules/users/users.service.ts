@@ -4,7 +4,6 @@ import type { SafeUser } from "../auth/auth.types";
 import { sendPasswordResetEmail } from "../../services/email.service";
 import type { UpdateProfileInput, AdminResetPasswordInput } from "./users.schemas";
 
-
 function toSafeUser(user: {
   id: string;
   email: string;
@@ -13,7 +12,9 @@ function toSafeUser(user: {
   isActive: boolean;
   isEmailVerified: boolean;
   createdAt: Date;
-}): SafeUser {
+  avatarUrl?: string | null;
+  bio?: string | null;
+}): SafeUser & { avatarUrl?: string | null; bio?: string | null } {
   return {
     id: user.id,
     email: user.email,
@@ -22,6 +23,8 @@ function toSafeUser(user: {
     isActive: user.isActive,
     isEmailVerified: user.isEmailVerified,
     createdAt: user.createdAt,
+    avatarUrl: user.avatarUrl ?? null,
+    bio: user.bio ?? null,
   };
 }
 
@@ -32,18 +35,16 @@ export async function getProfile(userId: string): Promise<SafeUser> {
   const user = await prisma.user.findUnique({
     where: { id: userId },
   });
-
   if (!user || !user.isActive) {
     const error = new Error("User not found");
     (error as any).statusCode = 404;
     throw error;
   }
-
   return toSafeUser(user);
 }
 
 // ----------------------------------------------------------------------------
-// Update own profile
+// Update own profile (Fixed to persist avatarUrl, bio, and fullName)
 // ----------------------------------------------------------------------------
 export async function updateProfile(
   userId: string,
@@ -52,7 +53,9 @@ export async function updateProfile(
   const user = await prisma.user.update({
     where: { id: userId },
     data: {
-      ...(input.fullName && { fullName: input.fullName }),
+      ...(input.fullName !== undefined && { fullName: input.fullName }),
+      ...(input.avatarUrl !== undefined && { avatarUrl: input.avatarUrl }),
+      ...(input.bio !== undefined && { bio: input.bio }),
     },
   });
 
@@ -76,7 +79,6 @@ export async function listUsers(): Promise<SafeUser[]> {
   const users = await prisma.user.findMany({
     orderBy: { createdAt: "desc" },
   });
-
   return users.map(toSafeUser);
 }
 
@@ -90,15 +92,12 @@ export async function deactivateUser(
   const user = await prisma.user.findUnique({
     where: { id: targetUserId },
   });
-
   if (!user) {
     const error = new Error("User not found");
     (error as any).statusCode = 404;
     throw error;
   }
 
-  // Revoke all active refresh tokens for the suspended user —
-  // forces immediate re-authentication attempt which will fail
   await prisma.refreshToken.updateMany({
     where: {
       userId: targetUserId,
@@ -135,7 +134,6 @@ export async function activateUser(
   const user = await prisma.user.findUnique({
     where: { id: targetUserId },
   });
-
   if (!user) {
     const error = new Error("User not found");
     (error as any).statusCode = 404;
@@ -171,7 +169,6 @@ export async function resetUserPassword(
   const user = await prisma.user.findUnique({
     where: { id: targetUserId },
   });
-
   if (!user) {
     const error = new Error("User not found");
     (error as any).statusCode = 404;
@@ -179,13 +176,11 @@ export async function resetUserPassword(
   }
 
   const passwordHash = await bcrypt.hash(input.newPassword, 12);
-
   await prisma.user.update({
     where: { id: targetUserId },
     data: { passwordHash: passwordHash },
   });
 
-  // Revoke all sessions — user must log in with new password
   await prisma.refreshToken.updateMany({
     where: { userId: targetUserId, revokedAt: null },
     data: { revokedAt: new Date() },

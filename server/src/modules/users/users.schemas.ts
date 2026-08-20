@@ -7,6 +7,8 @@ export const updateProfileSchema = z.object({
     .max(100, "Full name must be at most 100 characters")
     .trim()
     .optional(),
+  avatarUrl: z.string().url("Invalid avatar URL").optional().nullable(),
+  bio: z.string().max(500, "Bio cannot exceed 500 characters").optional().nullable(),
 });
 
 export const adminResetPasswordSchema = z.object({

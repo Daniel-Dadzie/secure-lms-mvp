@@ -28,6 +28,8 @@ function toSafeUser(user: {
     isActive: user.isActive,
     isEmailVerified: user.isEmailVerified,
     createdAt: user.createdAt,
+    avatarUrl: user.avatarUrl ?? null,
+    bio: user.bio ?? null,
   };
 }
 

@@ -892,4 +892,3 @@ This project is proprietary. Unauthorized copying, distribution, modification, o
 <p align="center">
   Built with Next.js, Node.js, Express, PostgreSQL, Prisma, and modern security practices.
 </p>
-

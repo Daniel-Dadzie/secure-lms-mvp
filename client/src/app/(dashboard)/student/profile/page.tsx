@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { User, Mail, Shield, CheckCircle2, Save, Lock, Upload, FileText } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import { Avatar } from "@/components/ui/Avatar";
 import api from "@/lib/api";
 import { uploadAvatar } from "@/lib/upload.api";
+
+
 
 export default function StudentProfilePage() {
   const authStore = useAuthStore() as any;
@@ -16,6 +18,25 @@ export default function StudentProfilePage() {
   const [email, setEmail] = useState(user?.email || "");
   const [avatarUrl, setAvatarUrl] = useState(user?.avatarUrl || "");
   const [bio, setBio] = useState(user?.bio || "");
+
+  useEffect(() => {
+    async function fetchLatestProfile() {
+      try {
+        const res = await api.get("/users/profile");
+        const freshUser = res.data?.user;
+        if (freshUser) {
+          if (setUser) setUser(freshUser);
+          setFullName(freshUser.fullName || "");
+          setEmail(freshUser.email || "");
+          setAvatarUrl(freshUser.avatarUrl || "");
+          setBio(freshUser.bio || "");
+        }
+      } catch (err) {
+        console.error("Failed to fetch latest profile", err);
+      }
+    }
+    fetchLatestProfile();
+  }, [setUser]);
 
   // Password State
   const [currentPassword, setCurrentPassword] = useState("");
@@ -53,26 +74,26 @@ export default function StudentProfilePage() {
     }
   };
 
-  // Image Upload Handler (Instantly syncs with TopBar via Auth Store)
+// Image Upload Handler (Instantly syncs with TopBar via Auth Store)
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploadingImage(true);
     setUploadError(null);
+
     try {
       const uploadedUrl = await uploadAvatar(file);
       setAvatarUrl(uploadedUrl);
-
-      // Save to user profile on the backend
-      const updateRes = await api.patch("/users/profile", { fullName, avatarUrl: uploadedUrl, bio });
       
-      // Instantly update the global auth store so the TopBar reflects it immediately
-      const updatedUserData = updateRes.data?.user || { ...user, avatarUrl: uploadedUrl };
-      if (setUser) {
+      // Save to user profile on the backend
+      await api.patch("/users/profile", { fullName, avatarUrl: uploadedUrl, bio });
+      
+      // Explicitly merge the new avatarUrl with the existing user object and update global store
+      if (setUser && user) {
+        const updatedUserData = { ...user, avatarUrl: uploadedUrl };
         setUser(updatedUserData);
-      } else {
-        window.location.reload(); // Fallback reload if store setter is absent
       }
 
       setSuccessMessage("Profile photo updated successfully!");
@@ -84,7 +105,6 @@ export default function StudentProfilePage() {
       setIsUploadingImage(false);
     }
   };
-
   // Password Update Handler
   const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,12 +169,21 @@ export default function StudentProfilePage() {
               <p className="text-xs text-slate-500 font-medium mt-0.5">{email}</p>
             </div>
             
-            {/* Photo Upload Trigger */}
+{/* Photo Upload Trigger */}
             <div>
-              <label className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-sm">
+              <input 
+                type="file" 
+                id="avatar-upload" 
+                accept="image/*" 
+                onChange={handleImageUpload} 
+                className="hidden" 
+              />
+              <label 
+                htmlFor="avatar-upload" 
+                className="inline-flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer transition-all shadow-sm"
+              >
                 <Upload className="w-3.5 h-3.5" />
                 <span>{isUploadingImage ? "Uploading..." : "Change Photo"}</span>
-                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
               </label>
             </div>
 
