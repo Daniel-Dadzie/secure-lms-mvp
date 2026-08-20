@@ -44,6 +44,8 @@ export interface SafeUser {
   isActive: boolean;
   isEmailVerified: boolean;
   createdAt: Date;
+  avatarUrl?: string | null;
+  bio?: string | null;
 }
 
 // ----------------------------------------------------------------------------
