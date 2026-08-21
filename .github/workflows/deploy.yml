@@ -120,7 +120,7 @@ jobs:
             --comment "Secure LMS deployment ${IMAGE_TAG}" \
             --timeout-seconds 900 \
             --parameters "commands=[
-              \"set -euo pipefail\",
+              \"set -eu\",
               \"cd /home/ubuntu/secure-lms-mvp\",
               \"export IMAGE_TAG=${IMAGE_TAG}\",
               \"echo '=== Secure LMS deployment ==='\",
