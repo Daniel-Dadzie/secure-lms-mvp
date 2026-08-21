@@ -119,6 +119,8 @@ jobs:
             --parameters 'commands=[
               "set -e",
               "cd /home/ubuntu/secure-lms-mvp",
+              "git fetch origin feature/auto-deployment",
+              "git reset --hard origin/feature/auto-deployment",
               "export IMAGE_TAG='"${GITHUB_SHA}"'",
               "aws ecr get-login-password --region '"${AWS_REGION}"' | docker login --username AWS --password-stdin '"${ECR_REGISTRY}"'",
               "docker pull '"${ECR_REGISTRY}/${BACKEND_REPOSITORY}:${GITHUB_SHA}"'",
