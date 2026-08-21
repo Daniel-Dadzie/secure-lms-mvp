@@ -62,7 +62,7 @@ function SupportContact() {
 
 function PaymentVerification() {
   const searchParams = useSearchParams();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, isLoading: authLoading } = useAuthStore();
 
   // Paystack can send either "reference" or "trxref".
   const reference =
@@ -145,6 +145,23 @@ function PaymentVerification() {
 
         <p className="mt-2 text-sm text-slate-500">
           Please do not close this window.
+        </p>
+      </div>
+    );
+  }
+
+  if (status === "success" && authLoading) {
+    return (
+      <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
+        <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-[#196A54]" />
+
+        <h1 className="text-2xl font-bold text-slate-900">
+          Restoring your session...
+        </h1>
+
+        <p className="mt-2 text-sm text-slate-500">
+          Your payment has been confirmed. We&apos;re restoring your account so
+          you can access your course.
         </p>
       </div>
     );

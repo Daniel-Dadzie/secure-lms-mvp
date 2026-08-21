@@ -1,3 +1,7 @@
+import axios, {
+  type AxiosError,
+  type InternalAxiosRequestConfig,
+} from "axios";
 import axios from "axios";
 import { useAuthStore } from "@/store/auth.store";
 
@@ -13,43 +17,28 @@ export const api = axios.create({
 });
 
 // ----------------------------------------------------------------------------
-// Secure In-Memory Token Storage
-// Tokens live only in this file's closure, protecting them from XSS.
-// ----------------------------------------------------------------------------
-let _accessToken: string | null = null;
-
-export function getAccessToken(): string | null {
-  return _accessToken;
-}
-
-export function setAccessToken(token: string): void {
-  _accessToken = token;
-}
-
-export function clearAccessToken(): void {
-  _accessToken = null;
-}
-
-// ----------------------------------------------------------------------------
-// Request Interceptor
+// Request interceptor — attach access token from memory to every request.
+// Token is never read from localStorage (security requirement).
+// It comes from the Zustand auth store (in-memory only).
 // ----------------------------------------------------------------------------
 api.interceptors.request.use((config) => {
   const token = getAccessToken();
-  
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  
-  // Strip Content-Type for file uploads (avatars, thumbnails, videos)
+  // Let the browser set multipart boundary — the default application/json
+  // header breaks file uploads (avatar, thumbnails).
   if (config.data instanceof FormData) {
     delete config.headers["Content-Type"];
   }
-  
   return config;
 });
 
 // ----------------------------------------------------------------------------
-// Response Interceptor — Silent Refresh & Request Queuing
+// Response interceptor — on 401, attempt a silent token refresh then retry.
+// If refresh fails, clear auth state and redirect to login.
+// This handles the case where the access token expires mid-session without
+// forcing the user to manually log in again.
 // ----------------------------------------------------------------------------
 let isRefreshing = false;
 let failedQueue: Array<{
@@ -73,18 +62,24 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Never attempt a refresh-and-retry for the refresh/login/register
+    // endpoints themselves. Retrying a failed /auth/refresh call by calling
+    // /auth/refresh again deadlocks: the first call's isRefreshing lock
+    // never releases because it's waiting on a queued promise from the
+    // second call, which is waiting on the same lock. This hits on every
+    // single first-time visitor with no session cookie yet.
     const isAuthEndpoint =
       originalRequest.url?.includes("/auth/refresh") ||
       originalRequest.url?.includes("/auth/login") ||
       originalRequest.url?.includes("/auth/register");
 
-    // If 401, not a retry, and not an auth endpoint, attempt silent refresh
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
       !isAuthEndpoint
     ) {
       if (isRefreshing) {
+        // Queue this request until the refresh completes
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })
@@ -111,10 +106,7 @@ api.interceptors.response.use(
         processQueue(refreshError, null);
         clearAccessToken();
 
-        try {
-          useAuthStore.getState().clearAuth();
-        } catch {}
-
+        // Redirect to login if we're in the browser
         if (typeof window !== "undefined") {
           window.location.href = "/login";
         }
@@ -128,5 +120,23 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// ----------------------------------------------------------------------------
+// In-memory token storage — never localStorage or sessionStorage.
+// Token lives only for the duration of this browser tab session.
+// ----------------------------------------------------------------------------
+let _accessToken: string | null = null;
+
+export function getAccessToken(): string | null {
+  return _accessToken;
+}
+
+export function setAccessToken(token: string): void {
+  _accessToken = token;
+}
+
+export function clearAccessToken(): void {
+  _accessToken = null;
+}
 
 export default api;

@@ -13,7 +13,7 @@ export default function HealthCheckPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/health`)
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/health`)
       .then((res) => res.json())
       .then(setHealth)
       .catch(() => setError("Could not reach backend"));
