@@ -29,3 +29,50 @@ jobs:
             --repository-names \
               secure-lms-backend \
               secure-lms-frontend
+
+      - name: Verify SSM access
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          INSTANCE_ID="i-0db943f6c525965c1"
+
+          COMMAND_ID="$(
+            aws ssm send-command \
+              --region eu-west-1 \
+              --instance-ids "$INSTANCE_ID" \
+              --document-name "AWS-RunShellScript" \
+              --parameters 'commands=["echo Secure LMS SSM connectivity test successful"]' \
+              --query "Command.CommandId" \
+              --output text
+          )"
+
+          echo "SSM Command ID: $COMMAND_ID"
+
+          aws ssm wait command-executed \
+            --region eu-west-1 \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID"
+
+          STATUS="$(
+            aws ssm get-command-invocation \
+              --region eu-west-1 \
+              --command-id "$COMMAND_ID" \
+              --instance-id "$INSTANCE_ID" \
+              --query "Status" \
+              --output text
+          )"
+
+          echo "SSM command status: $STATUS"
+
+          if [ "$STATUS" != "Success" ]; then
+            echo "SSM command failed."
+            exit 1
+          fi
+
+          aws ssm get-command-invocation \
+            --region eu-west-1 \
+            --command-id "$COMMAND_ID" \
+            --instance-id "$INSTANCE_ID" \
+            --query "StandardOutputContent" \
+            --output text
