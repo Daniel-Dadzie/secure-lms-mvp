@@ -3,7 +3,7 @@ name: Build and Deploy
 on:
   push:
     branches:
-      - feature/auto-deployment
+      - main
   workflow_dispatch:
 
 permissions:
