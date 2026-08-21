@@ -242,12 +242,15 @@ function CoursesContent() {
         </div>
       </section>
 
+
       {/* Filters */}
       <section className="sticky top-20 z-40 border-b border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 lg:px-8">
         <div className="mx-auto max-w-[1400px]">
           <div className="mb-4 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative">
+            
+            {/* Search and Dropdowns Container */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+              <div className="relative w-full sm:w-auto">
                 <svg
                   className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#196A54]/60"
                   fill="none"
@@ -261,37 +264,38 @@ function CoursesContent() {
                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                   />
                 </svg>
-
                 <input
                   type="text"
                   placeholder="Search courses or instructors..."
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  className="w-64 rounded-full border border-[#196A54]/20 py-2 pl-10 pr-4 text-sm text-slate-700 outline-none transition-all placeholder:text-[#196A54]/50 focus:border-[#0A4A3A] focus:ring-2 focus:ring-[#0A4A3A]"
+                  className="w-full sm:w-64 rounded-full border border-[#196A54]/20 py-2 pl-10 pr-4 text-sm text-slate-700 outline-none transition-all placeholder:text-[#196A54]/50 focus:border-[#0A4A3A] focus:ring-2 focus:ring-[#0A4A3A]"
                 />
               </div>
 
-              <select
-                value={level}
-                onChange={(event) => setLevel(event.target.value)}
-                className="cursor-pointer rounded-full border border-[#196A54]/20 bg-white px-4 py-2 text-sm font-medium text-[#0A4A3A] outline-none focus:ring-2 focus:ring-[#0A4A3A]"
-              >
-                <option value="">All Levels</option>
-                <option value="BEGINNER">Beginner</option>
-                <option value="INTERMEDIATE">Intermediate</option>
-                <option value="ADVANCED">Advanced</option>
-                <option value="ALL_LEVELS">All Levels</option>
-              </select>
-
-              <select
-                value={priceFilter}
-                onChange={(event) => setPriceFilter(event.target.value)}
-                className="cursor-pointer rounded-full border border-[#196A54]/20 bg-white px-4 py-2 text-sm font-medium text-[#0A4A3A] outline-none focus:ring-2 focus:ring-[#0A4A3A]"
-              >
-                <option value="">Any Price</option>
-                <option value="free">Free</option>
-                <option value="paid">Paid</option>
-              </select>
+              {/* Dropdowns in a 2-column grid on mobile */}
+              <div className="grid grid-cols-2 sm:flex items-center gap-2">
+                <select
+                  value={level}
+                  onChange={(event) => setLevel(event.target.value)}
+                  className="w-full cursor-pointer rounded-full border border-[#196A54]/20 bg-white px-3 sm:px-4 py-2 text-sm font-medium text-[#0A4A3A] outline-none focus:ring-2 focus:ring-[#0A4A3A]"
+                >
+                  <option value="">All Levels</option>
+                  <option value="BEGINNER">Beginner</option>
+                  <option value="INTERMEDIATE">Intermediate</option>
+                  <option value="ADVANCED">Advanced</option>
+                  <option value="ALL_LEVELS">All Levels</option>
+                </select>
+                <select
+                  value={priceFilter}
+                  onChange={(event) => setPriceFilter(event.target.value)}
+                  className="w-full cursor-pointer rounded-full border border-[#196A54]/20 bg-white px-3 sm:px-4 py-2 text-sm font-medium text-[#0A4A3A] outline-none focus:ring-2 focus:ring-[#0A4A3A]"
+                >
+                  <option value="">Any Price</option>
+                  <option value="free">Free</option>
+                  <option value="paid">Paid</option>
+                </select>
+              </div>
             </div>
 
             <div className="whitespace-nowrap text-sm font-medium text-slate-500">
@@ -303,12 +307,12 @@ function CoursesContent() {
             </div>
           </div>
 
-          {/* Category pills */}
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Category pills — Horizontally scrollable on mobile, wrapping on larger screens */}
+          <div className="flex flex-nowrap sm:flex-wrap items-center gap-2 overflow-x-auto pb-2 scrollbar-none whitespace-nowrap -mx-4 px-4 sm:mx-0 sm:px-0">
             <button
               type="button"
               onClick={() => setSelectedCategory("")}
-              className={`rounded-full px-5 py-1.5 text-sm font-bold transition-all ${
+              className={`rounded-full px-5 py-1.5 text-sm font-bold transition-all shrink-0 ${
                 !selectedCategory
                   ? "bg-[#0A4A3A] text-white"
                   : "border border-[#196A54]/30 bg-[#F4F9F7] text-[#0A4A3A] hover:bg-[#196A54]/10"
@@ -316,7 +320,6 @@ function CoursesContent() {
             >
               All
             </button>
-
             {categories.map((category) => (
               <button
                 type="button"
@@ -328,7 +331,7 @@ function CoursesContent() {
                       : category.id
                   )
                 }
-                className={`rounded-full px-5 py-1.5 text-sm font-bold transition-all ${
+                className={`rounded-full px-5 py-1.5 text-sm font-bold transition-all shrink-0 ${
                   selectedCategory === category.id
                     ? "border-2 border-[#0A4A3A] bg-[#0A4A3A] text-white shadow-md"
                     : "border border-[#196A54]/30 bg-[#F4F9F7] text-[#0A4A3A] hover:bg-[#196A54]/10"
@@ -340,6 +343,8 @@ function CoursesContent() {
           </div>
         </div>
       </section>
+
+
 
       {/* Course grid */}
       <section className="mx-auto max-w-[1400px] px-4 py-12 sm:px-6 lg:px-8">
