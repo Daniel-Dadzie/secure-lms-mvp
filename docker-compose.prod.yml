@@ -23,9 +23,7 @@ services:
       - lms_internal
 
   backend:
-    build:
-      context: .
-      dockerfile: server/Dockerfile
+    image: 666036096298.dkr.ecr.eu-west-1.amazonaws.com/secure-lms-backend:${IMAGE_TAG}
 
     container_name: secure-lms-backend
     restart: unless-stopped
@@ -60,7 +58,6 @@ services:
       SMTP_PASS: ${SMTP_PASS}
       SMTP_FROM: ${SMTP_FROM}
 
-      # Help Center Chatbot (OpenRouter)
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
       OPENROUTER_MODEL: ${OPENROUTER_MODEL}
       CHATBOT_RETRIEVAL_THRESHOLD: ${CHATBOT_RETRIEVAL_THRESHOLD}
@@ -78,18 +75,7 @@ services:
       - lms_internal
 
   frontend:
-    build:
-      context: .
-      dockerfile: client/Dockerfile
-      args:
-        NEXT_PUBLIC_API_URL: /api
-        NEXT_PUBLIC_FIREBASE_API_KEY: ${NEXT_PUBLIC_FIREBASE_API_KEY}
-        NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN}
-        NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${NEXT_PUBLIC_FIREBASE_PROJECT_ID}
-        NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: ${NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET}
-        NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID}
-        NEXT_PUBLIC_FIREBASE_APP_ID: ${NEXT_PUBLIC_FIREBASE_APP_ID}
-        NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY: ${NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY}
+    image: 666036096298.dkr.ecr.eu-west-1.amazonaws.com/secure-lms-frontend:${IMAGE_TAG}
 
     container_name: secure-lms-frontend
     restart: unless-stopped
