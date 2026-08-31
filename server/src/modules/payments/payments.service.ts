@@ -5,9 +5,7 @@ import { PLATFORM_CURRENCY } from "../../config/platform";
 import { createNotification } from "../notifications/notifications.service";
 import { logActivity } from "../../lib/activityLog";
 import { resolveUserRegion } from "../../lib/resolveUserRegion";
-
-import Stripe from "stripe";
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+import { paystack } from "../../config/paystack";
 
 function resolveCheckoutRegion(timezone?: string) {
   return resolveUserRegion({ timezone });
@@ -29,23 +27,19 @@ export async function checkout(
     where: { id: courseId, status: "PUBLISHED", isActive: true },
     select: { id: true, title: true, priceCents: true },
   });
-
   if (!course) {
     const error = new Error("Course not found or not available");
     (error as any).statusCode = 404;
     throw error;
   }
-
   const existingEnrollment = await prisma.enrollment.findUnique({
     where: { userId_courseId: { userId, courseId } },
   });
-
   if (existingEnrollment) {
     const error = new Error("You are already enrolled in this course");
     (error as any).statusCode = 409;
     throw error;
   }
-
   const user = await prisma.user.findUnique({
     where: { id: userId },
     select: { email: true },
@@ -56,13 +50,10 @@ export async function checkout(
     throw error;
   }
 
-  // Coupon validation — same logic as before, just computed up front
-  // rather than inside a completion transaction.
+  // Coupon validation
   let coupon: { id: string; discountType: "PERCENTAGE" | "FIXED_AMOUNT"; discountValue: number } | null = null;
-
   if (couponCode) {
     const foundCoupon = await prisma.coupon.findUnique({ where: { code: couponCode } });
-
     if (!foundCoupon || !foundCoupon.isActive) {
       const error = new Error("Coupon is invalid or no longer active");
       (error as any).statusCode = 400;
@@ -78,7 +69,6 @@ export async function checkout(
       (error as any).statusCode = 400;
       throw error;
     }
-
     const existingUsage = await prisma.couponUsage.findUnique({
       where: { couponId_userId: { couponId: foundCoupon.id, userId } },
     });
@@ -87,7 +77,6 @@ export async function checkout(
       (error as any).statusCode = 409;
       throw error;
     }
-
     coupon = {
       id: foundCoupon.id,
       discountType: foundCoupon.discountType,
@@ -97,7 +86,6 @@ export async function checkout(
 
   const amountCents = course.priceCents;
   let discountCents = 0;
-
   if (coupon) {
     discountCents =
       coupon.discountType === "PERCENTAGE"
@@ -105,7 +93,6 @@ export async function checkout(
         : coupon.discountValue;
     discountCents = Math.min(discountCents, amountCents);
   }
-
   const finalAmountCents = amountCents - discountCents;
   const reference = `PSK-${crypto.randomUUID()}`;
   const { region: buyerRegion, timezone: buyerTimezone } = resolveCheckoutRegion(timezone);
@@ -137,46 +124,38 @@ export async function checkout(
     });
   }
 
-const session = await stripe.checkout.sessions.create({
-    payment_method_types: ['card'],
-    mode: 'payment',
-    customer_email: user.email,
-    client_reference_id: reference, 
-    line_items: [
-      {
-        price_data: {
-          currency: PLATFORM_CURRENCY.toLowerCase(),
-          product_data: { name: course.title },
-          unit_amount: finalAmountCents,
-        },
-        quantity: 1,
-      },
-    ],
-    success_url: `${process.env.CLIENT_URL}/payment/callback?reference=${reference}`,
-    cancel_url: `${process.env.CLIENT_URL}/course/${courseId}`,
+  // Initialize Paystack Transaction
+  const paystackResponse = await paystack.post("/transaction/initialize", {
+    email: user.email,
+    amount: finalAmountCents,
+    currency: PLATFORM_CURRENCY,
+    reference,
+    callback_url: `${process.env.CLIENT_URL}/payment/callback?reference=${reference}`,
+    metadata: {
+      userId,
+      courseId,
+      purchaseId: purchase.id,
+    },
   });
 
-  return { authorizationUrl: session.url, reference, purchase };
+  const authorizationUrl = paystackResponse.data.data.authorization_url;
+  return { authorizationUrl, reference, purchase };
 }
 
 // ----------------------------------------------------------------------------
 // Initiate checkout for the whole cart as ONE Paystack transaction. All
 // cart items share a single reference; the webhook completes them together.
-// Coupons are not supported here, matching the existing single-coupon
-// design constraint (@@unique([couponId, userId]) on CouponUsage).
 // ----------------------------------------------------------------------------
 export async function checkoutCart(userId: string, timezone?: string) {
   const cart = await prisma.cart.findUnique({
     where: { userId },
     include: { items: { include: { course: true } } },
   });
-
   if (!cart || cart.items.length === 0) {
     const error = new Error("Cart is empty");
     (error as any).statusCode = 400;
     throw error;
   }
-
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } });
   if (!user) {
     const error = new Error("User not found");
@@ -186,7 +165,6 @@ export async function checkoutCart(userId: string, timezone?: string) {
 
   const eligibleItems = [];
   const skipped = [];
-
   for (const item of cart.items) {
     const existing = await prisma.enrollment.findUnique({
       where: { userId_courseId: { userId, courseId: item.courseId } },
@@ -242,57 +220,41 @@ export async function checkoutCart(userId: string, timezone?: string) {
     });
   }
 
-const session = await stripe.checkout.sessions.create({
-    payment_method_types: ['card'],
-    mode: 'payment',
-    customer_email: user.email,
-    client_reference_id: reference,
-    line_items: [
-      {
-        price_data: {
-          currency: PLATFORM_CURRENCY.toLowerCase(),
-          product_data: { name: "Secure LMS Cart Checkout" },
-          unit_amount: totalAmountCents,
-        },
-        quantity: 1,
-      },
-    ],
-    success_url: `${process.env.CLIENT_URL}/payment/callback?reference=${reference}`,
-    cancel_url: `${process.env.CLIENT_URL}/cart`,
+  // Initialize Paystack Cart Transaction
+  const paystackResponse = await paystack.post("/transaction/initialize", {
+    email: user.email,
+    amount: totalAmountCents,
+    currency: PLATFORM_CURRENCY,
+    reference,
+    callback_url: `${process.env.CLIENT_URL}/payment/callback?reference=${reference}`,
+    metadata: {
+      userId,
+      isCartCheckout: true,
+    },
   });
 
-  return { authorizationUrl: session.url, reference, purchases, skipped };
+  const authorizationUrl = paystackResponse.data.data.authorization_url;
+  return { authorizationUrl, reference, purchases, skipped };
 }
 
 // ----------------------------------------------------------------------------
-// Complete all PENDING purchases sharing a reference — the actual
-// enrollment/certificate-eligible/notification logic that used to run
-// inline in checkout(). Called ONLY from the webhook handler or the verify
-// fallback, never directly from a client-facing route. Idempotent: if
-// purchases are already COMPLETED, this safely no-ops (Paystack may
-// legitimately resend the same webhook event more than once).
+// Complete all PENDING purchases sharing a reference
 // ----------------------------------------------------------------------------
 export async function completePurchasesByReference(reference: string): Promise<void> {
   const pendingPurchases = await prisma.purchase.findMany({
     where: { providerReference: reference, status: "PENDING" },
     include: { course: { select: { title: true, instructorId: true, modules: { select: { lessons: { select: { id: true } } } } } } },
   });
-
   if (pendingPurchases.length === 0) {
-    // Already completed (duplicate webhook) or reference doesn't exist —
-    // either way, nothing to do. Not an error.
     return;
   }
-
   for (const purchase of pendingPurchases) {
     const lessonIds = purchase.course.modules.flatMap((m: any) => m.lessons.map((l: any) => l.id));
-
     await prisma.$transaction(async (tx: any) => {
       await tx.purchase.update({
         where: { id: purchase.id },
         data: { status: "COMPLETED" },
       });
-
       const enrollment = await tx.enrollment.create({
         data: {
           userId: purchase.userId,
@@ -301,7 +263,6 @@ export async function completePurchasesByReference(reference: string): Promise<v
           status: "ACTIVE",
         },
       });
-
       if (lessonIds.length > 0) {
         await tx.lessonProgress.createMany({
           data: lessonIds.map((lessonId: string) => ({
@@ -314,7 +275,6 @@ export async function completePurchasesByReference(reference: string): Promise<v
           skipDuplicates: true,
         });
       }
-
       if (purchase.couponId) {
         await tx.couponUsage.create({
           data: {
@@ -329,11 +289,9 @@ export async function completePurchasesByReference(reference: string): Promise<v
           data: { usedCount: { increment: 1 } },
         });
       }
-
       await tx.cartItem.deleteMany({
         where: { courseId: purchase.courseId, cart: { userId: purchase.userId } },
       });
-
       await tx.auditEvent.create({
         data: {
           userId: purchase.userId,
@@ -350,7 +308,6 @@ export async function completePurchasesByReference(reference: string): Promise<v
           },
         },
       });
-
       await createNotification(
         purchase.userId,
         "ENROLLMENT_CONFIRMED",
@@ -358,7 +315,6 @@ export async function completePurchasesByReference(reference: string): Promise<v
         `You're now enrolled in ${purchase.course.title}.`,
         { courseId: purchase.courseId }
       );
-
       await createNotification(
         purchase.course.instructorId,
         "NEW_ENROLLMENT",
@@ -367,15 +323,12 @@ export async function completePurchasesByReference(reference: string): Promise<v
         { courseId: purchase.courseId, enrollmentId: enrollment.id }
       );
     });
-
     await logActivity({
       userId: purchase.userId,
       title: `Enrolled in "${purchase.course.title}"`,
       description: "Purchase confirmed",
       iconType: "enrolled",
     });
-
-    // Best-effort push notification — never block payment completion on this
     try {
       await firebaseMessaging.send({
         topic: `user-${purchase.userId}`,
@@ -393,8 +346,8 @@ export async function completePurchasesByReference(reference: string): Promise<v
 
 // ----------------------------------------------------------------------------
 // Fallback verification for the frontend's post-redirect callback page.
-// Re-checks with Paystack directly (never trusts the redirect alone) —
-// covers the case where the user lands back before the webhook has arrived.
+// Re-checks with Paystack directly via API (bypassing webhook dependency) —
+// covers local testing where webhooks might fail or get delayed.
 // ----------------------------------------------------------------------------
 export async function verifyAndComplete(reference: string, userId: string | null) {
   const purchases = await prisma.purchase.findMany({
@@ -409,20 +362,17 @@ export async function verifyAndComplete(reference: string, userId: string | null
       },
     },
   });
-
   if (purchases.length === 0) {
     const error = new Error("Purchase not found");
     (error as any).statusCode = 404;
     throw error;
   }
-
   // If userId is provided, verify ownership
   if (userId && purchases[0].userId !== userId) {
     const error = new Error("Purchase not found");
     (error as any).statusCode = 404;
     throw error;
   }
-
   if (purchases[0].status === "COMPLETED") {
     return {
       status: "COMPLETED" as const,
@@ -430,13 +380,26 @@ export async function verifyAndComplete(reference: string, userId: string | null
     };
   }
 
+  // Direct Paystack API Verification Fallback
+  try {
+    const response = await paystack.get(`/transaction/verify/${reference}`);
+    const txData = response.data?.data;
+    if (txData && txData.status === "success") {
+      await completePurchasesByReference(reference);
+      return {
+        status: "COMPLETED" as const,
+        courses: purchases.map((p: any) => ({ id: p.course.id, title: p.course.title, slug: p.course.slug })),
+      };
+    }
+  } catch (err) {
+    console.error("Paystack direct verification fallback failed:", err);
+  }
+
   return { status: purchases[0].status as string, courses: [] };
 }
 
-
-
 // ----------------------------------------------------------------------------
-// Get student's purchase history (unchanged)
+// Get student's purchase history
 // ----------------------------------------------------------------------------
 export async function getPurchaseHistory(userId: string) {
   return prisma.purchase.findMany({
@@ -458,7 +421,6 @@ export async function getPurchaseById(purchaseId: string, userId: string) {
     where: { id: purchaseId },
     include: { course: { select: { id: true, title: true, slug: true, thumbnailUrl: true } } },
   });
-
   if (!purchase) {
     const error = new Error("Purchase not found");
     (error as any).statusCode = 404;
@@ -469,6 +431,5 @@ export async function getPurchaseById(purchaseId: string, userId: string) {
     (error as any).statusCode = 404;
     throw error;
   }
-
   return purchase;
 }

@@ -7,6 +7,7 @@ import api from "@/lib/api";
 import { Search, Star } from "lucide-react";
 import PageHero from "@/components/shared/PageHero";
 import CtaBanner from "@/components/shared/CtaBanner";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
 
 interface Instructor {
   id: string;
@@ -59,20 +60,17 @@ export default function InstructorsPage() {
     return matchesSearch && matchesCategory;
   });
 
-  // Extract unique categories from actual instructors
   const availableCategories = Array.from(new Set(instructors.map(inst => inst.category)));
   const categoriesToDisplay = CATEGORIES.filter(cat => cat === "All" || availableCategories.includes(cat));
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Clean Hero Without Overlap */}
       <PageHero
         badge="World-Class Educators"
         title="Meet Our Instructors"
         subtitle="Learn from 200+ engineers with deep industry experience at Boeing, Tesla, NASA, Siemens, and beyond."
       />
 
-      {/* Sticky Search & Filter Bar Section */}
       <div className="sticky top-20 z-30 bg-slate-50/90 backdrop-blur-md py-4 border-b border-slate-200/60 shadow-sm transition-all">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 flex flex-col lg:flex-row items-center justify-between gap-4">
@@ -108,12 +106,25 @@ export default function InstructorsPage() {
         </div>
       </div>
 
-      {/* Instructors Grid Content */}
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10 flex-1 w-full space-y-12">
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-96 bg-white rounded-2xl border border-slate-200 p-6 animate-pulse shadow-sm" />
+              <div key={i} className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-sm space-y-6">
+                <div className="space-y-4 text-center">
+                  <LoadingSkeleton className="w-24 h-24 rounded-full mx-auto" />
+                  <div className="space-y-2">
+                    <LoadingSkeleton className="h-5 w-3/4 mx-auto" />
+                    <LoadingSkeleton className="h-3 w-1/2 mx-auto" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2 py-3 border-t border-b border-slate-100">
+                  <LoadingSkeleton className="h-8 w-full" />
+                  <LoadingSkeleton className="h-8 w-full" />
+                  <LoadingSkeleton className="h-8 w-full" />
+                </div>
+                <LoadingSkeleton className="h-10 w-full rounded-xl" />
+              </div>
             ))}
           </div>
         ) : filteredInstructors.length > 0 ? (

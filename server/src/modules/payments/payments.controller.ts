@@ -1,12 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import * as paymentsService from "./payments.service";
-
 import { z } from "zod";
-
-
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+import crypto from "crypto";
 
 const checkoutSchema = z.object({
   courseId: z.string().uuid("Invalid course ID"),
@@ -59,44 +54,34 @@ export async function checkoutCart(req: Request, res: Response, next: NextFuncti
 }
 
 // ----------------------------------------------------------------------------
-// Paystack webhook — public, but every request is verified via HMAC
-// signature before any data is trusted. Always responds 200 quickly once
-// verified, even if internal processing is still async, per Paystack's
-// requirements.
-// ----------------------------------------------------------------------------
-// ----------------------------------------------------------------------------
-// Stripe webhook — public, but every request is verified via Stripe's
-// digital signature before any data is trusted.
+// Paystack webhook — public, verified via HMAC SHA512 signature using
+// Paystack's secret key before any data is trusted. Responds 200 immediately.
 // ----------------------------------------------------------------------------
 export async function webhook(req: Request, res: Response): Promise<void> {
-  const signature = req.headers["stripe-signature"] as string;
-  const rawBody = (req as any).rawBody;
+  const signature = req.headers["x-paystack-signature"] as string;
 
-  if (!signature || !rawBody) {
-    res.status(400).json({ message: "Missing signature or payload body" });
+  if (!signature) {
+    res.status(400).json({ message: "Missing Paystack signature header" });
     return;
   }
 
-  let event: Stripe.Event;
+  const secret = process.env.PAYSTACK_SECRET_KEY || "";
+  const hash = crypto
+    .createHmac("sha512", secret)
+    .update(JSON.stringify(req.body))
+    .digest("hex");
 
-  try {
-    // This verifies the signature and parses the raw data safely
-    event = stripe.webhooks.constructEvent(
-      rawBody,
-      signature,
-      process.env.STRIPE_WEBHOOK_SECRET as string
-    );
-  } catch (err: any) {
-    console.error("Stripe Webhook signature verification failed:", err.message);
-    res.status(401).send(`Webhook Error: ${err.message}`);
+  if (hash !== signature) {
+    res.status(401).json({ message: "Invalid signature" });
     return;
   }
 
-  // If the payment is completely successful, enroll the student!
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const reference = session.client_reference_id;
+  // Acknowledge receipt to Paystack immediately
+  res.status(200).json({ received: true });
 
+  const event = req.body;
+  if (event && event.event === "charge.success") {
+    const reference = event.data?.reference;
     if (reference) {
       try {
         await paymentsService.completePurchasesByReference(reference);
@@ -105,15 +90,10 @@ export async function webhook(req: Request, res: Response): Promise<void> {
       }
     }
   }
-
-  // Acknowledge receipt to Stripe immediately
-  res.status(200).json({ received: true });
 }
 
 export async function verifyPayment(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    // Allow verification without authentication for the callback page
-    // The reference is enough to identify and verify the purchase
     const userId = (req as any).user?.sub;
     const result = await paymentsService.verifyAndComplete(req.params.reference as string, userId);
     res.status(200).json(result);

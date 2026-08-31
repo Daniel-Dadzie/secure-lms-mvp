@@ -6,10 +6,10 @@ import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Award, BookOpen, GraduationCap } from "lucide-react";
 import { StatCard } from "@/components/ui/StatCard";
 import { ProgressBar } from "@/components/ui/ProgressBar";
-import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
 import { formatPrice } from "@/lib/currency";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
+import { LoadingSkeleton, CourseCardSkeleton, StatCardSkeleton } from "@/components/ui/LoadingSkeleton";
 
 interface DashboardData {
   stats: {
@@ -52,14 +52,12 @@ export default function StudentDashboard() {
   const { user } = useAuthStore();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get("search")?.toLowerCase() || "";
-
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-
     async function fetchDashboard() {
       try {
         const res = await api.get("/student/dashboard");
@@ -71,27 +69,22 @@ export default function StudentDashboard() {
         if (!cancelled) setLoading(false);
       }
     }
-
     void fetchDashboard();
     return () => { cancelled = true; };
   }, []);
 
-  // Filter active and recommended courses dynamically based on search parameter
   const filteredActiveCourses = data?.activeCourses?.filter((course) =>
     course.title.toLowerCase().includes(searchQuery)
   ) || [];
-
   const filteredRecommendedCourses = data?.recommendedCourses?.filter((course) =>
     course.title.toLowerCase().includes(searchQuery)
   ) || [];
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
-
       {/* 1. HERO BANNER */}
       <section className="bg-[#196A54] rounded-2xl p-8 text-white relative overflow-hidden shadow-lg border border-[#12503F]">
         <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10 mix-blend-overlay"></div>
-
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
           <div className="flex-1">
             <p className="text-teal-100 font-medium mb-1">Welcome back 👋</p>
@@ -103,13 +96,11 @@ export default function StudentDashboard() {
                 ? "Loading your progress..."
                 : `${data?.stats?.activeCoursesCount ?? 0} in progress · ${data?.stats?.completedCoursesCount ?? data?.stats?.certificates ?? 0} completed`}
             </p>
-
             {loading ? (
-              <div className="flex flex-wrap gap-8">
-                <LoadingSkeleton className="h-16 w-24 bg-white/20" />
-                <LoadingSkeleton className="h-16 w-24 bg-white/20" />
-                <LoadingSkeleton className="h-16 w-24 bg-white/20" />
-                <LoadingSkeleton className="h-16 w-24 bg-white/20" />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg">
+                <StatCardSkeleton />
+                <StatCardSkeleton />
+                <StatCardSkeleton />
               </div>
             ) : (
               <div className="flex flex-wrap gap-8">
@@ -134,12 +125,11 @@ export default function StudentDashboard() {
           <h2 className="text-xl font-bold text-slate-900">Continue Learning</h2>
           <Link href="/student/my-learning" className="text-sm font-semibold text-[#196A54] hover:underline">View all</Link>
         </div>
-
         {loading ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <LoadingSkeleton className="h-64 w-full" />
-            <LoadingSkeleton className="h-64 w-full" />
-            <LoadingSkeleton className="h-64 w-full" />
+            <CourseCardSkeleton />
+            <CourseCardSkeleton />
+            <CourseCardSkeleton />
           </div>
         ) : error ? (
           <p className="text-red-500 text-sm">{error}</p>
@@ -193,8 +183,6 @@ export default function StudentDashboard() {
       {/* 3. BOTTOM GRID: Recommended & Activity */}
       {!loading && !error && (
         <div className="grid lg:grid-cols-3 gap-8">
-
-          {/* Recommended Courses */}
           <section className="lg:col-span-2">
             <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-bold text-slate-900">Recommended Courses</h2>
@@ -202,7 +190,6 @@ export default function StudentDashboard() {
                 Browse all
               </Link>
             </div>
-
             {filteredRecommendedCourses.length === 0 ? (
               <div className="bg-slate-50 border border-slate-200 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center h-[280px]">
                 <p className="text-slate-600 text-sm font-medium mb-2">
@@ -214,31 +201,44 @@ export default function StudentDashboard() {
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 gap-6">
-                {filteredRecommendedCourses.map((course) => (
-                  <div key={course.id} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col">
-                    <div className="aspect-video relative rounded-xl overflow-hidden mb-4 bg-slate-100 shrink-0">
-                      <Image src={course.thumbnailUrl} alt={course.title} fill className="object-cover" />
-                      {course.price === null && (
-                        <span className="absolute top-2 right-2 bg-white/90 backdrop-blur text-[#0A4A3A] text-xs font-bold px-2 py-1 rounded-md">
-                          Free
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="font-bold text-slate-900 text-sm mb-1 line-clamp-1">{course.title}</h3>
-                    <p className="text-xs text-slate-500 mb-3">{course.instructorName}</p>
-                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
-                      <div className="font-extrabold text-slate-900">
-                        {course.price != null ? formatPrice(Math.round(course.price * 100)) : "Free"}
+                {filteredRecommendedCourses.length === 0 ? (
+  <div className="bg-slate-50 border border-slate-200 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center h-[280px]">
+    <p className="text-slate-600 text-sm font-medium mb-2">
+      {searchQuery ? `No recommendations match "${searchQuery}".` : "You are enrolled in all available courses!"}
+    </p>
+    <Link href="/student/courses" className="text-[#196A54] text-xs font-bold hover:underline">
+      Check the catalog for new releases
+    </Link>
+  </div>
+) : (
+  <div className="grid sm:grid-cols-2 gap-6">
+    {filteredRecommendedCourses.map((course) => (
+      <div key={course.id} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+        <div className="aspect-video relative rounded-xl overflow-hidden mb-4 bg-slate-100 shrink-0">
+          <Image src={course.thumbnailUrl} alt={course.title} fill className="object-cover" />
+          {course.price === null && (
+            <span className="absolute top-2 right-2 bg-white/90 backdrop-blur text-[#0A4A3A] text-xs font-bold px-2 py-1 rounded-md">
+              Free
+            </span>
+          )}
+        </div>
+        <h3 className="font-bold text-slate-900 text-sm mb-1 line-clamp-1">{course.title}</h3>
+        <p className="text-xs text-slate-500 mb-3">{course.instructorName}</p>
+        <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
+                          <div className="font-extrabold text-slate-900">
+                            {course.price != null ? formatPrice(Math.round(course.price * 100)) : "Free"}
+                          </div>
+                          <Link
+                            href={`/student/courses/${course.id}`}
+                            className="px-4 py-2 bg-[#0A4A3A] text-white rounded-lg text-xs font-bold hover:bg-[#12503F] transition-colors"
+                          >
+                            View Course
+                          </Link>
+                        </div>
                       </div>
-                      <Link
-                        href={`/student/courses/${course.id}`}
-                        className="px-4 py-2 bg-[#0A4A3A] text-white rounded-lg text-xs font-bold hover:bg-[#12503F] transition-colors"
-                      >
-                        View Course
-                      </Link>
-                    </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
             )}
           </section>

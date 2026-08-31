@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import PageHero from "@/components/shared/PageHero";
 import CtaBanner from "@/components/shared/CtaBanner";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
 
 interface Category {
   id: string;
@@ -82,9 +83,9 @@ export default function CategoriesPage() {
   }, []);
 
   const filteredCategories = categories.filter((cat) =>
-      cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      cat.description?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    cat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    cat.description?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -116,7 +117,17 @@ export default function CategoriesPage() {
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="h-48 bg-white rounded-2xl border border-slate-200 p-6 animate-pulse shadow-sm" />
+              <div key={i} className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+                <LoadingSkeleton className="w-12 h-12 rounded-xl" />
+                <div className="space-y-2">
+                  <LoadingSkeleton className="h-5 w-3/4" />
+                  <LoadingSkeleton className="h-3 w-full" />
+                </div>
+                <div className="pt-4 border-t border-slate-100 flex justify-between items-center">
+                  <LoadingSkeleton className="h-6 w-20 rounded-lg" />
+                  <LoadingSkeleton className="h-4 w-12" />
+                </div>
+              </div>
             ))}
           </div>
         ) : filteredCategories.length > 0 ? (

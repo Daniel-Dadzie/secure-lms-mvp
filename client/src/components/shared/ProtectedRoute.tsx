@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/auth.store";
 import { syncUserRegionOnce } from "@/lib/syncUserRegion";
+import PageLoader from "@/components/shared/PageLoader";
 import type { Role } from "@/types/auth";
 
 interface ProtectedRouteProps {
@@ -15,10 +16,6 @@ interface ProtectedRouteProps {
 // ProtectedRoute — wraps any page that requires authentication.
 // Redirects to /login if not authenticated.
 // Redirects to /unauthorized if authenticated but wrong role.
-// Usage:
-//   <ProtectedRoute allowedRoles={["ADMIN"]}>
-//     <AdminDashboard />
-//   </ProtectedRoute>
 // ----------------------------------------------------------------------------
 export default function ProtectedRoute({
   children,
@@ -45,11 +42,7 @@ export default function ProtectedRoute({
   }, [isAuthenticated, isLoading, user, allowedRoles, router]);
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <p className="text-gray-500">Loading...</p>
-      </div>
-    );
+    return <PageLoader text="Restoring your session..." />;
   }
 
   if (!isAuthenticated) return null;
@@ -58,4 +51,3 @@ export default function ProtectedRoute({
 
   return <>{children}</>;
 }
-
