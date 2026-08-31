@@ -5,7 +5,7 @@ import helmet from "helmet";
 import { prisma } from "./config/prisma";
 
 import swaggerUi from "swagger-ui-express";
-import swaggerDocument from "../../docs/swagger.json";
+import swaggerDocument from "../docs/swagger.json";
 
 // Routers
 import authRouter from "./modules/auth/auth.routes";
