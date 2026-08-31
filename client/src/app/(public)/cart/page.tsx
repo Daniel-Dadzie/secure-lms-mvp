@@ -287,7 +287,7 @@ export default function CartPage() {
                 </p>
                 <div className="mt-6 border-t border-slate-100 pt-4">
                   <Link
-                    href="/student/dashboard"
+                    href="/student/courses"
                     className="block text-center text-sm font-semibold text-[#196A54] hover:underline"
                   >
                     Continue Shopping
