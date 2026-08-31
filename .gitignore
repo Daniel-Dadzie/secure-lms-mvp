@@ -42,3 +42,4 @@ audit.json
 
 #cursor files
 .cursor/
+.deployment/

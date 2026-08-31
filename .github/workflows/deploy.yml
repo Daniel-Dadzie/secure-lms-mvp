@@ -3,7 +3,7 @@ name: Build and Deploy
 on:
   push:
     branches:
-      - feature/auto-deployment
+      - main
   workflow_dispatch:
 
 permissions:
@@ -108,6 +108,9 @@ jobs:
           aws-region: eu-west-1
 
       - name: Deploy through AWS SSM
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
 
@@ -115,20 +118,61 @@ jobs:
             --region "${AWS_REGION}" \
             --instance-ids "${EC2_INSTANCE_ID}" \
             --document-name "AWS-RunShellScript" \
-            --comment "Secure LMS deployment ${GITHUB_SHA}" \
-            --parameters 'commands=[
-              "set -e",
-              "cd /home/ubuntu/secure-lms-mvp",
-              "export IMAGE_TAG='"${GITHUB_SHA}"'",
-              "aws ecr get-login-password --region '"${AWS_REGION}"' | docker login --username AWS --password-stdin '"${ECR_REGISTRY}"'",
-              "docker pull '"${ECR_REGISTRY}/${BACKEND_REPOSITORY}:${GITHUB_SHA}"'",
-              "docker pull '"${ECR_REGISTRY}/${FRONTEND_REPOSITORY}:${GITHUB_SHA}"'",
-              "docker compose -f docker-compose.prod.yml up -d --no-build",
-              "docker compose -f docker-compose.prod.yml ps",
-              "sleep 10",
-              "curl -fsS http://localhost/ > /dev/null",
-              "echo Deployment health check passed"
-            ]' \
+            --comment "Secure LMS deployment ${IMAGE_TAG}" \
+            --timeout-seconds 900 \
+            --parameters "commands=[
+              \"set -eu\",
+              \"cd /home/ubuntu/secure-lms-mvp\",
+              \"export IMAGE_TAG=${IMAGE_TAG}\",
+              \"export GITHUB_RUN_ID=${GITHUB_RUN_ID}\",
+              \"DEPLOYMENT_DIR=/home/ubuntu/secure-lms-mvp/.deployment\",
+              \"mkdir -p \${DEPLOYMENT_DIR}\",
+              \"DEPLOYED_AT=\$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+              \"CURRENT_RELEASE=\$(cat \${DEPLOYMENT_DIR}/current-release 2>/dev/null || echo unknown)\",
+              \"echo '=== Secure LMS deployment ==='\",
+              \"echo 'IMAGE_TAG=\${IMAGE_TAG}'\",
+              \"echo 'CURRENT_RELEASE=\${CURRENT_RELEASE}'\",
+              \"echo 'GITHUB_RUN_ID=\${GITHUB_RUN_ID}'\",
+              \"echo 'DEPLOYED_AT=\${DEPLOYED_AT}'\",
+              \"echo '\${DEPLOYED_AT} | STARTED | new=\${IMAGE_TAG} | previous=\${CURRENT_RELEASE} | github_run=\${GITHUB_RUN_ID}' >> \${DEPLOYMENT_DIR}/deployment-history.log\",
+              \"echo '=== Disk usage before deployment ==='\",
+              \"df -h /\",
+              \"echo '=== Docker disk usage before deployment ==='\",
+              \"docker system df\",
+              \"echo '=== Logging into Amazon ECR ==='\",
+              \"aws ecr get-login-password --region ${AWS_REGION} | docker login --username AWS --password-stdin ${ECR_REGISTRY}\",
+              \"echo '=== Pulling backend image ==='\",
+              \"docker pull ${ECR_REGISTRY}/${BACKEND_REPOSITORY}:${IMAGE_TAG}\",
+              \"echo '=== Pulling frontend image ==='\",
+              \"docker pull ${ECR_REGISTRY}/${FRONTEND_REPOSITORY}:${IMAGE_TAG}\",
+              \"echo '=== Starting application ==='\",
+              \"docker compose -f docker-compose.prod.yml up -d --no-build\",
+              \"echo '=== Container status ==='\",
+              \"docker compose -f docker-compose.prod.yml ps\",
+              \"echo '=== Waiting for application ==='\",
+              \"sleep 15\",
+              \"echo '=== Application health check ==='\",
+              \"curl -fsS http://localhost/ > /dev/null\",
+              \"echo 'Application health check passed'\",
+              \"echo '=== Cleaning unused Docker resources ==='\",
+              \"docker image prune -af --filter 'until=168h' || true\",
+              \"docker builder prune -af --filter 'until=168h' || true\",
+              \"echo '=== Disk usage after deployment ==='\",
+              \"df -h /\",
+              \"echo '=== Docker disk usage after deployment ==='\",
+              \"docker system df\",
+              \"printf '%s\\\\n' \${CURRENT_RELEASE} > \${DEPLOYMENT_DIR}/previous-release\",
+              \"printf '%s\\\\n' \${IMAGE_TAG} > \${DEPLOYMENT_DIR}/current-release\",
+              \"echo '\${DEPLOYED_AT} | SUCCESS | current=\${IMAGE_TAG} | previous=\${CURRENT_RELEASE} | github_run=\${GITHUB_RUN_ID}' >> \${DEPLOYMENT_DIR}/deployment-history.log\",
+              \"echo '=== Deployment state ==='\",
+              \"echo 'Current release:'\",
+              \"cat \${DEPLOYMENT_DIR}/current-release\",
+              \"echo 'Previous release:'\",
+              \"cat \${DEPLOYMENT_DIR}/previous-release\",
+              \"echo 'Recent deployment history:'\",
+              \"tail -n 10 \${DEPLOYMENT_DIR}/deployment-history.log\",
+              \"echo 'Deployment completed successfully'\"
+            ]" \
             --query 'Command.CommandId' \
             --output text)
 
@@ -137,6 +181,8 @@ jobs:
 
       - name: Wait for deployment
         run: |
+          set -euo pipefail
+
           aws ssm wait command-executed \
             --region "${AWS_REGION}" \
             --command-id "${COMMAND_ID}" \
@@ -176,6 +222,28 @@ jobs:
               --query 'StandardErrorContent' \
               --output text
 
+            echo
+            echo "===== Recording failed deployment audit ====="
+
+            aws ssm send-command \
+              --region "${AWS_REGION}" \
+              --instance-ids "${EC2_INSTANCE_ID}" \
+              --document-name "AWS-RunShellScript" \
+              --comment "Secure LMS failed deployment audit ${IMAGE_TAG}" \
+              --parameters "commands=[
+                \"set -eu\",
+                \"cd /home/ubuntu/secure-lms-mvp\",
+                \"export IMAGE_TAG=${IMAGE_TAG}\",
+                \"export GITHUB_RUN_ID=${GITHUB_RUN_ID}\",
+                \"export COMMAND_ID=${COMMAND_ID}\",
+                \"DEPLOYMENT_DIR=/home/ubuntu/secure-lms-mvp/.deployment\",
+                \"DEPLOYED_AT=\$(date -u +%Y-%m-%dT%H:%M:%SZ)\",
+                \"CURRENT_RELEASE=\$(cat \${DEPLOYMENT_DIR}/current-release 2>/dev/null || echo unknown)\",
+                \"echo '\${DEPLOYED_AT} | FAILED | attempted=\${IMAGE_TAG} | current=\${CURRENT_RELEASE} | github_run=\${GITHUB_RUN_ID} | ssm_command=\${COMMAND_ID}' >> \${DEPLOYMENT_DIR}/deployment-history.log\",
+                \"echo 'Failed deployment recorded in audit history'\"
+              ]" \
+              --output text
+
             exit 1
           fi
 
@@ -187,3 +255,18 @@ jobs:
             --instance-id "${EC2_INSTANCE_ID}" \
             --query 'StandardOutputContent' \
             --output text
+
+      - name: Add deployment audit summary
+        run: |
+          {
+            echo "## 🚀 Secure LMS Deployment"
+            echo
+            echo "| Field | Value |"
+            echo "|---|---|"
+            echo "| Commit | \`${GITHUB_SHA}\` |"
+            echo "| Branch | \`${GITHUB_REF_NAME}\` |"
+            echo "| GitHub Run | \`${GITHUB_RUN_ID}\` |"
+            echo "| SSM Command | \`${COMMAND_ID}\` |"
+            echo "| Status | Success |"
+            echo "| Deployment Time | $(date -u '+%Y-%m-%d %H:%M:%S UTC') |"
+          } >> "$GITHUB_STEP_SUMMARY"
