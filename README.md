@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="./docs/architecture/system-overview.png" alt="Secure LMS Architecture" width="600"/>
+  <img src="./server/src/docs/architecture/system-overview.png" alt="Secure LMS Architecture" width="600"/>
 </p>
 
 <h1 align="center">Secure LMS MVP</h1>
@@ -195,31 +195,31 @@ The video demonstrates the major features of the platform, including:
 ### Live Application
 
 <p align="center">
-  <img src="./docs/screenshots/homepage.png" alt="Secure LMS Live Application" width="900"/>
+  <img src="./server/src/docs/screenshots/homepage.png" alt="Secure LMS Live Application" width="900"/>
 </p>
 
 ### Student Dashboard
 
 <p align="center">
-  <img src="./docs/screenshots/student-dashboard.png" alt="Student Dashboard" width="900"/>
+  <img src="./server/src/docs/screenshots/student-dashboard.png" alt="Student Dashboard" width="900"/>
 </p>
 
 ### Instructor Dashboard
 
 <p align="center">
-  <img src="./docs/screenshots/instructor-dashboard.png" alt="Instructor Dashboard" width="900"/>
+  <img src="./server/src/docs/screenshots/instructor-dashboard.png" alt="Instructor Dashboard" width="900"/>
 </p>
 
 ### Course Learning Interface
 
 <p align="center">
-  <img src="./docs/screenshots/course-learning.png" alt="Course Learning Interface" width="900"/>
+  <img src="./server/src/docs/screenshots/course-learning.png" alt="Course Learning Interface" width="900"/>
 </p>
 
 ### Admin Dashboard
 
 <p align="center">
-  <img src="./docs/screenshots/admin-dashboard.png" alt="Admin Dashboard" width="900"/>
+  <img src="./server/src/docs/screenshots/admin-dashboard.png" alt="Admin Dashboard" width="900"/>
 </p>
 
 ---
