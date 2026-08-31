@@ -7,7 +7,7 @@ This document details the production monitoring strategy designed to ensure oper
 ## 1. Monitoring Pillars
 
 ### A. Application Metrics
-* **HTTP Traffic & Error Rates:** Track request volumes, response latency percentograms (p95, p99), and HTTP status code distribution (monitoring spikes in `4xx` client errors and `5xx` server faults).
+* **HTTP Traffic & Error Rates:** Track request volumes, response latency percentiles (p95, p99), and HTTP status code distribution (monitoring spikes in `4xx` client errors and `5xx` server faults).
 * **Authentication & Authorization Health:** Monitor rates of successful logins, failed authentication attempts, and authorization violations (`403 Forbidden` responses).
 * **Payment Gateway Signals:** Track successful checkout completions, pending transaction states, webhook processing failures, and signature mismatch errors.
 

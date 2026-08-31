@@ -20,13 +20,11 @@ To provide complete transparency to evaluators and security reviewers, this docu
 * **Limitation:** Rate limiting (`express-rate-limit`) currently relies on local in-memory storage per application process instance.
 * **Mitigation:** For multi-instance horizontal scaling, the rate-limiting store will be migrated to a shared Redis cluster.
 
+---
 
-## Architectural Pivots & Design Rationale
+## 5. Architectural Pivots & Design Rationale
 
-Payment Gateway Pivot (Paystack to Stripe):
-
-    Context & Rationale: While the platform's transactional model was initially structured around Paystack, the architecture was refactored to integrate Stripe checkout and HMAC webhook verification. This pivot ensures robust global currency handling, secure server-to-server signature validation, and clean idempotency handling for test and production environments.
-
-Media & Video Storage Pivot (Firebase to Cloudinary):
-
-    Context & Rationale: Although Firebase was initially considered for backend utilities, media storage and video streaming were migrated to Cloudinary. This decision was driven by Firebase’s strict tier limits and premium access barriers for media hosting. Cloudinary provides dedicated signed URL generation, optimized video delivery, and secure cloud storage management for course assets without encountering unexpected quota locks during evaluation.
+* **Payment Gateway Integration (Paystack):**
+  * **Context & Rationale:** The platform's transactional model is built around Paystack checkout and HMAC SHA-512 webhook verification. This architecture ensures robust localized and international payment routing, secure server-to-server signature validation, and clean idempotency handling for test and production environments. 
+* **Media & Video Storage Pivot (Firebase to Cloudinary):**
+  * **Context & Rationale:** Although Firebase was initially considered for backend utilities, media storage and video streaming were migrated to Cloudinary. This decision was driven by Firebase’s strict tier limits and premium access barriers for media hosting. Cloudinary provides dedicated signed URL generation, optimized video delivery, and secure cloud storage management for course assets without encountering unexpected quota locks during evaluation.
