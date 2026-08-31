@@ -1,7 +1,6 @@
 "use client";
-
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
@@ -13,17 +12,13 @@ function SupportContact() {
 
   const handleSend = async () => {
     if (!question.trim()) return;
-
     setIsSending(true);
-
     try {
       await api.post("/support/ask", {
         question: `Payment issue: ${question}`,
       });
-
       setSent(true);
     } catch {
-      // Still show confirmation so the user is not left without feedback.
       setSent(true);
     } finally {
       setIsSending(false);
@@ -47,7 +42,6 @@ function SupportContact() {
         className="w-full resize-none rounded-lg border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-blue-500"
         rows={3}
       />
-
       <button
         type="button"
         onClick={handleSend}
@@ -62,87 +56,83 @@ function SupportContact() {
 
 function PaymentVerification() {
   const searchParams = useSearchParams();
-  const { isAuthenticated, isLoading: authLoading } = useAuthStore();
-
-  // Paystack can send either "reference" or "trxref".
-  const reference =
-    searchParams.get("reference") || searchParams.get("trxref");
-
-  // If there is no reference, start directly in the error state.
-  // This avoids calling setState synchronously inside useEffect.
-  const [status, setStatus] = useState<
-    "loading" | "success" | "pending" | "error"
-  >(reference ? "loading" : "error");
-
-  const [errorMessage, setErrorMessage] = useState(
-    reference
-      ? ""
-      : "No payment reference found in this URL. If you were charged, please contact support with your email address and payment date."
-  );
-
+  const router = useRouter();
+  const { isLoading: authLoading } = useAuthStore();
+  
+  const reference = searchParams.get("reference") || searchParams.get("trxref");
+  
+  const [status, setStatus] = useState<"loading" | "success" | "pending" | "error">(reference ? "loading" : "error");
+  const [errorMessage, setErrorMessage] = useState(reference ? "" : "No payment reference found in this URL. If you were charged, please contact support with your email address and payment date.");
+  const [purchasedCourses, setPurchasedCourses] = useState<Array<{ id: string; title: string; slug: string }>>([]);
+  const [countdown, setCountdown] = useState(4);
   const [showSupport, setShowSupport] = useState(false);
 
   useEffect(() => {
-    if (!reference) {
-      return;
-    }
-
+    if (!reference) return;
     let cancelled = false;
 
     const verifyPayment = async () => {
       try {
-        // Backend verifies the transaction directly with Paystack.
-        // This endpoint now works without authentication for the callback page
         const res = await api.get(`/payments/verify/${reference}`);
-
         if (cancelled) return;
-
+        
         const paymentStatus = res.data.status;
-
         if (paymentStatus === "COMPLETED") {
+          setPurchasedCourses(res.data.courses || []);
           setStatus("success");
         } else {
-          // PENDING means the webhook/confirmation may not have arrived yet.
           setStatus("pending");
         }
       } catch (err: unknown) {
         if (cancelled) return;
-
         const error = err as {
-          response?: {
-            status?: number;
-            data?: {
-              message?: string;
-            };
-          };
+          response?: { status?: number; data?: { message?: string } };
           message?: string;
         };
-
         setStatus("error");
         setErrorMessage(
           error.response?.data?.message ||
-            error.message ||
-            "We could not verify your payment. If you were charged, please contact support."
+          error.message ||
+          "We could not verify your payment. If you were charged, please contact support."
         );
       }
     };
 
     void verifyPayment();
-
     return () => {
       cancelled = true;
     };
   }, [reference]);
 
+  // Hybrid auto-redirect timer for success state
+  useEffect(() => {
+    if (status !== "success") return;
+
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          if (purchasedCourses.length === 1) {
+            router.push(`/learn/${purchasedCourses[0].id}`);
+          } else {
+            router.push("/student/my-learning");
+          }
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [status, purchasedCourses, router]);
+
   if (status === "loading") {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
         <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-[#196A54]" />
-
         <h1 className="text-2xl font-bold text-slate-900">
           Verifying your payment...
         </h1>
-
         <p className="mt-2 text-sm text-slate-500">
           Please do not close this window.
         </p>
@@ -154,51 +144,42 @@ function PaymentVerification() {
     return (
       <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
         <div className="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-slate-200 border-t-[#196A54]" />
-
         <h1 className="text-2xl font-bold text-slate-900">
           Restoring your session...
         </h1>
-
         <p className="mt-2 text-sm text-slate-500">
-          Your payment has been confirmed. We&apos;re restoring your account so
-          you can access your course.
+          Your payment has been confirmed. We&apos;re restoring your account so you can access your course.
         </p>
       </div>
     );
   }
 
   if (status === "success") {
+    const isSingleCourse = purchasedCourses.length === 1;
+    const targetUrl = isSingleCourse ? `/learn/${purchasedCourses[0].id}` : "/student/my-learning";
+
     return (
       <div className="flex min-h-[60vh] items-center justify-center px-4">
         <div className="w-full max-w-lg rounded-2xl border border-green-100 bg-white p-8 text-center shadow-sm">
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-4xl text-green-600">
             ✓
           </div>
-
           <h1 className="mb-3 text-3xl font-extrabold text-slate-900">
             Payment Successful!
           </h1>
-
           <p className="mb-8 text-slate-600">
-            Your enrollment has been confirmed. You can now access your new
-            courses from your learning dashboard.
+            {isSingleCourse ? (
+              <>You are enrolled in <span className="font-semibold text-slate-900">{purchasedCourses[0].title}</span>. Redirecting in {countdown}s...</>
+            ) : (
+              <>Your enrollment has been confirmed. Redirecting to your learning dashboard in {countdown}s...</>
+            )}
           </p>
-
-          {isAuthenticated ? (
-            <Link
-              href="/student/my-learning"
-              className="inline-flex rounded-xl bg-[#196A54] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#12503F]"
-            >
-              Go to My Learning →
-            </Link>
-          ) : (
-            <Link
-              href="/login"
-              className="inline-flex rounded-xl bg-[#196A54] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#12503F]"
-            >
-              Sign In to Access Your Courses →
-            </Link>
-          )}
+          <Link
+            href={targetUrl}
+            className="inline-flex rounded-xl bg-[#196A54] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#12503F]"
+          >
+            {isSingleCourse ? "Start Course Now →" : "Go to My Learning →"}
+          </Link>
         </div>
       </div>
     );
@@ -211,17 +192,14 @@ function PaymentVerification() {
           <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-amber-100 text-4xl">
             ⏳
           </div>
-
           <h1 className="mb-3 text-3xl font-extrabold text-slate-900">
             Payment Processing
           </h1>
-
           <p className="mb-8 text-slate-600">
             Your payment is being processed. This usually takes a few seconds.
             Your enrollment will appear in your learning dashboard automatically once
             confirmed — you don&apos;t need to do anything else.
           </p>
-
           <div className="flex flex-col justify-center gap-3 sm:flex-row">
             <Link
               href="/student/my-learning"
@@ -229,7 +207,6 @@ function PaymentVerification() {
             >
               Go to My Learning
             </Link>
-
             <button
               type="button"
               onClick={() => window.location.reload()}
@@ -250,15 +227,12 @@ function PaymentVerification() {
         <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-100 text-4xl text-red-600">
           ✕
         </div>
-
         <h1 className="mb-3 text-3xl font-extrabold text-slate-900">
           Verification Failed
         </h1>
-
         <p className="mb-8 text-sm leading-6 text-slate-600">
           {errorMessage}
         </p>
-
         <div className="mb-6 flex flex-col gap-3 sm:flex-row">
           <Link
             href="/cart"
@@ -266,7 +240,6 @@ function PaymentVerification() {
           >
             Return to Cart
           </Link>
-
           <button
             type="button"
             onClick={() => setShowSupport((current) => !current)}
@@ -275,7 +248,6 @@ function PaymentVerification() {
             Contact Support
           </button>
         </div>
-
         {showSupport && <SupportContact />}
       </div>
     </div>
@@ -295,13 +267,11 @@ export default function PaymentCallbackPage() {
           </Link>
         </div>
       </header>
-
       <Suspense
         fallback={
           <div className="flex min-h-[60vh] items-center justify-center px-4">
             <div className="text-center">
               <div className="mx-auto mb-4 h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-[#196A54]" />
-
               <p className="text-sm font-medium text-slate-600">
                 Loading...
               </p>
@@ -311,7 +281,6 @@ export default function PaymentCallbackPage() {
       >
         <PaymentVerification />
       </Suspense>
-      </div>
+    </div>
   );
 }
-

@@ -8,15 +8,17 @@ import {
 } from "../lib/chatbotCache";
 
 export const OUT_OF_SCOPE_MARKER = "OUT_OF_SCOPE";
-
 const OPENROUTER_API_URL = "https://openrouter.ai/api/v1/chat/completions";
 const HELP_ASSISTANT_SESSION_ID = "mechspec-help-assistant";
 
-/** Free models on OpenRouter — tried in order on failure. */
+/** 
+ * Free models on OpenRouter — tried sequentially on failure. 
+ * Updated to reliable, currently active models to prevent 404s.
+ */
 const DEFAULT_MODELS = [
-  "openai/gpt-oss-20b:free",
+  "google/gemini-2.0-flash-lite-preview-02-05:free",
   "meta-llama/llama-3.3-70b-instruct:free",
-  "qwen/qwen-3-4b:free",
+  "qwen/qwen-2.5-72b-instruct:free",
 ];
 
 export type { ChatArticleContext };
@@ -45,6 +47,7 @@ function isPromptCacheEnabled(): boolean {
 function getModelCandidates(): string[] {
   const configured = process.env.OPENROUTER_MODEL?.trim();
   if (!configured) return DEFAULT_MODELS;
+  // Push the environment-configured model to the front, fallback to defaults
   return [configured, ...DEFAULT_MODELS.filter((model) => model !== configured)];
 }
 
@@ -98,33 +101,39 @@ function buildHeaders(apiKey: string): Record<string, string> {
   return headers;
 }
 
-function buildUserMessage(question: string, articles: ChatArticleContext[]) {
+/**
+ * Dynamically builds the message payload. 
+ * Prevents 400 Bad Request errors by restricting ephemeral caching syntax to Anthropic models.
+ */
+function buildUserMessage(question: string, articles: ChatArticleContext[], modelName: string) {
   const articlesBlock = `HELP ARTICLES:\n${formatArticles(articles)}`;
   const questionBlock = `QUESTION: ${question}`;
 
-  if (!isPromptCacheEnabled()) {
+  const isAnthropic = modelName.toLowerCase().includes("anthropic");
+
+  if (isPromptCacheEnabled() && isAnthropic) {
     return {
       role: "user" as const,
-      content: `${articlesBlock}\n\n${questionBlock}`,
+      content: [
+        {
+          type: "text",
+          text: articlesBlock,
+          cache_control: {
+            type: "ephemeral",
+          },
+        },
+        {
+          type: "text",
+          text: questionBlock,
+        },
+      ],
     };
   }
 
+  // Standard format for LLaMA, Qwen, Gemini, and OpenAI
   return {
     role: "user" as const,
-    content: [
-      {
-        type: "text",
-        text: articlesBlock,
-        cache_control: {
-          type: "ephemeral",
-          ttl: "1h",
-        },
-      },
-      {
-        type: "text",
-        text: questionBlock,
-      },
-    ],
+    content: `${articlesBlock}\n\n${questionBlock}`,
   };
 }
 
@@ -142,7 +151,7 @@ async function callOpenRouterModel(
       session_id: HELP_ASSISTANT_SESSION_ID,
       messages: [
         { role: "system", content: systemInstruction },
-        buildUserMessage(question, articles),
+        buildUserMessage(question, articles, modelName),
       ],
       max_tokens: 512,
       temperature: 0.3,
@@ -153,14 +162,14 @@ async function callOpenRouterModel(
     },
     {
       headers: buildHeaders(apiKey),
-      timeout: 45_000,
+      timeout: 45_000, // 45s fail-safe timeout for LLM latency
     }
   );
 
   const cachedTokens = data.usage?.prompt_tokens_details?.cached_tokens ?? 0;
   if (cachedTokens > 0) {
     console.info(
-      `OpenRouter prompt cache hit (${modelName}): ${cachedTokens} cached tokens`
+      `[ChatbotService] Prompt cache hit (${modelName}): ${cachedTokens} cached tokens`
     );
   }
 
@@ -184,15 +193,14 @@ function extractAnswerText(data: OpenRouterChatResponse): string {
 
 function getRetryDelayMs(error: unknown): number {
   if (!isAxiosError(error)) return 2000;
-
+  
   const retryAfter = error.response?.headers?.["retry-after"];
   if (typeof retryAfter === "string") {
     const seconds = Number.parseInt(retryAfter, 10);
     if (Number.isFinite(seconds) && seconds > 0) {
-      return Math.min(seconds * 1000, 8000);
+      return Math.min(seconds * 1000, 8000); // Cap wait time at 8 seconds
     }
   }
-
   return 2000;
 }
 
@@ -205,6 +213,7 @@ export async function generateGroundedAnswer(
   }
 
   const cacheKey = buildResponseCacheKey(question, articles);
+
   if (isResponseCacheEnabled()) {
     const cached = getCachedChatbotResult(cacheKey);
     if (cached) {
@@ -213,7 +222,6 @@ export async function generateGroundedAnswer(
   }
 
   const apiKey = process.env.OPENROUTER_API_KEY!.trim();
-
   const systemInstruction = `You are a friendly help center assistant for MechSpec LMS.
 Answer ONLY using the HELP ARTICLES provided in the user message.
 Be concise, clear, and conversational (2-4 sentences when possible).
@@ -233,18 +241,21 @@ Do not invent features, prices, policies, or steps not described in the articles
           question,
           articles
         );
+
         const text = extractAnswerText(data);
 
         if (!text || text.includes(OUT_OF_SCOPE_MARKER)) {
-          const result = { answer: "", outOfScope: true, modelUsed: modelName };
-          return result;
+          return { answer: "", outOfScope: true, modelUsed: modelName };
         }
 
         const result = { answer: text, outOfScope: false, modelUsed: modelName };
+
         if (isResponseCacheEnabled()) {
           setCachedChatbotResult(cacheKey, result);
         }
+
         return result;
+
       } catch (error) {
         lastError = error;
 
@@ -253,34 +264,35 @@ Do not invent features, prices, policies, or steps not described in the articles
           const errorBody = error.response?.data as OpenRouterErrorBody | undefined;
           const message = errorBody?.error?.message ?? error.message;
 
-          if (status === 404) {
-            console.warn(`OpenRouter model unavailable (${modelName}): ${message}`);
-            break;
+          // 1. Hard Auth Failures - Crash safely
+          if (status === 401 || status === 403) {
+            throw new Error(
+              "Authentication failed. Please check your OpenRouter API key.",
+              { cause: error }
+            );
           }
 
+          // 2. Rate Limits (429) - Retry once, then failover
           if (status === 429) {
             sawRateLimit = true;
             if (attempt === 0) {
               const delayMs = getRetryDelayMs(error);
-              console.warn(
-                `OpenRouter rate limited (${modelName}), retrying in ${delayMs}ms...`
-              );
+              console.warn(`[ChatbotService] OpenRouter rate limited (${modelName}), retrying in ${delayMs}ms...`);
               await sleep(delayMs);
               continue;
             }
-            console.warn(`OpenRouter rate limited (${modelName}), trying next model...`);
+            console.warn(`[ChatbotService] OpenRouter rate limited (${modelName}) after retry, failing over to next model...`);
             break;
           }
 
-          if (status === 401 || status === 403) {
-            throw new Error(
-              "Authentication failed. Please contact support.",
-              { cause: error }
-            );
-          }
+          // 3. API/Model Errors (400, 404, 500, 502) - Failover immediately
+          console.warn(`[ChatbotService] Request failed for ${modelName} [Status: ${status || 'Timeout'}]: ${message}`);
+          break;
         }
 
-        throw error;
+        // 4. Unknown/Network Exceptions - Failover immediately
+        console.warn(`[ChatbotService] Unexpected network error with ${modelName}:`, error instanceof Error ? error.message : String(error));
+        break; 
       }
     }
   }
@@ -289,8 +301,7 @@ Do not invent features, prices, policies, or steps not described in the articles
     throw new ChatbotRateLimitError();
   }
 
-  const message =
-    lastError instanceof Error ? lastError.message : "Unknown OpenRouter API error";
+  const message = lastError instanceof Error ? lastError.message : "Unknown OpenRouter API error";
   throw new Error(`No compatible OpenRouter model available. Last error: ${message}`, {
     cause: lastError,
   });
@@ -302,7 +313,6 @@ export function formatRetrievalFallback(
   if (articles.length === 0) {
     return "I could not find a matching help article. Your question has been logged for review.";
   }
-
   const primary = articles[0];
   return `Here's what I found in our help center (${primary.title}):\n\n${primary.content}`;
 }

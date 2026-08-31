@@ -23,13 +23,13 @@ export default function Error({
         {/* Top Navbar Brand Mark */}
         <div className="flex items-center justify-between mb-8 md:mb-12">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shadow-sm shrink-0">
+            <div className="w-8 h-8 rounded-lg bg-[#196A54] flex items-center justify-center text-white shadow-sm shrink-0">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477-4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
               </svg>
             </div>
-            <span className="text-xl font-extrabold tracking-tight text-slate-900">
-              Mech<span className="text-blue-600">Spec</span> Technologies
+            <span className="text-xl font-extrabold tracking-tight text-[#196A54]">
+              Mech Spec Technologies
             </span>
           </Link>
         </div>
@@ -38,7 +38,7 @@ export default function Error({
           
           {/* Left Column: Interactive Glowing Engineering Graphic */}
           <div className="relative flex flex-col items-center justify-center bg-slate-50/80 rounded-2xl p-8 md:p-10 border border-slate-100 group">
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-blue-500/10 to-amber-400/10 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none" />
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-emerald-500/10 to-amber-400/10 opacity-0 group-hover:opacity-100 transition-all duration-500 pointer-events-none" />
 
             <div className="absolute top-4 right-4 md:top-6 md:right-6 transition-all duration-300 transform group-hover:scale-110">
               <div className="w-10 h-10 rounded-full bg-slate-200/80 flex items-center justify-center shadow-inner group-hover:bg-amber-400 group-hover:shadow-[0_0_25px_rgba(251,191,36,0.8)] transition-all duration-500 cursor-pointer">
@@ -65,7 +65,7 @@ export default function Error({
                 </div>
               </div>
 
-              <div className="flex justify-between w-full px-6 text-blue-600 opacity-60 animate-pulse">
+              <div className="flex justify-between w-full px-6 text-[#196A54] opacity-60 animate-pulse">
                 {/* Spark/Zap SVG Left */}
                 <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
                   <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
@@ -93,7 +93,7 @@ export default function Error({
 
           {/* Right Column: Error Text & Actions */}
           <div className="flex flex-col items-start text-left">
-            <h2 className="text-5xl md:text-6xl font-extrabold text-blue-600 tracking-tight mb-2">
+            <h2 className="text-5xl md:text-6xl font-extrabold text-[#196A54] tracking-tight mb-2">
               Oops!
             </h2>
             <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-3">
@@ -112,7 +112,7 @@ export default function Error({
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full">
               <button
                 onClick={() => reset()}
-                className="w-full sm:w-auto rounded-xl bg-blue-600 px-8 py-3.5 text-sm font-semibold text-white transition hover:bg-blue-700 shadow-sm text-center"
+                className="w-full sm:w-auto rounded-xl bg-[#196A54] px-8 py-3.5 text-sm font-semibold text-white transition hover:bg-[#12503F] shadow-sm text-center"
               >
                 Try Again
               </button>

@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import * as paymentsService from "./payments.service";
-import { verifyWebhookSignature } from "../../services/paystack.service";
 import { z } from "zod";
+import crypto from "crypto";
 
 const checkoutSchema = z.object({
   courseId: z.string().uuid("Invalid course ID"),
@@ -54,39 +54,46 @@ export async function checkoutCart(req: Request, res: Response, next: NextFuncti
 }
 
 // ----------------------------------------------------------------------------
-// Paystack webhook — public, but every request is verified via HMAC
-// signature before any data is trusted. Always responds 200 quickly once
-// verified, even if internal processing is still async, per Paystack's
-// requirements.
+// Paystack webhook — public, verified via HMAC SHA512 signature using
+// Paystack's secret key before any data is trusted. Responds 200 immediately.
 // ----------------------------------------------------------------------------
 export async function webhook(req: Request, res: Response): Promise<void> {
   const signature = req.headers["x-paystack-signature"] as string;
-  const rawBody = (req as any).rawBody;
 
-  if (!signature || !rawBody || !verifyWebhookSignature(rawBody, signature)) {
+  if (!signature) {
+    res.status(400).json({ message: "Missing Paystack signature header" });
+    return;
+  }
+
+  const secret = process.env.PAYSTACK_SECRET_KEY || "";
+  const hash = crypto
+    .createHmac("sha512", secret)
+    .update(JSON.stringify(req.body))
+    .digest("hex");
+
+  if (hash !== signature) {
     res.status(401).json({ message: "Invalid signature" });
     return;
   }
 
-  const event = req.body;
+  // Acknowledge receipt to Paystack immediately
+  res.status(200).json({ received: true });
 
-  if (event.event === "charge.success") {
-    try {
-      await paymentsService.completePurchasesByReference(event.data.reference);
-    } catch (err) {
-      console.error("Webhook processing error:", err);
-      // Still ack 200 — Paystack will retry on non-2xx, but a processing
-      // error here needs investigation, not an infinite retry loop.
+  const event = req.body;
+  if (event && event.event === "charge.success") {
+    const reference = event.data?.reference;
+    if (reference) {
+      try {
+        await paymentsService.completePurchasesByReference(reference);
+      } catch (err) {
+        console.error("Webhook database processing error:", err);
+      }
     }
   }
-
-  res.status(200).json({ received: true });
 }
 
 export async function verifyPayment(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
-    // Allow verification without authentication for the callback page
-    // The reference is enough to identify and verify the purchase
     const userId = (req as any).user?.sub;
     const result = await paymentsService.verifyAndComplete(req.params.reference as string, userId);
     res.status(200).json(result);

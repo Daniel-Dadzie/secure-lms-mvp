@@ -7,8 +7,8 @@ import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
 import { formatCurrency } from "@/lib/admin/formatters";
 import { StatCard } from "@/components/ui/StatCard";
-import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { LoadingSkeleton, StatCardSkeleton } from "@/components/ui/LoadingSkeleton";
 import type { InstructorOverview } from "@/types/instructor";
 
 export default function InstructorDashboard() {
@@ -42,6 +42,7 @@ export default function InstructorDashboard() {
 
   return (
     <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-8">
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900">Welcome back, {firstName}</h1>
@@ -59,11 +60,12 @@ export default function InstructorDashboard() {
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
       )}
 
+      {/* Top Stats Grid */}
       {isLoading ? (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <LoadingSkeleton key={i} className="h-28 rounded-2xl" />
-          ))}
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
         </div>
       ) : overview?.totals ? (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -73,6 +75,7 @@ export default function InstructorDashboard() {
         </div>
       ) : null}
 
+      {/* Quick Links (Static - always visible) */}
       <div className="grid sm:grid-cols-3 gap-4">
         {[
           { href: "/instructor/courses", label: "My Courses", icon: BookOpen, desc: "Manage and publish" },
@@ -95,6 +98,7 @@ export default function InstructorDashboard() {
         ))}
       </div>
 
+      {/* Alerts */}
       {lowPerformingCourses.length > 0 && !isLoading && (
         <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
           <h3 className="font-bold text-amber-900 text-sm">Courses needing attention</h3>
@@ -108,40 +112,59 @@ export default function InstructorDashboard() {
         </div>
       )}
 
+      {/* Course Table Area */}
       <div>
         <h2 className="text-lg font-bold text-slate-900 mb-4">Your Courses</h2>
+        
         {isLoading ? (
-          <LoadingSkeleton className="h-48 w-full rounded-2xl" />
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm p-6 space-y-6">
+            <div className="flex justify-between border-b border-slate-100 pb-4">
+              <LoadingSkeleton className="h-4 w-32" />
+              <LoadingSkeleton className="h-4 w-20 hidden sm:block" />
+              <LoadingSkeleton className="h-4 w-20 hidden sm:block" />
+              <LoadingSkeleton className="h-4 w-20" />
+            </div>
+            {[1, 2, 3].map((row) => (
+              <div key={row} className="flex justify-between items-center py-2">
+                <LoadingSkeleton className="h-4 w-48" />
+                <LoadingSkeleton className="h-4 w-12 hidden sm:block" />
+                <LoadingSkeleton className="h-4 w-12 hidden sm:block" />
+                <LoadingSkeleton className="h-4 w-16" />
+              </div>
+            ))}
+          </div>
         ) : overview && overview.courses.length > 0 ? (
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50 border-b border-slate-200">
-                <tr>
-                  <th className="px-6 py-3 text-left font-semibold text-slate-600">Course</th>
-                  <th className="px-6 py-3 text-right font-semibold text-slate-600">Enrollments</th>
-                  <th className="px-6 py-3 text-right font-semibold text-slate-600">Completions</th>
-                  <th className="px-6 py-3 text-right font-semibold text-slate-600">Avg Progress</th>
-                  <th className="px-6 py-3 text-right font-semibold text-slate-600">Revenue</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {overview.courses.map((course) => (
-                  <tr key={course.courseId} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4 font-medium text-slate-900">
-                      <Link href={`/instructor/courses/${course.courseId}/edit`} className="hover:text-[#196A54]">
-                        {course.courseTitle}
-                      </Link>
-                    </td>
-                    <td className="px-6 py-4 text-right text-slate-600">{course.enrollmentCount.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-right text-slate-600">{course.completionCount.toLocaleString()}</td>
-                    <td className="px-6 py-4 text-right text-slate-600">{course.averageProgress}%</td>
-                    <td className="px-6 py-4 text-right font-semibold text-slate-900">
-                      {formatCurrency(course.revenueCents)}
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50 border-b border-slate-200">
+                  <tr>
+                    <th className="px-6 py-3 text-left font-semibold text-slate-600">Course</th>
+                    <th className="px-6 py-3 text-right font-semibold text-slate-600">Enrollments</th>
+                    <th className="px-6 py-3 text-right font-semibold text-slate-600">Completions</th>
+                    <th className="px-6 py-3 text-right font-semibold text-slate-600">Avg Progress</th>
+                    <th className="px-6 py-3 text-right font-semibold text-slate-600">Revenue</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {overview.courses.map((course) => (
+                    <tr key={course.courseId} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-6 py-4 font-medium text-slate-900 whitespace-nowrap">
+                        <Link href={`/instructor/courses/${course.courseId}/edit`} className="hover:text-[#196A54]">
+                          {course.courseTitle}
+                        </Link>
+                      </td>
+                      <td className="px-6 py-4 text-right text-slate-600">{course.enrollmentCount.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-right text-slate-600">{course.completionCount.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-right text-slate-600">{course.averageProgress}%</td>
+                      <td className="px-6 py-4 text-right font-semibold text-slate-900">
+                        {formatCurrency(course.revenueCents)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : (
           <EmptyState

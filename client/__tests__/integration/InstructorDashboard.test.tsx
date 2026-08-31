@@ -58,6 +58,8 @@ vi.mock("@/components/ui/LoadingSkeleton", () => ({
       className={className}
     />
   ),
+  StatCardSkeleton: () => <div data-testid="stat-card-skeleton" />,
+  CourseCardSkeleton: () => <div data-testid="course-card-skeleton" />,
 }));
 
 vi.mock("@/components/ui/EmptyState", () => ({

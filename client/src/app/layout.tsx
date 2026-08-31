@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import AuthProvider from "@/components/shared/AuthProvider";
 import { GlobalSupportWidget } from "@/components/layout/GlobalSupportWidget";
+import { IdleTimer } from "@/components/auth/IdleTimer";
+
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "MechSpec Technologies — Engineering LMS",
@@ -14,14 +18,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body className="font-sans min-h-screen flex flex-col bg-slate-50 text-slate-900 antialiased" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
+      <body 
+        className={`${inter.className} font-sans min-h-screen flex flex-col bg-slate-50 text-slate-900 antialiased overflow-x-hidden`} 
+        suppressHydrationWarning
+      >
         <AuthProvider>
-          {children}
+          <IdleTimer />
+          {/* Removed overflow-x-hidden from here so sticky top-0 works properly */}
+          <div className="flex-1 flex flex-col w-full">
+            {children}
+          </div>
           <GlobalSupportWidget />
         </AuthProvider>
       </body>
     </html>
   );
 }
-

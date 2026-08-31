@@ -127,6 +127,7 @@ api.interceptors.response.use(
       requestUrl.includes("/auth/register") ||
       requestUrl.includes("/auth/logout");
 
+    // If 401, not a retry, and not an auth endpoint, attempt silent refresh
     if (
       error.response?.status !== 401 ||
       originalRequest._retry ||

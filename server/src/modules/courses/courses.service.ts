@@ -38,6 +38,7 @@ const courseSelect = {
         select: {
           id: true,
           title: true,
+          contentType: true,
           contentUrl: true,
           durationSeconds: true,
           order: true,
@@ -86,6 +87,7 @@ const publicCourseSelect = {
         select: {
           id: true,
           title: true,
+          contentType: true,
           durationSeconds: true,
           order: true,
         },

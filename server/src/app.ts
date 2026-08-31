@@ -4,6 +4,9 @@ import cookieParser from "cookie-parser";
 import helmet from "helmet";
 import { prisma } from "./config/prisma";
 
+import swaggerUi from "swagger-ui-express";
+import swaggerDocument from "../../docs/swagger.json";
+
 // Routers
 import authRouter from "./modules/auth/auth.routes";
 import usersRouter from "./modules/users/users.routes";
@@ -114,3 +117,14 @@ app.use((
   });
 });
 
+
+app.get("/api", (_req, res) => {
+  res.status(200).json({
+    name: "Secure LMS API",
+    status: "online",
+    documentation: "/api-docs",
+    health: "/api/health"
+  });
+});
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));

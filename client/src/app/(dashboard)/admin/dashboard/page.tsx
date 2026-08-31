@@ -7,6 +7,7 @@ import { ActivityFeed } from "@/components/admin/ActivityFeed";
 import { PlatformHealthWidget } from "@/components/admin/PlatformHealthWidget";
 import { RegistrationChart } from "@/components/admin/RegistrationChart";
 import { RevenueChart } from "@/components/admin/RevenueChart";
+import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
 import type {
   AnalyticsOverview,
   PlatformHealth,
@@ -63,43 +64,71 @@ export default function AdminDashboardPage() {
 
       {error && <p className="text-sm text-red-500">{error}</p>}
 
-      {!loading && analytics && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-          <div className="rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-500/10 to-teal-50 p-4 sm:p-5 shadow-sm">
-            <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0A4A3A]">
-              {analytics.summary.platformCompletionRate}%
-            </p>
-            <p className="text-sm font-medium text-slate-600 mt-1">Platform Completion Rate</p>
+      {loading ? (
+        <div className="space-y-6 sm:space-y-8 animate-pulse">
+          {/* Summary Cards Skeleton */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm space-y-2">
+              <LoadingSkeleton className="h-8 w-24" />
+              <LoadingSkeleton className="h-4 w-40" />
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 shadow-sm space-y-2">
+              <LoadingSkeleton className="h-8 w-24" />
+              <LoadingSkeleton className="h-4 w-40" />
+            </div>
           </div>
-          <div className="rounded-2xl border border-violet-200/80 bg-gradient-to-br from-violet-500/10 to-purple-50 p-4 sm:p-5 shadow-sm">
-            <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0A4A3A]">
-              {analytics.summary.monthlyActiveUsers.toLocaleString()}
-            </p>
-            <p className="text-sm font-medium text-slate-600 mt-1">Monthly Active Users</p>
+
+          {/* Charts Grid Skeleton */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+            <div className="lg:col-span-2 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm h-80 flex items-center justify-center">
+              <LoadingSkeleton className="h-full w-full rounded-xl" />
+            </div>
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm h-80 flex items-center justify-center">
+              <LoadingSkeleton className="h-full w-full rounded-xl" />
+            </div>
           </div>
         </div>
-      )}
+      ) : (
+        <>
+          {analytics && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="rounded-2xl border border-emerald-200/80 bg-gradient-to-br from-emerald-500/10 to-teal-50 p-4 sm:p-5 shadow-sm">
+                <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0A4A3A]">
+                  {analytics.summary.platformCompletionRate}%
+                </p>
+                <p className="text-sm font-medium text-slate-600 mt-1">Platform Completion Rate</p>
+              </div>
+              <div className="rounded-2xl border border-violet-200/80 bg-gradient-to-br from-violet-500/10 to-purple-50 p-4 sm:p-5 shadow-sm">
+                <p className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#0A4A3A]">
+                  {analytics.summary.monthlyActiveUsers.toLocaleString()}
+                </p>
+                <p className="text-sm font-medium text-slate-600 mt-1">Monthly Active Users</p>
+              </div>
+            </div>
+          )}
 
-      {!loading && analytics && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-          <section className="lg:col-span-2 min-w-0">
-            <RegistrationChart data={analytics.registrations} />
-          </section>
-          <section className="min-w-0">
-            <RevenueChart data={analytics.revenue} />
-          </section>
-        </div>
-      )}
+          {analytics && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+              <section className="lg:col-span-2 min-w-0">
+                <RegistrationChart data={analytics.registrations} />
+              </section>
+              <section className="min-w-0">
+                <RevenueChart data={analytics.revenue} />
+              </section>
+            </div>
+          )}
 
-      {!loading && !error && stats && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 items-start">
-          <section className="lg:col-span-2 min-w-0">
-            <ActivityFeed events={stats.recentActivity} showViewAll />
-          </section>
-          <section className="min-w-0">
-            <PlatformHealthWidget health={health} loading={loading} />
-          </section>
-        </div>
+          {stats && (
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 items-start">
+              <section className="lg:col-span-2 min-w-0">
+                <ActivityFeed events={stats.recentActivity} showViewAll />
+              </section>
+              <section className="min-w-0">
+                <PlatformHealthWidget health={health} loading={loading} />
+              </section>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

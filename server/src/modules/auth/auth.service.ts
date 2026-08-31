@@ -19,6 +19,8 @@ function toSafeUser(user: {
   isActive: boolean;
   isEmailVerified: boolean;
   createdAt: Date;
+  avatarUrl?: string | null;
+  bio?: string | null;
 }): SafeUser {
   return {
     id: user.id,
@@ -28,6 +30,8 @@ function toSafeUser(user: {
     isActive: user.isActive,
     isEmailVerified: user.isEmailVerified,
     createdAt: user.createdAt,
+    avatarUrl: user.avatarUrl ?? null,
+    bio: user.bio ?? null,
   };
 }
 

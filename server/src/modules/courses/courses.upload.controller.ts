@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from "express";
 import { prisma } from "../../config/prisma";
-import { uploadThumbnail, generateVideoUploadUrl, deleteThumbnail } from "../../services/upload.service";
+import { uploadThumbnail, generateVideoUploadUrl, deleteThumbnail, uploadVideoToCloudinary } from "../../services/upload.service";
 
 interface MulterRequest extends Request {
   file?: Express.Multer.File;
@@ -78,6 +78,43 @@ export async function generateVideoUploadUrlHandler(
     );
 
     res.status(200).json({ uploadUrl, filePath });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
+export async function uploadLessonVideoHandler(
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    if (!req.file) {
+      res.status(400).json({ message: "No video file provided" });
+      return;
+    }
+
+    const { courseId, moduleId, lessonId } = req.params;
+
+    const { videoUrl, duration } = await uploadVideoToCloudinary(
+      req.file.buffer,
+      req.file.mimetype
+    );
+
+    const updatedLesson = await prisma.lesson.update({
+      where: { id: lessonId as string },
+      data: {
+        contentUrl: videoUrl,
+        durationSeconds: duration || undefined,
+      },
+    });
+
+    res.status(200).json({
+      message: "Video uploaded successfully",
+      videoUrl,
+      lesson: updatedLesson,
+    });
   } catch (error) {
     next(error);
   }

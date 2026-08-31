@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import api from "@/lib/api";
 import { useAuthStore } from "@/store/auth.store";
 import { formatPrice } from "@/lib/currency";
-
+import { CourseCardSkeleton, StatCardSkeleton, LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
 interface Course {
   id: string;
   title: string;
@@ -67,29 +67,14 @@ function CoursesContent() {
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // Filter state — initialized from URL params
-  const [search, setSearch] = useState(
-    searchParams.get("search") ?? ""
-  );
+  const [search, setSearch] = useState(searchParams.get("search") ?? "");
   const [selectedCategory, setSelectedCategory] = useState(
     searchParams.get("categoryId") ?? ""
   );
-  const [level, setLevel] = useState(
-    searchParams.get("level") ?? ""
-  );
-  const [priceFilter, setPriceFilter] = useState(
-    searchParams.get("price") ?? ""
-  );
+  const [level, setLevel] = useState(searchParams.get("level") ?? "");
+  const [priceFilter, setPriceFilter] = useState(searchParams.get("price") ?? "");
   const [cartAdding, setCartAdding] = useState<string | null>(null);
 
-  /*
-   * Fetch courses whenever the search/category filters change.
-   *
-   * The async function is defined inside the effect so that the
-   * effect itself handles the external API synchronization.
-   * This avoids the react-hooks/set-state-in-effect lint error
-   * without changing the API request or state update behavior.
-   */
   useEffect(() => {
     let cancelled = false;
 
@@ -108,9 +93,7 @@ function CoursesContent() {
         }
 
         const query = params.toString();
-        const url = query
-          ? `/courses?${query}&limit=12`
-          : "/courses?limit=12";
+        const url = query ? `/courses?${query}&limit=12` : "/courses?limit=12";
 
         const res = await api.get(url);
 
@@ -137,7 +120,6 @@ function CoursesContent() {
     };
   }, [search, selectedCategory]);
 
-  // Load categories once when the page mounts.
   useEffect(() => {
     let cancelled = false;
 
@@ -234,9 +216,7 @@ function CoursesContent() {
           </h1>
 
           <p className="max-w-2xl text-lg text-teal-50">
-            {total > 0
-              ? `${total}+ industry-relevant courses`
-              : "Industry-relevant courses"}{" "}
+            {total > 0 ? `${total}+ industry-relevant courses` : "Industry-relevant courses"}{" "}
             taught by world-class engineers. Learn at your own pace.
           </p>
         </div>
@@ -246,8 +226,8 @@ function CoursesContent() {
       <section className="sticky top-20 z-40 border-b border-slate-200 bg-white px-4 py-4 shadow-sm sm:px-6 lg:px-8">
         <div className="mx-auto max-w-[1400px]">
           <div className="mb-4 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+              <div className="relative w-full sm:w-auto">
                 <svg
                   className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[#196A54]/60"
                   fill="none"
@@ -261,37 +241,37 @@ function CoursesContent() {
                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                   />
                 </svg>
-
                 <input
                   type="text"
                   placeholder="Search courses or instructors..."
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
-                  className="w-64 rounded-full border border-[#196A54]/20 py-2 pl-10 pr-4 text-sm text-slate-700 outline-none transition-all placeholder:text-[#196A54]/50 focus:border-[#0A4A3A] focus:ring-2 focus:ring-[#0A4A3A]"
+                  className="w-full sm:w-64 rounded-full border border-[#196A54]/20 py-2 pl-10 pr-4 text-sm text-slate-700 outline-none transition-all placeholder:text-[#196A54]/50 focus:border-[#0A4A3A] focus:ring-2 focus:ring-[#0A4A3A]"
                 />
               </div>
 
-              <select
-                value={level}
-                onChange={(event) => setLevel(event.target.value)}
-                className="cursor-pointer rounded-full border border-[#196A54]/20 bg-white px-4 py-2 text-sm font-medium text-[#0A4A3A] outline-none focus:ring-2 focus:ring-[#0A4A3A]"
-              >
-                <option value="">All Levels</option>
-                <option value="BEGINNER">Beginner</option>
-                <option value="INTERMEDIATE">Intermediate</option>
-                <option value="ADVANCED">Advanced</option>
-                <option value="ALL_LEVELS">All Levels</option>
-              </select>
-
-              <select
-                value={priceFilter}
-                onChange={(event) => setPriceFilter(event.target.value)}
-                className="cursor-pointer rounded-full border border-[#196A54]/20 bg-white px-4 py-2 text-sm font-medium text-[#0A4A3A] outline-none focus:ring-2 focus:ring-[#0A4A3A]"
-              >
-                <option value="">Any Price</option>
-                <option value="free">Free</option>
-                <option value="paid">Paid</option>
-              </select>
+              <div className="grid grid-cols-2 sm:flex items-center gap-2">
+                <select
+                  value={level}
+                  onChange={(event) => setLevel(event.target.value)}
+                  className="w-full cursor-pointer rounded-full border border-[#196A54]/20 bg-white px-3 sm:px-4 py-2 text-sm font-medium text-[#0A4A3A] outline-none focus:ring-2 focus:ring-[#0A4A3A]"
+                >
+                  <option value="">All Levels</option>
+                  <option value="BEGINNER">Beginner</option>
+                  <option value="INTERMEDIATE">Intermediate</option>
+                  <option value="ADVANCED">Advanced</option>
+                  <option value="ALL_LEVELS">All Levels</option>
+                </select>
+                <select
+                  value={priceFilter}
+                  onChange={(event) => setPriceFilter(event.target.value)}
+                  className="w-full cursor-pointer rounded-full border border-[#196A54]/20 bg-white px-3 sm:px-4 py-2 text-sm font-medium text-[#0A4A3A] outline-none focus:ring-2 focus:ring-[#0A4A3A]"
+                >
+                  <option value="">Any Price</option>
+                  <option value="free">Free</option>
+                  <option value="paid">Paid</option>
+                </select>
+              </div>
             </div>
 
             <div className="whitespace-nowrap text-sm font-medium text-slate-500">
@@ -303,12 +283,11 @@ function CoursesContent() {
             </div>
           </div>
 
-          {/* Category pills */}
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex flex-nowrap sm:flex-wrap items-center gap-2 overflow-x-auto pb-2 scrollbar-none whitespace-nowrap -mx-4 px-4 sm:mx-0 sm:px-0">
             <button
               type="button"
               onClick={() => setSelectedCategory("")}
-              className={`rounded-full px-5 py-1.5 text-sm font-bold transition-all ${
+              className={`rounded-full px-5 py-1.5 text-sm font-bold transition-all shrink-0 ${
                 !selectedCategory
                   ? "bg-[#0A4A3A] text-white"
                   : "border border-[#196A54]/30 bg-[#F4F9F7] text-[#0A4A3A] hover:bg-[#196A54]/10"
@@ -316,19 +295,16 @@ function CoursesContent() {
             >
               All
             </button>
-
             {categories.map((category) => (
               <button
                 type="button"
                 key={category.id}
                 onClick={() =>
                   setSelectedCategory(
-                    selectedCategory === category.id
-                      ? ""
-                      : category.id
+                    selectedCategory === category.id ? "" : category.id
                   )
                 }
-                className={`rounded-full px-5 py-1.5 text-sm font-bold transition-all ${
+                className={`rounded-full px-5 py-1.5 text-sm font-bold transition-all shrink-0 ${
                   selectedCategory === category.id
                     ? "border-2 border-[#0A4A3A] bg-[#0A4A3A] text-white shadow-md"
                     : "border border-[#196A54]/30 bg-[#F4F9F7] text-[#0A4A3A] hover:bg-[#196A54]/10"
@@ -346,10 +322,7 @@ function CoursesContent() {
         {loading ? (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {Array.from({ length: 6 }).map((_, index) => (
-              <div
-                key={index}
-                className="h-80 animate-pulse rounded-2xl border border-slate-200 bg-white"
-              />
+              <CourseCardSkeleton key={index} />
             ))}
           </div>
         ) : filteredCourses.length === 0 ? (
@@ -387,7 +360,6 @@ function CoursesContent() {
                   key={course.id}
                   className="flex flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white transition-shadow hover:shadow-xl"
                 >
-                  {/* Thumbnail */}
                   <div className="relative h-52 overflow-hidden bg-slate-100">
                     {course.thumbnailUrl ? (
                       <div className="relative h-full w-full animate-pulse bg-slate-200">
@@ -399,9 +371,7 @@ function CoursesContent() {
                           className="object-cover transition-opacity duration-300"
                           unoptimized
                           onLoad={(event) => {
-                            const target =
-                              event.currentTarget as HTMLElement;
-
+                            const target = event.currentTarget as HTMLElement;
                             target.parentElement?.classList.remove(
                               "animate-pulse",
                               "bg-slate-200"
@@ -514,8 +484,8 @@ function CoursesContent() {
                           {cartAdding === course.id
                             ? "Adding..."
                             : course.priceCents === 0
-                              ? "Enroll Free"
-                              : "Add to Cart"}
+                            ? "Enroll Free"
+                            : "Add to Cart"}
                         </button>
                       </div>
                     </div>
@@ -545,4 +515,3 @@ export default function CoursesPage() {
     </Suspense>
   );
 }
-

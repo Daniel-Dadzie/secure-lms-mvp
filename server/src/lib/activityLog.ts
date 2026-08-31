@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { prisma } from "../config/prisma";
 import type { Prisma } from "@prisma/client";
 
@@ -12,6 +13,7 @@ export async function logActivity(params: {
 }): Promise<void> {
   await prisma.activity.create({
     data: {
+      id: crypto.randomUUID(), // <-- Added to satisfy Prisma input requirements
       userId: params.userId,
       title: params.title,
       description: params.description,

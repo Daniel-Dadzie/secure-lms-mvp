@@ -40,6 +40,6 @@ router.post(
 
 router.get(
   "/verify/:reference", 
-  authenticate, requireRole(["STUDENT"]), paymentsController.verifyPayment);
+   paymentsController.verifyPayment); // public, no auth — reference-verified instead 
 
 export default router;
