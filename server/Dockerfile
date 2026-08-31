@@ -35,7 +35,7 @@ COPY server/package*.json ./server/
 RUN npm ci
 
 COPY --from=builder /app/server/dist ./server/dist
-COPY --from=builder /app/server/src/docs ./server/src/docs
+COPY --from=builder /app/server/docs ./server/docs
 COPY --from=builder /app/server/prisma ./server/prisma
 COPY --from=builder /app/server/prisma.config.ts ./server/prisma.config.ts
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
