@@ -1,21 +1,37 @@
 <p align="center">
-  <img src="./server/src/docs/architecture/system-overview.png" alt="Secure LMS Architecture" width="600"/>
+  <img
+    src="./server/docs/architecture/system-overview.png"
+    alt="Secure LMS Architecture"
+    width="600"
+  />
 </p>
 
 <h1 align="center">Secure LMS MVP</h1>
 
 <p align="center">
   <a href="https://github.com/Daniel-Dadzie/secure-lms-mvp/actions/workflows/ci.yml">
-    <img src="https://github.com/Daniel-Dadzie/secure-lms-mvp/actions/workflows/ci.yml/badge.svg" alt="CI"/>
+    <img
+      src="https://github.com/Daniel-Dadzie/secure-lms-mvp/actions/workflows/ci.yml/badge.svg"
+      alt="CI"
+    />
   </a>
   <a href="https://github.com/Daniel-Dadzie/secure-lms-mvp/actions/workflows/pr-validation.yml">
-    <img src="https://github.com/Daniel-Dadzie/secure-lms-mvp/actions/workflows/pr-validation.yml/badge.svg" alt="PR Validation"/>
+    <img
+      src="https://github.com/Daniel-Dadzie/secure-lms-mvp/actions/workflows/pr-validation.yml/badge.svg"
+      alt="PR Validation"
+    />
   </a>
   <a href="https://github.com/Daniel-Dadzie/secure-lms-mvp/actions/workflows/security.yml">
-    <img src="https://github.com/Daniel-Dadzie/secure-lms-mvp/actions/workflows/security.yml/badge.svg" alt="Security Pipeline"/>
+    <img
+      src="https://github.com/Daniel-Dadzie/secure-lms-mvp/actions/workflows/security.yml/badge.svg"
+      alt="Security Pipeline"
+    />
   </a>
   <a href="https://github.com/Daniel-Dadzie/secure-lms-mvp/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/License-Private-red" alt="License"/>
+    <img
+      src="https://img.shields.io/badge/License-Private-red"
+      alt="License"
+    />
   </a>
 </p>
 
@@ -23,51 +39,47 @@
 
 ## Table of Contents
 
-* [Overview](#overview)
-* [Live Demo](#live-demo)
-* [Project Demo Video](#project-demo-video)
-* [Features](#features)
-
-  * [Authentication & Security](#authentication--security)
-  * [Student](#student)
-  * [Instructor](#instructor)
-  * [Admin](#admin)
-  * [Platform](#platform)
-* [Screenshots](#screenshots)
-* [Tech Stack](#tech-stack)
-
-  * [Frontend](#frontend)
-  * [Backend](#backend)
-  * [External Services](#external-services)
-  * [Security & DevOps](#security--devops)
-* [Repository Structure](#repository-structure)
-* [Architecture](#architecture)
-* [Security Model](#security-model)
-* [Getting Started](#getting-started)
-
-  * [Prerequisites](#prerequisites)
-  * [Installation](#installation)
-  * [Development](#development)
-  * [Useful Commands](#useful-commands)
-* [Environment Variables](#environment-variables)
-* [API Documentation](#api-documentation)
-* [Testing](#testing)
-* [CI/CD Pipelines](#cicd-pipelines)
-* [Deployment](#deployment)
-* [Production Architecture](#production-architecture)
-* [Production Deployment Requirements](#production-deployment-requirements)
-* [Production Deployment Checklist](#production-deployment-checklist)
-
-  * [Environment](#environment)
-  * [Database](#database)
-  * [Application](#application)
-  * [Security](#security)
-  * [Deployment](#deployment)
-* [Contributing](#contributing)
-* [Branch Strategy](#branch-strategy)
-* [Security Reporting](#security-reporting)
-* [Project Documentation](#project-documentation)
-* [License](#license)
+- [Overview](#overview)
+- [Live Demo](#live-demo)
+- [Project Demo Video](#project-demo-video)
+- [Features](#features)
+  - [Authentication & Security](#authentication--security)
+  - [Student](#student)
+  - [Instructor](#instructor)
+  - [Admin](#admin)
+  - [Platform](#platform)
+- [Screenshots](#screenshots)
+- [Tech Stack](#tech-stack)
+  - [Frontend](#frontend)
+  - [Backend](#backend)
+  - [External Services](#external-services)
+  - [Security & DevOps](#security--devops)
+- [Repository Structure](#repository-structure)
+- [Architecture](#architecture)
+- [Security Model](#security-model)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Development](#development)
+  - [Useful Commands](#useful-commands)
+- [Environment Variables](#environment-variables)
+- [API Documentation](#api-documentation)
+- [Testing](#testing)
+- [CI/CD Pipelines](#cicd-pipelines)
+- [Deployment](#deployment)
+- [Production Architecture](#production-architecture)
+- [Production Deployment Requirements](#production-deployment-requirements)
+- [Production Deployment Checklist](#production-deployment-checklist)
+  - [Environment](#environment)
+  - [Database](#database)
+  - [Application](#application)
+  - [Security](#security)
+  - [Deployment](#deployment)
+- [Contributing](#contributing)
+- [Branch Strategy](#branch-strategy)
+- [Security Reporting](#security-reporting)
+- [Project Documentation](#project-documentation)
+- [License](#license)
 
 ---
 
@@ -87,9 +99,9 @@ Security features include strict authentication and authorization, input validat
 
 The production deployment is available through the links below.
 
-| Component            | Link                                                   |
-| -------------------- | ------------------------------------------------------ |
-| 🌐 Web Application   | [Open Secure LMS](http://54.229.212.77/)               |
+| Component | Link |
+| --- | --- |
+| 🌐 Web Application | [Open Secure LMS](http://54.229.212.77/) |
 | 📚 API Documentation | [OpenAPI Documentation](http://54.229.212.77/api-docs) |
 
 > **Note:** The application is currently deployed on an AWS EC2 instance.
@@ -104,17 +116,17 @@ A complete walkthrough of the Secure LMS MVP is available in the project demo vi
 
 The video demonstrates the major features of the platform, including:
 
-* Authentication and role-based access control
-* Student dashboard and course enrolment
-* Course browsing and learning
-* Instructor course management
-* Course and lesson creation
-* Video and media uploads
-* Student progress tracking
-* Quizzes and assessments
-* Admin dashboard and platform management
-* Paystack payment and course-related workflows
-* Security and application architecture
+- Authentication and role-based access control
+- Student dashboard and course enrolment
+- Course browsing and learning
+- Instructor course management
+- Course and lesson creation
+- Video and media uploads
+- Student progress tracking
+- Quizzes and assessments
+- Admin dashboard and platform management
+- Paystack payment and course-related workflows
+- Security and application architecture
 
 🎥 **[Watch the Secure LMS MVP Project Demo on Loom](https://www.loom.com/share/60c500e0f02d4fe9bee4667083f3b776b)**
 
@@ -126,67 +138,67 @@ The video demonstrates the major features of the platform, including:
 
 ### Authentication & Security
 
-* User registration and email verification
-* Secure login with JWT access and refresh tokens
-* Password reset workflow
-* Role-based access control for Students, Instructors, and Admins
-* Ownership-based authorization
-* Rate limiting on sensitive endpoints
-* Input validation with Zod
-* Security headers with Helmet
-* Append-only audit logging
-* Secure password hashing with bcrypt
-* CORS origin restrictions
-* Paystack webhook signature verification
-* Secret scanning with Gitleaks
-* Dependency auditing
-* Static Application Security Testing with Semgrep
+- User registration and email verification
+- Secure login with JWT access and refresh tokens
+- Password reset workflow
+- Role-based access control for Students, Instructors, and Admins
+- Ownership-based authorization
+- Rate limiting on sensitive endpoints
+- Input validation with Zod
+- Security headers with Helmet
+- Append-only audit logging
+- Secure password hashing with bcrypt
+- CORS origin restrictions
+- Paystack webhook signature verification
+- Secret scanning with Gitleaks
+- Dependency auditing
+- Static Application Security Testing with Semgrep
 
 ### Student
 
-* Browse and search courses
-* Course enrolment
-* Shopping cart
-* Coupon support
-* Paystack payment checkout
-* Course progress tracking
-* Quizzes and assessments
-* Course reviews and ratings
-* Notifications
-* Student dashboard
-* Course learning interface
+- Browse and search courses
+- Course enrolment
+- Shopping cart
+- Coupon support
+- Paystack payment checkout
+- Course progress tracking
+- Quizzes and assessments
+- Course reviews and ratings
+- Notifications
+- Student dashboard
+- Course learning interface
 
 ### Instructor
 
-* Course creation and management
-* Course publishing workflow
-* Course thumbnails and media uploads
-* Student analytics
-* Course analytics
-* Earnings and performance tracking
-* Instructor dashboard
-* Student-instructor support messaging
+- Course creation and management
+- Course publishing workflow
+- Course thumbnails and media uploads
+- Student analytics
+- Course analytics
+- Earnings and performance tracking
+- Instructor dashboard
+- Student-instructor support messaging
 
 ### Admin
 
-* Platform-wide analytics
-* User management
-* Course management
-* Category management
-* Instructor management
-* Help article management
-* Audit and security visibility
+- Platform-wide analytics
+- User management
+- Course management
+- Category management
+- Instructor management
+- Help article management
+- Audit and security visibility
 
 ### Platform
 
-* PostgreSQL-backed transactional data
-* Cloudinary for video, image, and media storage
-* Firebase Cloud Messaging for push notifications
-* OpenAPI API documentation
-* Automated CI/CD
-* Automated secret scanning
-* Dependency auditing
-* Static Application Security Testing
+- PostgreSQL-backed transactional data
+- Cloudinary for video, image, and media storage
+- Firebase Cloud Messaging for push notifications
+- OpenAPI API documentation
+- Automated CI/CD
+- Automated secret scanning
+- Dependency auditing
+- Static Application Security Testing
 
 ---
 
@@ -195,31 +207,51 @@ The video demonstrates the major features of the platform, including:
 ### Live Application
 
 <p align="center">
-  <img src="./server/src/docs/screenshots/homepage.png" alt="Secure LMS Live Application" width="900"/>
+  <img
+    src="./server/docs/screenshots/homepage.png"
+    alt="Secure LMS Live Application"
+    width="900"
+  />
 </p>
 
 ### Student Dashboard
 
 <p align="center">
-  <img src="./server/src/docs/screenshots/student-dashboard.png" alt="Student Dashboard" width="900"/>
+  <img
+    src="./server/docs/screenshots/student-dashboard.png"
+    alt="Student Dashboard"
+    width="900"
+  />
 </p>
 
 ### Instructor Dashboard
 
 <p align="center">
-  <img src="./server/src/docs/screenshots/instructor-dashboard.png" alt="Instructor Dashboard" width="900"/>
+  <img
+    src="./server/docs/screenshots/instructor-dashboard.png"
+    alt="Instructor Dashboard"
+    width="900"
+  />
 </p>
 
 ### Course Learning Interface
 
 <p align="center">
-  <img src="./server/src/docs/screenshots/course-learning.png" alt="Course Learning Interface" width="900"/>
+  <img
+    src="./server/docs/screenshots/course-learning.png"
+    alt="Course Learning Interface"
+    width="900"
+  />
 </p>
 
 ### Admin Dashboard
 
 <p align="center">
-  <img src="./server/src/docs/screenshots/admin-dashboard.png" alt="Admin Dashboard" width="900"/>
+  <img
+    src="./server/docs/screenshots/admin-dashboard.png"
+    alt="Admin Dashboard"
+    width="900"
+  />
 </p>
 
 ---
@@ -334,6 +366,16 @@ secure-lms-mvp/
 │   │   ├── schema.prisma                     # Prisma database schema
 │   │   └── seed.ts                           # Demo/test data seeding
 │   │
+│   ├── docs/                                 # Backend and project documentation
+│   │   ├── ADR/                              # Architecture Decision Records
+│   │   ├── api/                              # API documentation and OpenAPI specification
+│   │   ├── architecture/                     # System architecture documentation
+│   │   ├── screenshots/                       # README screenshots
+│   │   ├── security/                         # Security documentation and evidence
+│   │   ├── API.md
+│   │   ├── KNOWN-LIMITATIONS.md
+│   │   └── MONITORING.md
+│   │
 │   └── tests/
 │       ├── helpers/                          # Test helpers and fixtures
 │       ├── integration/                      # Integration and security tests
@@ -341,14 +383,7 @@ secure-lms-mvp/
 │       └── setup.ts                          # Test environment setup
 │
 ├── packages/
-│   └── shared/                              # Shared types and validation schemas
-│
-├── docs/
-│   ├── api/
-│   │   └── openapi.yaml                      # OpenAPI 3.0 API contract
-│   ├── architecture/                         # System architecture and ERD
-│   ├── screenshots/                          # README screenshots
-│   └── security/                             # Security documentation and evidence
+│   └── shared/                               # Shared types and validation schemas
 │
 ├── .github/
 │   └── workflows/
@@ -356,12 +391,12 @@ secure-lms-mvp/
 │       ├── pr-validation.yml                 # PR security validation
 │       └── security.yml                      # Security scanning pipeline
 │
-├── docker-compose.yml                         # PostgreSQL and Adminer
-├── Makefile                                   # Developer command shortcuts
-├── .env.example                               # Environment variable template
-├── CONTRIBUTING.md                            # Contribution guidelines
+├── docker-compose.yml                        # PostgreSQL and Adminer
+├── Makefile                                  # Developer command shortcuts
+├── .env.example                              # Environment variable template
+├── CONTRIBUTING.md                           # Contribution guidelines
 ├── LICENSE
-└── README.md                                  # Project documentation
+└── README.md                                 # Project documentation
 ```
 
 ---
@@ -376,29 +411,29 @@ Each domain concern is isolated within its own module under:
 server/src/modules/
 ```
 
-| Module                 | Responsibility                                          |
-| ---------------------- | ------------------------------------------------------- |
-| `auth`                 | Registration, login, email verification, password reset |
-| `users`                | User profile management                                 |
-| `courses`              | Course CRUD, thumbnails, publishing, search             |
-| `categories`           | Course categorization                                   |
-| `enrolments`           | Student course enrolment lifecycle                      |
-| `progress`             | Lesson completion and progress tracking                 |
-| `quizzes`              | Quiz creation, attempts, and scoring                    |
-| `cart`                 | Shopping cart management                                |
-| `coupons`              | Discount coupon validation                              |
-| `payments`             | Paystack checkout and webhook verification              |
-| `reviews`              | Course ratings and reviews                              |
-| `instructors`          | Instructor onboarding and management                    |
-| `instructor-portal`    | Instructor dashboard workflows                          |
-| `instructor-analytics` | Earnings, engagement, and performance metrics           |
-| `students`             | Student dashboard and learning workflows                |
-| `admin`                | Platform-wide administration and analytics              |
-| `search`               | Course and content search                               |
-| `notifications`        | In-app and FCM push notifications                       |
-| `support`              | Messaging between students and instructors              |
-| `help`                 | Help article management                                 |
-| `uploads`              | Signed URL generation for media                         |
+| Module | Responsibility |
+| --- | --- |
+| `auth` | Registration, login, email verification, password reset |
+| `users` | User profile management |
+| `courses` | Course CRUD, thumbnails, publishing, search |
+| `categories` | Course categorization |
+| `enrolments` | Student course enrolment lifecycle |
+| `progress` | Lesson completion and progress tracking |
+| `quizzes` | Quiz creation, attempts, and scoring |
+| `cart` | Shopping cart management |
+| `coupons` | Discount coupon validation |
+| `payments` | Paystack checkout and webhook verification |
+| `reviews` | Course ratings and reviews |
+| `instructors` | Instructor onboarding and management |
+| `instructor-portal` | Instructor dashboard workflows |
+| `instructor-analytics` | Earnings, engagement, and performance metrics |
+| `students` | Student dashboard and learning workflows |
+| `admin` | Platform-wide administration and analytics |
+| `search` | Course and content search |
+| `notifications` | In-app and FCM push notifications |
+| `support` | Messaging between students and instructors |
+| `help` | Help article management |
+| `uploads` | Signed URL generation for media |
 
 ---
 
@@ -406,25 +441,25 @@ server/src/modules/
 
 Security is implemented as a layered defense model across the application.
 
-| Control               | Implementation                                             |
-| --------------------- | ---------------------------------------------------------- |
-| HTTP Security Headers | Helmet with CSP, HSTS, X-Frame-Options                     |
-| CORS                  | Restricted to configured client origin with credentials    |
-| Rate Limiting         | `express-rate-limit` on sensitive endpoints                |
-| Authentication        | JWT access tokens (15 min) + refresh tokens (7 days)       |
-| Password Storage      | bcrypt hashing                                             |
-| Input Validation      | Zod schemas on incoming requests                           |
-| Authorization         | RBAC using `requireRole` and `requireOwnership` middleware |
-| Payment Integrity     | Paystack webhook verification                              |
-| Secret Scanning       | Gitleaks on every PR and push                              |
-| Dependency Auditing   | `npm audit` with high-severity checks                      |
-| Static Analysis       | Semgrep security rules                                     |
-| Audit Logging         | Append-only `AuditEvent` records                           |
+| Control | Implementation |
+| --- | --- |
+| HTTP Security Headers | Helmet with CSP, HSTS, X-Frame-Options |
+| CORS | Restricted to configured client origin with credentials |
+| Rate Limiting | `express-rate-limit` on sensitive endpoints |
+| Authentication | JWT access tokens (15 min) + refresh tokens (7 days) |
+| Password Storage | bcrypt hashing |
+| Input Validation | Zod schemas on incoming requests |
+| Authorization | RBAC using `requireRole` and `requireOwnership` middleware |
+| Payment Integrity | Paystack webhook verification |
+| Secret Scanning | Gitleaks on every PR and push |
+| Dependency Auditing | `npm audit` with high-severity checks |
+| Static Analysis | Semgrep security rules |
+| Audit Logging | Append-only `AuditEvent` records |
 
 Additional security documentation and evidence are maintained under:
 
 ```text
-docs/security/
+server/docs/security/
 ```
 
 ---
@@ -435,13 +470,13 @@ docs/security/
 
 Before running the project locally, make sure the following are installed:
 
-* Node.js 24.x
-* npm
-* PostgreSQL 16 or Docker
-* Git
-* Cloudinary account
-* Firebase project with Firebase Cloud Messaging configured
-* Paystack account
+- Node.js 24.x
+- npm
+- PostgreSQL 16 or Docker
+- Git
+- Cloudinary account
+- Firebase project with Firebase Cloud Messaging configured
+- Paystack account
 
 The project uses the Node.js version specified in `.node-version`.
 
@@ -528,19 +563,19 @@ http://localhost:4000
 
 ### Useful Commands
 
-| Command            | Description                       |
-| ------------------ | --------------------------------- |
-| `make dev`         | Run client and server             |
-| `make dev-client`  | Run Next.js frontend              |
-| `make dev-server`  | Run Express backend               |
-| `make lint`        | Run linting across workspaces     |
-| `make test`        | Run all tests                     |
-| `make build`       | Build applications for production |
-| `make studio`      | Open Prisma Studio                |
-| `make migrate`     | Run Prisma migrations             |
-| `make seed`        | Seed demo data                    |
-| `make docker-up`   | Start Docker services             |
-| `make docker-down` | Stop Docker services              |
+| Command | Description |
+| --- | --- |
+| `make dev` | Run client and server |
+| `make dev-client` | Run Next.js frontend |
+| `make dev-server` | Run Express backend |
+| `make lint` | Run linting across workspaces |
+| `make test` | Run all tests |
+| `make build` | Build applications for production |
+| `make studio` | Open Prisma Studio |
+| `make migrate` | Run Prisma migrations |
+| `make seed` | Seed demo data |
+| `make docker-up` | Start Docker services |
+| `make docker-down` | Stop Docker services |
 
 ---
 
@@ -554,18 +589,18 @@ Environment variables are documented in:
 
 ### Core Variables
 
-| Variable                 | Purpose                                                      |
-| ------------------------ | ------------------------------------------------------------ |
-| `DATABASE_URL`           | PostgreSQL connection string                                 |
-| `JWT_ACCESS_SECRET`      | JWT access-token signing secret                              |
-| `JWT_REFRESH_SECRET`     | JWT refresh-token signing secret                             |
-| `CLOUDINARY_*`           | Cloudinary configuration for video, image, and media uploads |
-| `FIREBASE_*`             | Firebase Admin configuration for Firebase Cloud Messaging    |
-| `NEXT_PUBLIC_FIREBASE_*` | Firebase client configuration for push notifications         |
-| `PAYSTACK_*`             | Paystack payment configuration                               |
-| `SMTP_*`                 | SMTP email configuration                                     |
-| `RESEND_*`               | Resend email configuration                                   |
-| `CLIENT_URL`             | Allowed frontend origin for CORS                             |
+| Variable | Purpose |
+| --- | --- |
+| `DATABASE_URL` | PostgreSQL connection string |
+| `JWT_ACCESS_SECRET` | JWT access-token signing secret |
+| `JWT_REFRESH_SECRET` | JWT refresh-token signing secret |
+| `CLOUDINARY_*` | Cloudinary configuration for video, image, and media uploads |
+| `FIREBASE_*` | Firebase Admin configuration for Firebase Cloud Messaging |
+| `NEXT_PUBLIC_FIREBASE_*` | Firebase client configuration for push notifications |
+| `PAYSTACK_*` | Paystack payment configuration |
+| `SMTP_*` | SMTP email configuration |
+| `RESEND_*` | Resend email configuration |
+| `CLIENT_URL` | Allowed frontend origin for CORS |
 
 > **Security:** Never commit `.env` files, API keys, private keys, JWT secrets, database credentials, or other sensitive configuration to the repository.
 
@@ -578,7 +613,7 @@ The API contract is defined using the **OpenAPI 3.0 specification**.
 The specification is located at:
 
 ```text
-docs/api/openapi.yaml
+server/docs/api/openapi.yaml
 ```
 
 The production API documentation is available at:
@@ -591,11 +626,11 @@ The production API documentation is available at:
 
 The project uses multiple testing layers.
 
-| Layer    | Framework                      | Purpose                     |
-| -------- | ------------------------------ | --------------------------- |
-| Backend  | Vitest + Supertest             | API and integration testing |
-| Frontend | Vitest + React Testing Library | Component and UI testing    |
-| Security | Vitest + Supertest + Semgrep   | Security control validation |
+| Layer | Framework | Purpose |
+| --- | --- | --- |
+| Backend | Vitest + Supertest | API and integration testing |
+| Frontend | Vitest + React Testing Library | Component and UI testing |
+| Security | Vitest + Supertest + Semgrep | Security control validation |
 
 Run the complete test suite:
 
@@ -617,11 +652,11 @@ Ephemeral JWT secrets are generated during test execution.
 
 The project uses GitHub Actions for continuous integration, pull-request validation, and security automation.
 
-| Workflow          | Trigger                         | Purpose                                                     |
-| ----------------- | ------------------------------- | ----------------------------------------------------------- |
-| CI                | Push / PR to `main`             | Lint → Prisma generate → DB sync → Build → Test → npm audit |
-| PR Validation     | PR opened / synchronized        | Gitleaks secret scan → Semgrep SAST → Evidence packaging    |
-| Security Pipeline | Push / PR to `main` / `develop` | Gitleaks → npm audit → Semgrep blocking rules               |
+| Workflow | Trigger | Purpose |
+| --- | --- | --- |
+| CI | Push / PR to `main` | Lint → Prisma generate → DB sync → Build → Test → npm audit |
+| PR Validation | PR opened / synchronized | Gitleaks secret scan → Semgrep SAST → Evidence packaging |
+| Security Pipeline | Push / PR to `main` / `develop` | Gitleaks → npm audit → Semgrep blocking rules |
 
 ---
 
@@ -631,18 +666,18 @@ The Secure LMS MVP is currently deployed on an **AWS EC2 instance**.
 
 ### Current Production Deployment
 
-| Component                 | Platform                 |
-| ------------------------- | ------------------------ |
-| 🌐 Frontend               | AWS EC2                  |
-| ⚙️ Backend                | AWS EC2                  |
-| 🗄️ Database              | PostgreSQL               |
-| 🖼️ Image & Video Storage | Cloudinary               |
-| 🔔 Push Notifications     | Firebase Cloud Messaging |
-| 💳 Payments               | Paystack                 |
-| 📧 Email                  | Nodemailer / Resend      |
-| 🔄 Process Management     | PM2                      |
-| 🌐 Reverse Proxy          | Nginx                    |
-| 🔒 SSL                    | Let's Encrypt            |
+| Component | Platform |
+| --- | --- |
+| 🌐 Frontend | AWS EC2 |
+| ⚙️ Backend | AWS EC2 |
+| 🗄️ Database | PostgreSQL |
+| 🖼️ Image & Video Storage | Cloudinary |
+| 🔔 Push Notifications | Firebase Cloud Messaging |
+| 💳 Payments | Paystack |
+| 📧 Email | Nodemailer / Resend |
+| 🔄 Process Management | PM2 |
+| 🌐 Reverse Proxy | Nginx |
+| 🔒 SSL | Let's Encrypt |
 
 ### Live Application
 
@@ -695,26 +730,26 @@ The frontend and backend are currently hosted on the same AWS EC2 infrastructure
 
 Production deployment requires:
 
-* PostgreSQL database
-* Node.js runtime
-* Production environment variables
-* Secure JWT secrets
-* Live Paystack keys
-* `NODE_ENV=production`
-* Firebase Cloud Messaging configuration
-* Cloudinary configuration for image and video uploads
-* Correct CORS configuration
-* Paystack webhook configuration
-* HTTPS
-* Secure database credentials
+- PostgreSQL database
+- Node.js runtime
+- Production environment variables
+- Secure JWT secrets
+- Live Paystack keys
+- `NODE_ENV=production`
+- Firebase Cloud Messaging configuration
+- Cloudinary configuration for image and video uploads
+- Correct CORS configuration
+- Paystack webhook configuration
+- HTTPS
+- Secure database credentials
 
 For EC2 deployments, additionally configure:
 
-* Nginx
-* PM2
-* SSL certificates using Let's Encrypt
-* Firewall/security group rules
-* Production process monitoring
+- Nginx
+- PM2
+- SSL certificates using Let's Encrypt
+- Firewall/security group rules
+- Production process monitoring
 
 ---
 
@@ -724,14 +759,14 @@ Before declaring the application production-ready, verify the following.
 
 ### Environment
 
-* [ ] Configure production environment variables
-* [ ] Set `NODE_ENV=production`
-* [ ] Generate strong JWT secrets
-* [ ] Configure production database
-* [ ] Configure Firebase Cloud Messaging
-* [ ] Configure Cloudinary for image and video uploads
-* [ ] Configure Paystack live credentials
-* [ ] Configure production email provider
+- [ ] Configure production environment variables
+- [ ] Set `NODE_ENV=production`
+- [ ] Generate strong JWT secrets
+- [ ] Configure production database
+- [ ] Configure Firebase Cloud Messaging
+- [ ] Configure Cloudinary for image and video uploads
+- [ ] Configure Paystack live credentials
+- [ ] Configure production email provider
 
 ### Database
 
@@ -749,54 +784,54 @@ npx prisma generate
 
 Then verify:
 
-* [ ] Database connectivity
-* [ ] Required database indexes
-* [ ] Production schema
-* [ ] Production seed requirements, if applicable
+- [ ] Database connectivity
+- [ ] Required database indexes
+- [ ] Production schema
+- [ ] Production seed requirements, if applicable
 
 ### Application
 
-* [ ] Build frontend
-* [ ] Build backend
-* [ ] Verify production environment configuration
-* [ ] Verify API health endpoint
-* [ ] Verify authentication
-* [ ] Verify role-based authorization
-* [ ] Verify course creation and publishing
-* [ ] Verify enrolment
-* [ ] Verify Paystack payments
-* [ ] Verify Paystack webhooks
-* [ ] Verify image uploads
-* [ ] Verify video uploads
-* [ ] Verify Cloudinary media delivery
-* [ ] Verify email delivery
-* [ ] Verify Firebase push notifications
+- [ ] Build frontend
+- [ ] Build backend
+- [ ] Verify production environment configuration
+- [ ] Verify API health endpoint
+- [ ] Verify authentication
+- [ ] Verify role-based authorization
+- [ ] Verify course creation and publishing
+- [ ] Verify enrolment
+- [ ] Verify Paystack payments
+- [ ] Verify Paystack webhooks
+- [ ] Verify image uploads
+- [ ] Verify video uploads
+- [ ] Verify Cloudinary media delivery
+- [ ] Verify email delivery
+- [ ] Verify Firebase push notifications
 
 ### Security
 
-* [ ] Verify CORS configuration
-* [ ] Verify security headers
-* [ ] Verify rate limiting
-* [ ] Verify JWT expiration
-* [ ] Verify refresh-token behavior
-* [ ] Verify input validation
-* [ ] Verify ownership authorization
-* [ ] Verify audit logging
-* [ ] Run dependency audit
-* [ ] Run Gitleaks
-* [ ] Run Semgrep
+- [ ] Verify CORS configuration
+- [ ] Verify security headers
+- [ ] Verify rate limiting
+- [ ] Verify JWT expiration
+- [ ] Verify refresh-token behavior
+- [ ] Verify input validation
+- [ ] Verify ownership authorization
+- [ ] Verify audit logging
+- [ ] Run dependency audit
+- [ ] Run Gitleaks
+- [ ] Run Semgrep
 
 ### Deployment
 
-* [ ] Configure HTTPS
-* [ ] Configure production domain
-* [ ] Configure DNS
-* [ ] Configure reverse proxy if using EC2
-* [ ] Configure PM2 if using EC2
-* [ ] Verify frontend-to-backend communication
-* [ ] Verify production API documentation
-* [ ] Verify application health after deployment
-* [ ] Update the Live Demo URLs in this README
+- [ ] Configure HTTPS
+- [ ] Configure production domain
+- [ ] Configure DNS
+- [ ] Configure reverse proxy if using EC2
+- [ ] Configure PM2 if using EC2
+- [ ] Verify frontend-to-backend communication
+- [ ] Verify production API documentation
+- [ ] Verify application health after deployment
+- [ ] Update the Live Demo URLs in this README
 
 ---
 
@@ -852,21 +887,25 @@ For security-related issues, follow the project's security reporting process doc
 Security documentation and evidence are maintained under:
 
 ```text
-docs/security/
+server/docs/security/
 ```
 
 ---
 
 ## Project Documentation
 
-| Documentation          | Location                                         |
-| ---------------------- | ------------------------------------------------ |
-| API Specification      | [`docs/api/openapi.yaml`](docs/api/openapi.yaml) |
-| Architecture           | [`docs/architecture/`](docs/architecture/)       |
-| Screenshots            | [`docs/screenshots/`](docs/screenshots/)         |
-| Security Documentation | [`docs/security/`](docs/security/)               |
-| Contribution Guide     | [`CONTRIBUTING.md`](CONTRIBUTING.md)             |
-| License                | [`LICENSE`](LICENSE)                             |
+| Documentation | Location |
+| --- | --- |
+| API Specification | [`server/docs/api/openapi.yaml`](server/docs/api/openapi.yaml) |
+| Architecture | [`server/docs/architecture/`](server/docs/architecture/) |
+| Screenshots | [`server/docs/screenshots/`](server/docs/screenshots/) |
+| Security Documentation | [`server/docs/security/`](server/docs/security/) |
+| Architecture Decision Records | [`server/docs/ADR/`](server/docs/ADR/) |
+| API Documentation | [`server/docs/API.md`](server/docs/API.md) |
+| Known Limitations | [`server/docs/KNOWN-LIMITATIONS.md`](server/docs/KNOWN-LIMITATIONS.md) |
+| Monitoring | [`server/docs/MONITORING.md`](server/docs/MONITORING.md) |
+| Contribution Guide | [`CONTRIBUTING.md`](CONTRIBUTING.md) |
+| License | [`LICENSE`](LICENSE) |
 
 ---
 
