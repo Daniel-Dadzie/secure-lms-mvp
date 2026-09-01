@@ -42,7 +42,10 @@ function ResetPasswordForm() {
 
     try {
       // Pass both the token from the URL and the new password to the backend
-      await api.post("/auth/reset-password", { token, password });
+      await api.post("/auth/reset-password", { 
+      token: token, 
+      newPassword: password 
+    });
       
       setIsSuccess(true);
 
