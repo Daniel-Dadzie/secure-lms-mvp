@@ -77,17 +77,17 @@ export default function NotFound() {
             The page or course you are looking for has been moved, removed, or never existed. Try searching for your course below to jump right back on track.
           </p>
 
-          <form onSubmit={handleSearch} className="mb-8 flex gap-2">
+          <form onSubmit={handleSearch} className="mb-8 flex flex-col sm:flex-row gap-3">
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search for courses (e.g. Java, Python, Web)..."
-              className="flex-1 rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none focus:border-[#196A54] focus:ring-2 focus:ring-emerald-100 transition"
+              className="flex-1 w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-700 outline-none focus:border-[#196A54] focus:ring-2 focus:ring-emerald-100 transition"
             />
             <button
               type="submit"
-              className="rounded-xl bg-[#196A54] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#12503F] shrink-0"
+              className="rounded-xl w-full sm:w-auto bg-[#196A54] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#12503F] shrink-0"
             >
               Search
             </button>

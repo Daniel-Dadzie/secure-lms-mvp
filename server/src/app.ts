@@ -128,3 +128,13 @@ app.get("/api", (_req, res) => {
 });
 
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+
+app.use(helmet({
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      "upgrade-insecure-requests": null, // Temporarily disables the HTTPS force
+    },
+  },
+}));
