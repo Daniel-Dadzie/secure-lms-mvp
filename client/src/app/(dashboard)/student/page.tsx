@@ -201,44 +201,31 @@ export default function StudentDashboard() {
               </div>
             ) : (
               <div className="grid sm:grid-cols-2 gap-6">
-                {filteredRecommendedCourses.length === 0 ? (
-  <div className="bg-slate-50 border border-slate-200 border-dashed rounded-2xl p-8 flex flex-col items-center justify-center text-center h-[280px]">
-    <p className="text-slate-600 text-sm font-medium mb-2">
-      {searchQuery ? `No recommendations match "${searchQuery}".` : "You are enrolled in all available courses!"}
-    </p>
-    <Link href="/student/courses" className="text-[#196A54] text-xs font-bold hover:underline">
-      Check the catalog for new releases
-    </Link>
-  </div>
-) : (
-  <div className="grid sm:grid-cols-2 gap-6">
-    {filteredRecommendedCourses.map((course) => (
-      <div key={course.id} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col">
-        <div className="aspect-video relative rounded-xl overflow-hidden mb-4 bg-slate-100 shrink-0">
-          <Image src={course.thumbnailUrl} alt={course.title} fill className="object-cover" />
-          {course.price === null && (
-            <span className="absolute top-2 right-2 bg-white/90 backdrop-blur text-[#0A4A3A] text-xs font-bold px-2 py-1 rounded-md">
-              Free
-            </span>
-          )}
-        </div>
-        <h3 className="font-bold text-slate-900 text-sm mb-1 line-clamp-1">{course.title}</h3>
-        <p className="text-xs text-slate-500 mb-3">{course.instructorName}</p>
-        <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
-                          <div className="font-extrabold text-slate-900">
-                            {course.price != null ? formatPrice(Math.round(course.price * 100)) : "Free"}
-                          </div>
-                          <Link
-                            href={`/student/courses/${course.id}`}
-                            className="px-4 py-2 bg-[#0A4A3A] text-white rounded-lg text-xs font-bold hover:bg-[#12503F] transition-colors"
-                          >
-                            View Course
-                          </Link>
-                        </div>
+                {filteredRecommendedCourses.map((course) => (
+                  <div key={course.id} className="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+                    <div className="aspect-video relative rounded-xl overflow-hidden mb-4 bg-slate-100 shrink-0">
+                      <Image src={course.thumbnailUrl || "https://images.unsplash.com/photo-1537462715879-360eeb61a0ad?auto=format&fit=crop&q=80"} alt={course.title} fill className="object-cover" />
+                      {course.price === null && (
+                        <span className="absolute top-2 right-2 bg-white/90 backdrop-blur text-[#0A4A3A] text-xs font-bold px-2 py-1 rounded-md">
+                          Free
+                        </span>
+                      )}
+                    </div>
+                    <h3 className="font-bold text-slate-900 text-sm mb-1 line-clamp-1">{course.title}</h3>
+                    <p className="text-xs text-slate-500 mb-3">{course.instructorName}</p>
+                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-slate-100">
+                      <div className="font-extrabold text-slate-900">
+                        {course.price != null ? formatPrice(Math.round(course.price * 100)) : "Free"}
                       </div>
-                    ))}
+                      <Link
+                        href={`/student/courses/${course.id}`}
+                        className="px-4 py-2 bg-[#0A4A3A] text-white rounded-lg text-xs font-bold hover:bg-[#12503F] transition-colors"
+                      >
+                        View Course
+                      </Link>
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
             )}
           </section>
