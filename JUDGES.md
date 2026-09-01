@@ -1,88 +1,239 @@
-any updates to be done in  this files as well
+# Secure LMS — Judge Verification Guide
 
-# Secure LMS — Judge & Evaluator Guide
+**Mech Spec Technologies | Secure LMS MVP**
 
-Welcome to the evaluation guide for **Mech Spec Technologies (Secure LMS Platform)**. This document provides direct live links, safe test credentials, a 5-minute verification path, and explicit instructions to independently verify our platform's security controls, role-based access control (RBAC), content gating, audit logs, and payment processing.
+Welcome to the Secure LMS evaluation guide. This document provides the live demo, test credentials and a concise path for independently verifying the platform's core security controls.
 
----
-
-## 1. Live Application & Access
-
-* **Live Frontend URL:** [http://54.229.212.77/](http://54.229.212.77/)
-* **Backend API Base:** [http://54.229.212.77/api](http://54.229.212.77/api)
-* **API Documentation:** [http://54.229.212.77/api/docs](http://54.229.212.77/api/docs)
+> **MVP Transparency:** Capabilities marked as production roadmap items are not represented as currently deployed.
 
 ---
 
-## 2. Safe Test Accounts
+## 1. Live Application
 
-Use these pre-provisioned roles to test authentication, permissions, and administrative features (all accounts use the password: `Password123!`):
-
-| Role | Email | Password | Access Level |
-| :--- | :--- | :--- | :--- |
-| **Student** | `student@mechlms.com` | `Password123!` | Standard enrolled/unenrolled student features |
-| **Instructor** | `james.walker@mechlms.com` | `Password123!` | Course management and analytics |
-| **Administrator** | `admin@mechlms.com` | `Password123!` | System settings, audit logs, and user management |
+* **Frontend:** http://54.229.212.77/
+* **API:** http://54.229.212.77/api
+* **API Documentation:** http://54.229.212.77/api/docs
 
 ---
 
-## 3. 5-Minute Security Verification Path
+## 2. Test Accounts
 
-### Test 1 — Authentication & Token Rotation
-* **Objective:** Verify short-lived access tokens and secure refresh-token handling.
-* **Steps:** Log in as a student. Open browser developer tools (`F12` > Application/Storage > Cookies). Verify that the access token is kept in memory while the refresh token is securely stored in an HTTP-only, secure cookie. 
+| Role              | Email                      | Password       |
+| ----------------- | -------------------------- | -------------- |
+| **Student**       | `student@mechlms.com`      | `Password123!` |
+| **Instructor**    | `james.walker@mechlms.com` | `Password123!` |
+| **Administrator** | `admin@mechlms.com`        | `Password123!` |
 
-### Test 2 — Role-Based Access Control (RBAC)
-* **Objective:** Prove that API routes strictly enforce role boundaries.
-* **Steps:** Log in using the **Student** account. Attempt to navigate directly to `/admin` or invoke an administrative API endpoint. 
-* **Expected Result:** The backend immediately denies access with a `403 Forbidden` response, preventing unauthorized privilege escalation.
-
-### Test 3 — Content Gating
-* **Objective:** Ensure paid course content cannot be accessed without verified enrollment.
-* **Steps:** Log in as an **unenrolled Student**. Attempt to access protected lesson material for a paid course.
-* **Expected Result:** Access is denied by the backend authorization middleware. After completing a test purchase/enrollment, the same lesson content becomes immediately available.
-
-### Test 4 — Audit Logging
-* **Objective:** Verify that security-sensitive actions generate a permanent audit trail.
-* **Steps:** Log in, perform a test action (or trigger a login failure), and then log in as the **Administrator**. Navigate to the Admin Audit Logs dashboard.
-* **Expected Result:** Traceable audit events (`auth.login_success`, `auth.login_failed`, `purchase.completed`) are recorded with timestamps and metadata.
-
-### Test 5 — Payment Integrity & Webhook Security
-* **Objective:** Prove that purchases require cryptographic verification and backend confirmation.
-* **Steps:** Initiate a checkout flow for a course. 
-* **Expected Result:** The purchase is marked as `PENDING`. Enrollment is withheld until Stripe verifies the transaction server-to-server and the backend validates the `stripe-signature` webhook header.
+These accounts are provided solely for evaluation.
 
 ---
 
-## 4. Demo Timestamps
+## 3. Five-Minute Security Verification
 
-* **00:00 – 01:00** | System Context & Architecture Overview
-* **01:00 – 02:00** | Authentication & RBAC Demonstration (`403 Forbidden` enforcement)
-* **02:00 – 03:00** | Content Gating & Course Enrollment Workflow
-* **03:00 – 04:00** | Payment Processing, Webhook Security & Idempotency
-* **04:00 – 05:00** | Admin Audit Trail & Security Event Verification
+### 1. Authentication & Session Security
 
----
+**Verify:** JWT authentication and refresh-token protection.
 
-## 5. Summary of Core Security Controls
-
-* **RBAC & Authorization:** Strict middleware validation enforcing user roles and resource ownership across all API controllers.
-* **JWT & Refresh Tokens:** 15-minute access token lifespans paired with 7-day server-tracked, SHA-256 hashed refresh tokens.
-* **Token-Family Rotation:** Automatic detection of refresh token reuse revokes the entire token family to mitigate replay attacks.
-* **Transactional Payments:** Prisma database transactions ensure that purchases, enrollments, and audit logs update atomically.
+* Access token lifetime: **15 minutes**
+* Refresh token lifetime: **7 days**
+* Refresh tokens are SHA-256 hashed before storage.
+* Refresh-token rotation and token-family reuse detection are implemented.
 
 ---
 
-## 6. MVP vs. Production Roadmap
+### 2. Role-Based Access Control (RBAC)
 
-* **MVP Scope:** Single-region EC2 Docker deployment, PostgreSQL database, JWT + refresh token rotation, Stripe payments, and database-level audit logging.
-* **Production Roadmap:** Multi-region high availability (ECS/EKS), AWS Secrets Manager, managed Redis session stores, and centralized SIEM log pipelines. (See `docs/MVP-VS-PRODUCTION.md`).
+**Verify:** Administrative APIs cannot be accessed by Students.
+
+**Test:**
+
+1. Sign in as the **Student**.
+2. Request:
+
+```text
+GET /api/users/admin/users
+```
+
+3. Observe the response.
+
+**Expected:** `403 Forbidden`.
+
+Repeat the request as **Administrator**.
+
+**Expected:** The authorized administrative response is returned.
+
+**Security evidence:** The endpoint requires authentication and the `ADMIN` role at the backend API layer.
 
 ---
 
-## 7. Known Limitations & Architectural Pivots
+### 3. Content Gating
 
-* **Access Token Revocation:** Immediate revocation of an active access token is bounded by its short 15-minute expiration window unless a secondary distributed denylist is checked.
-* **Payment Gateway Pivot:** Migrated from Paystack to Stripe to optimize global test card processing and secure webhook signature verification.
-* **Media Storage Pivot:** Migrated from Firebase to Cloudinary due to free-tier media streaming limits and premium access barriers.
-* **Disaster Recovery:** Automated point-in-time recovery verification is planned for the post-MVP production release. (See `docs/KNOWN-LIMITATIONS.md`).
+**Verify:** Protected course content is not exposed to unenrolled students.
+
+**Test:**
+
+1. Sign in as the **Student**.
+2. Open a paid course and select a lesson.
+3. Inspect:
+
+```text
+GET /api/courses/{courseId}/modules/{moduleId}/lessons/{lessonId}
+```
+
+**Expected when unenrolled:**
+
+* Lesson metadata may be returned.
+* `contentUrl` is not exposed (`null`).
+* Protected video content cannot be accessed.
+
+After verified enrollment, repeat the request.
+
+**Expected:** Authorized lesson content becomes available.
+
+---
+
+### 4. Protected Video Streaming
+
+The lesson stream endpoint requires a valid signed stream token.
+
+**Expected:**
+
+* Missing token → `401 Unauthorized`
+* Invalid token → `403 Forbidden`
+* Valid authorized token → protected stream access
+
+This provides an additional layer of protection beyond frontend content gating.
+
+---
+
+### 5. Audit Logging & Security Monitoring
+
+**Verify:** Security-sensitive events are recorded and attributable.
+
+1. Perform a successful login.
+2. Perform an unsuccessful login.
+3. Log out.
+4. As Administrator, open **Audit Logs**.
+
+**Expected events include:**
+
+```text
+Auth Login Success
+Auth Login Failed
+Auth Logout
+```
+
+Audit records include timestamp, user identity, event type and source IP where available.
+
+RBAC violations also generate structured backend events such as:
+
+```text
+auth.permission_denied
+```
+
+---
+
+### 6. Payment Integrity
+
+**Provider:** Paystack
+
+The payment workflow is designed so that browser-side success alone does not grant course access.
+
+```text
+Checkout
+   ↓
+PENDING
+   ↓
+Server-side verification
+   ↓
+Webhook signature validation
+   ↓
+Payment completion
+   ↓
+Enrollment
+```
+
+**Expected:** Invalid signatures, failed verification or unsuccessful payment states do not grant enrollment.
+
+---
+
+## 4. Token Revocation Strategy
+
+Secure LMS uses short-lived access tokens together with server-tracked refresh tokens.
+
+* Access tokens expire after **15 minutes**.
+* Refresh tokens are rotated on use.
+* Refresh-token reuse triggers token-family revocation.
+* Reuse detection is recorded as a security event.
+* An already-issued access token may remain valid until expiry.
+
+**MVP limitation:** Immediate revocation of an active access token is therefore bounded by its 15-minute lifetime.
+
+**Production roadmap:** Distributed access-token revocation/denylisting.
+
+---
+
+## 5. Monitoring & Observability
+
+The MVP provides operational and security visibility through:
+
+* Structured backend application logs
+* Database-backed audit logs
+* Docker container status/resource visibility
+* PostgreSQL readiness healthchecks
+* EC2 operational metrics
+
+Verified security events include authentication activity and `auth.permission_denied` RBAC violations.
+
+**Production roadmap:** Amazon CloudWatch, Prometheus, Grafana, centralized logging, APM, SIEM integration and automated alerting.
+
+See `server/docs/MONITORING.md`.
+
+---
+
+## 6. MVP vs Production
+
+| Current MVP                  | Production Roadmap                           |
+| ---------------------------- | -------------------------------------------- |
+| Single EC2 deployment        | Highly available multi-instance architecture |
+| Docker Compose               | ECS/EKS                                      |
+| PostgreSQL                   | Managed Multi-AZ database                    |
+| JWT + refresh-token rotation | Distributed revocation controls              |
+| Database audit logs          | Centralized/tamper-evident logging           |
+| Basic operational visibility | CloudWatch + Prometheus + Grafana            |
+| Paystack integration         | Automated reconciliation/dispute workflows   |
+| Manual investigation         | Automated alerting and incident response     |
+
+---
+
+## 7. Known Limitations
+
+The current MVP intentionally has the following boundaries:
+
+* Active access-token revocation is bounded by the 15-minute token lifetime.
+* Deployment currently uses a single EC2 host.
+* Centralized APM/SIEM and automated alerting are not yet deployed.
+* Distributed rate limiting is planned for horizontal scaling.
+* Automated payment dispute/chargeback reconciliation is not yet implemented.
+* Full automated disaster-recovery verification is planned for production.
+
+---
+
+## 8. Verification Summary
+
+Secure LMS demonstrates a security-first LMS architecture built around:
+
+**Authentication → RBAC → Content Protection → Secure Payments → Auditability**
+
+The MVP is intentionally distinguished from the production roadmap so judges can independently verify implemented controls while clearly understanding the remaining path to production readiness.
+
+### Key implementation evidence
+
+* `server/src/modules/auth/`
+* `server/src/modules/users/users.routes.ts`
+* `server/src/modules/courses/lessons.service.ts`
+* `server/src/modules/courses/lessons.controller.ts`
+* `server/src/modules/payments/`
+* `server/docs/MONITORING.md`
+* `server/docs/MVP-VS-PRODUCTION.md`
+* `server/docs/KNOWN-LIMITATIONS.md`
