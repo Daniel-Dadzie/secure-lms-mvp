@@ -4,8 +4,8 @@ Welcome to the Secure LMS API documentation. Our API is built on Express.js and 
 
 ## Interactive API Reference (Swagger UI)
 For the most up-to-date, interactive documentation, including request schemas and live testing capabilities, please visit our Swagger UI portal:
-* **Live API Docs:** [http://54.229.212.77/api-docs](http://54.229.212.77/api-docs) *(Requires active server deployment)*
-* **Local API Docs:** `http://localhost:4000/api-docs`
+* **Live API Docs:** [http://54.229.212.77/api/docs](http://54.229.212.77/api/docs) *(Requires active server deployment)*
+* **Local API Docs:** `http://localhost:4000/api/docs`
 
 ---
 

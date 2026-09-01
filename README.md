@@ -618,7 +618,7 @@ server/docs/api/openapi.yaml
 
 The production API documentation is available at:
 
-[OpenAPI Documentation](http://54.229.212.77/api-docs)
+[OpenAPI Documentation](http://54.229.212.77/api/docs)
 
 ---
 
