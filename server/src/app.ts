@@ -122,9 +122,9 @@ app.get("/api", (_req, res) => {
   res.status(200).json({
     name: "Secure LMS API",
     status: "online",
-    documentation: "/api-docs",
+    documentation: "/api/docs",
     health: "/api/health"
   });
 });
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));

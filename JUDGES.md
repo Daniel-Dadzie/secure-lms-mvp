@@ -10,7 +10,7 @@ Welcome to the evaluation guide for **Mech Spec Technologies (Secure LMS Platfor
 
 * **Live Frontend URL:** [http://54.229.212.77/](http://54.229.212.77/)
 * **Backend API Base:** [http://54.229.212.77/api](http://54.229.212.77/api)
-* **API Documentation:** [http://54.229.212.77/api-docs](http://54.229.212.77/api-docs)
+* **API Documentation:** [http://54.229.212.77/api/docs](http://54.229.212.77/api/docs)
 
 ---
 
