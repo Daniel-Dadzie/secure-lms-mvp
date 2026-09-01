@@ -25,7 +25,7 @@ import instructorPortalRouter from "./modules/instructor-portal/instructor-porta
 import searchRouter from "./modules/search/search.routes";
 import notificationsRouter from "./modules/notifications/notifications.routes";
 import studentRoutes from "./modules/students/student.routes";
-import uploadRouter from "./modules/uploads/upload.router"; // or check your relative path to the upload router file
+import uploadRouter from "./modules/uploads/upload.router";
 import helpRouter from "./modules/help/help.routes";
 
 export const app = express();
@@ -33,10 +33,16 @@ export const app = express();
 app.set("trust proxy", 1);
 
 // ----------------------------------------------------------------------------
-// Security middleware — must be first
+// Security middleware — single instance with temporary HTTP CSP bypass
 // ----------------------------------------------------------------------------
 app.use(helmet({
   crossOriginResourcePolicy: { policy: "cross-origin" },
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      "upgrade-insecure-requests": null, // Temporarily disables the HTTPS force for raw IP
+    },
+  },
 }));
 
 app.use(cors({
@@ -48,14 +54,10 @@ app.use(
   express.json({
     limit: "10kb",
     verify: (req: any, _res, buf) => {
-      // Preserve the raw body for webhook signature verification —
-      // express.json() would otherwise only leave us the parsed object,
-      // and Paystack's HMAC is computed over the exact original bytes.
       req.rawBody = buf;
     },
   })
 );
-
 
 app.use(cookieParser());
 
@@ -81,6 +83,16 @@ app.use("/api/search", searchRouter);
 app.use("/api/notifications", notificationsRouter);
 app.use("/api/student", studentRoutes);
 app.use("/api/uploads", uploadRouter);
+app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+
+app.get("/api", (_req, res) => {
+  res.status(200).json({
+    name: "Secure LMS API",
+    status: "online",
+    documentation: "/api/docs",
+    health: "/api/health"
+  });
+});
 
 // ----------------------------------------------------------------------------
 // Health check
@@ -103,7 +115,7 @@ app.get("/api/health", async (_req, res) => {
 });
 
 // ----------------------------------------------------------------------------
-// Global error handler — last middleware, never exposes stack traces to client
+// Global error handler — last middleware
 // ----------------------------------------------------------------------------
 app.use((
   err: any,
@@ -116,27 +128,3 @@ app.use((
     message: err.message || "Internal server error",
   });
 });
-
-
-app.get("/api", (_req, res) => {
-  res.status(200).json({
-    name: "Secure LMS API",
-    status: "online",
-    documentation: "/api/docs",
-    health: "/api/health"
-  });
-});
-
-app.use(
-  "/api/docs",
-  helmet({
-    contentSecurityPolicy: {
-      useDefaults: true,
-      directives: {
-        "upgrade-insecure-requests": null,
-      },
-    },
-  }),
-  swaggerUi.serve,
-  swaggerUi.setup(swaggerDocument)
-);
