@@ -1,18 +1,34 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { CheckCircle2, Lock, Eye, EyeOff } from "lucide-react";
+import { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { CheckCircle2, Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
 import api from "@/lib/api";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // If someone visits the page directly without a token in the URL
+  if (!token) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F4F9F7] px-4">
+        <div className="max-w-md w-full bg-white rounded-2xl border border-slate-200 p-8 shadow-sm text-center space-y-4">
+          <AlertCircle className="w-12 h-12 text-amber-500 mx-auto" />
+          <h1 className="text-xl font-bold text-slate-900">Invalid or Missing Link</h1>
+          <p className="text-xs text-slate-500">This password reset link is invalid. Please request a new password reset link.</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -25,20 +41,19 @@ export default function ResetPasswordPage() {
     setError(null);
 
     try {
-      // Replace with your actual password reset API endpoint
-      await api.post("/auth/reset-password", { password });
+      // Pass both the token from the URL and the new password to the backend
+      await api.post("/auth/reset-password", { token, password });
       
-      // 1. Show UI/UX best practice success state
       setIsSuccess(true);
 
-      // 2. Smoothly redirect to login after 2.5 seconds
+      // Smoothly redirect to login after 2.5 seconds
       setTimeout(() => {
         router.push("/login");
       }, 2500);
     } catch (err: unknown) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-        "Failed to update password. Please try again.";
+        "Failed to update password. The link may have expired.";
       setError(message);
       setIsLoading(false);
     }
@@ -53,7 +68,7 @@ export default function ResetPasswordPage() {
         </div>
 
         {isSuccess ? (
-          <div className="bg-emerald-50 border border-emerald-200 p-6 rounded-xl text-center space-y-3 animate-fadeIn">
+          <div className="bg-emerald-50 border border-emerald-200 p-6 rounded-xl text-center space-y-3">
             <CheckCircle2 className="w-12 h-12 text-emerald-600 mx-auto" />
             <h2 className="font-bold text-slate-900 text-sm">Password Updated Successfully!</h2>
             <p className="text-xs text-slate-600">Redirecting you to the login page...</p>
@@ -113,5 +128,13 @@ export default function ResetPasswordPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#F4F9F7] text-sm text-slate-500">Loading...</div>}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }
