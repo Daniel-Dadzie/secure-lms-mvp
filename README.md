@@ -128,7 +128,7 @@ The video demonstrates the major features of the platform, including:
 - Paystack payment and course-related workflows
 - Security and application architecture
 
-🎥 **[Watch the Secure LMS MVP Project Demo on Loom](https://www.loom.com/share/60c500e0f02d4fe9bee4667083f3b776b)**
+🎥 **[Watch the Secure LMS MVP Project Demo on Loom](https://www.loom.com/share/60c500e0f02d4fe9bee466708f3b776b)**
 
 > The demo video provides a practical walkthrough of the deployed application and explains how the major components of the system work together.
 
