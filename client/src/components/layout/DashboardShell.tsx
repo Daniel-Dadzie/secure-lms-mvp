@@ -48,8 +48,9 @@ export function DashboardShell({
   }
 
   return (
-    // THE FIX: Changed h-screen overflow-hidden to min-h-screen w-full
-    <div className="flex min-h-screen w-full bg-[#F4F9F7]">
+    // 1. Lock the outer shell to the exact viewport height with hidden overflow
+    <div className="flex h-screen w-screen overflow-hidden bg-[#F4F9F7]">
+      {/* 2. Sidebar is locked to full height and never scrolls away */}
       <Sidebar
         navItems={navItems}
         portalLabel={portalLabel}
@@ -59,7 +60,9 @@ export function DashboardShell({
         collapsed={sidebarCollapsed}
         onToggleCollapse={toggleSidebarCollapse}
       />
-      <div className="flex flex-1 flex-col min-w-0">
+      
+      {/* 3. Right side column containing TopBar and scrollable main content */}
+      <div className="flex flex-1 flex-col h-full overflow-hidden min-w-0">
         <TopBar
           title={topBarTitle}
           breadcrumb={breadcrumb}
@@ -71,7 +74,11 @@ export function DashboardShell({
           searchPath={searchPath}
           notificationBadge={notificationBadge}
         />
-        <main className="flex-1">{children}</main>
+        
+        {/* 4. Only this <main> container handles scrolling when modules expand */}
+        <main className="flex-1 overflow-y-auto bg-[#F4F9F7]">
+          {children}
+        </main>
       </div>
     </div>
   );
