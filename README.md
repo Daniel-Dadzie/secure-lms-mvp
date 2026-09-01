@@ -102,7 +102,7 @@ The production deployment is available through the links below.
 | Component | Link |
 | --- | --- |
 | 🌐 Web Application | [Open Secure LMS](http://54.229.212.77/) |
-| 📚 API Documentation | [OpenAPI Documentation](http://54.229.212.77/api-docs) |
+| 📚 API Documentation | [OpenAPI Documentation](http://54.229.212.77/api/docs) |
 
 > **Note:** The application is currently deployed on an AWS EC2 instance.
 
