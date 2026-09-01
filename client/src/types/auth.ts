@@ -5,6 +5,7 @@ export interface SafeUser {
   email: string;
   fullName: string;
   role: Role;
+  avatarUrl?: string | null;
   isActive: boolean;
   isEmailVerified: boolean;
   createdAt: string;

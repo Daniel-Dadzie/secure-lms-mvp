@@ -107,7 +107,7 @@ function CertificatesContent() {
 
   if (selectedCert) {
     return (
-      <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6 relative certificate-page">
+      <div className="p-6 md:p-8 max-w-5xl mx-auto space-y-6 relative certificate-page overflow-x-hidden">
         <style jsx global>{`
           @media print {
             body * {
@@ -148,7 +148,7 @@ function CertificatesContent() {
 
         <div
           id="certificate-document"
-          className="bg-white border-2 border-slate-800 rounded-3xl p-10 shadow-xl relative overflow-hidden text-center space-y-6"
+          className="bg-white border-2 border-slate-800 rounded-3xl p-6 sm:p-10 shadow-xl relative overflow-hidden text-center space-y-6"
         >
           {/* Geometric background patterns with brand colors */}
           <div className="absolute inset-0 opacity-10 pointer-events-none">
@@ -156,66 +156,22 @@ function CertificatesContent() {
             <div className="absolute inset-0 bg-[radial-gradient(#84cc16_1px,transparent_1px)] [background-size:32px_32px]" />
           </div>
 
-          {/* Top left geometric design */}
-          <div className="absolute top-0 left-0 w-32 h-32 pointer-events-none">
-            <div className="absolute top-4 left-4 w-16 h-16 border-4 border-[#0A4A3A] rounded-full opacity-60" />
-            <div className="absolute top-8 left-8 w-8 h-8 bg-[#84cc16] rounded-full opacity-40" />
-            <div className="absolute top-0 left-20 w-0 h-0 border-l-[20px] border-l-transparent border-t-[30px] border-t-[#0A4A3A] opacity-50" />
-            <div className="absolute top-12 left-0 w-0 h-0 border-r-[15px] border-r-transparent border-b-[25px] border-b-[#C2F25B] opacity-40" />
-            <div className="absolute top-2 left-2 w-20 h-1 bg-[#84cc16] opacity-30 transform -rotate-45" />
-            <div className="absolute top-6 left-6 w-16 h-1 bg-[#0A4A3A] opacity-30 transform -rotate-45" />
-          </div>
-
-          {/* Top right geometric design */}
-          <div className="absolute top-0 right-0 w-32 h-32 pointer-events-none">
-            <div className="absolute top-4 right-4 w-16 h-16 border-4 border-[#0A4A3A] rounded-full opacity-60" />
-            <div className="absolute top-8 right-8 w-8 h-8 bg-[#84cc16] rounded-full opacity-40" />
-            <div className="absolute top-0 right-20 w-0 h-0 border-r-[20px] border-r-transparent border-t-[30px] border-t-[#0A4A3A] opacity-50" />
-            <div className="absolute top-12 right-0 w-0 h-0 border-l-[15px] border-l-transparent border-b-[25px] border-b-[#C2F25B] opacity-40" />
-            <div className="absolute top-2 right-2 w-20 h-1 bg-[#84cc16] opacity-30 transform rotate-45" />
-            <div className="absolute top-6 right-6 w-16 h-1 bg-[#0A4A3A] opacity-30 transform rotate-45" />
-          </div>
-
-          {/* Bottom left geometric design */}
-          <div className="absolute bottom-0 left-0 w-32 h-32 pointer-events-none">
-            <div className="absolute bottom-4 left-4 w-16 h-16 border-4 border-[#0A4A3A] rounded-full opacity-60" />
-            <div className="absolute bottom-8 left-8 w-8 h-8 bg-[#84cc16] rounded-full opacity-40" />
-            <div className="absolute bottom-0 left-20 w-0 h-0 border-l-[20px] border-l-transparent border-b-[30px] border-b-[#0A4A3A] opacity-50" />
-            <div className="absolute bottom-12 left-0 w-0 h-0 border-r-[15px] border-r-transparent border-t-[25px] border-t-[#C2F25B] opacity-40" />
-            <div className="absolute bottom-2 left-2 w-20 h-1 bg-[#84cc16] opacity-30 transform rotate-45" />
-            <div className="absolute bottom-6 left-6 w-16 h-1 bg-[#0A4A3A] opacity-30 transform rotate-45" />
-          </div>
-
-          {/* Bottom right geometric design */}
-          <div className="absolute bottom-0 right-0 w-32 h-32 pointer-events-none">
-            <div className="absolute bottom-4 right-4 w-16 h-16 border-4 border-[#0A4A3A] rounded-full opacity-60" />
-            <div className="absolute bottom-8 right-8 w-8 h-8 bg-[#84cc16] rounded-full opacity-40" />
-            <div className="absolute bottom-0 right-20 w-0 h-0 border-r-[20px] border-r-transparent border-b-[30px] border-b-[#0A4A3A] opacity-50" />
-            <div className="absolute bottom-12 right-0 w-0 h-0 border-l-[15px] border-l-transparent border-t-[25px] border-t-[#C2F25B] opacity-40" />
-            <div className="absolute bottom-2 right-2 w-20 h-1 bg-[#84cc16] opacity-30 transform -rotate-45" />
-            <div className="absolute bottom-6 right-6 w-16 h-1 bg-[#0A4A3A] opacity-30 transform -rotate-45" />
-          </div>
-
-          {/* Subtle gradient borders */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#0A4A3A] to-transparent opacity-30" />
-          <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#84cc16] to-transparent opacity-30" />
-
           <div className="flex justify-center items-center space-x-2 text-[#0A4A3A]">
-            <Award className="w-10 h-10" />
-            <span className="font-extrabold tracking-widest text-sm uppercase">Mech Spec Technologies LMS</span>
+            <Award className="w-8 h-8 sm:w-10 sm:h-10" />
+            <span className="font-extrabold tracking-widest text-xs sm:text-sm uppercase">Mech Spec Technologies LMS</span>
           </div>
 
           <div className="space-y-2">
             <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Certificate of Completion</p>
-            <h2 className="text-3xl font-serif text-slate-900">This is to certify that</h2>
-            <p className="text-2xl font-bold font-serif text-[#0A4A3A] underline decoration-slate-300 underline-offset-8">
+            <h2 className="text-2xl sm:text-3xl font-serif text-slate-900">This is to certify that</h2>
+            <p className="text-xl sm:text-2xl font-bold font-serif text-[#0A4A3A] underline decoration-slate-300 underline-offset-8 break-words">
               {user?.fullName || "Student"}
             </p>
             <p className="text-sm text-slate-500 pt-2">has successfully completed the course</p>
           </div>
 
-          <div className="py-4 px-6 bg-slate-50 rounded-2xl border border-slate-200 inline-block mx-auto max-w-lg">
-            <h3 className="text-xl font-bold text-slate-900">{selectedCert.courseTitle}</h3>
+          <div className="py-4 px-6 bg-slate-50 rounded-2xl border border-slate-200 inline-block mx-auto max-w-lg w-full">
+            <h3 className="text-lg sm:text-xl font-bold text-slate-900">{selectedCert.courseTitle}</h3>
             <p className="text-xs text-slate-500 mt-1">Instructed by {selectedCert.instructorName}</p>
           </div>
 
@@ -233,16 +189,16 @@ function CertificatesContent() {
           <p className="text-[10px] font-mono text-slate-400 pt-4">Certificate ID: {selectedCert.certificateId}</p>
         </div>
 
-        <div className="no-print flex justify-center gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-          <button type="button" onClick={handleDownload} className="flex items-center gap-2 bg-[#196A54] hover:bg-[#12503F] text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all">
+        <div className="no-print flex flex-col sm:flex-row justify-center gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+          <button type="button" onClick={handleDownload} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-[#196A54] hover:bg-[#12503F] text-white px-6 py-2.5 rounded-xl text-sm font-semibold transition-all">
             <Download className="w-4 h-4" />
             <span>Download PDF</span>
           </button>
-          <button type="button" onClick={handleShare} className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all">
+          <button type="button" onClick={handleShare} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all">
             <Share2 className="w-4 h-4" />
             <span>Share Certificate</span>
           </button>
-          <button type="button" onClick={() => window.print()} className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all">
+          <button type="button" onClick={() => window.print()} className="w-full sm:w-auto flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-6 py-2.5 rounded-xl text-sm font-semibold transition-all">
             <Printer className="w-4 h-4" />
             <span>Print</span>
           </button>
@@ -252,7 +208,7 @@ function CertificatesContent() {
   }
 
   return (
-    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-6 md:p-8 max-w-7xl mx-auto space-y-6 overflow-x-hidden">
       <div>
         <h1 className="text-2xl font-extrabold text-slate-900">My Certificates</h1>
         <p className="text-sm text-slate-500 mt-1">{certificates.length} verified certificate{certificates.length !== 1 ? "s" : ""} earned</p>
@@ -267,29 +223,29 @@ function CertificatesContent() {
       ) : certificates.length > 0 ? (
         <div className="space-y-4">
           {certificates.map((cert) => (
-            <div key={cert.id} className="bg-white border border-slate-200 p-6 rounded-2xl shadow-sm flex items-center justify-between hover:border-slate-300 transition-all">
-              <div className="flex items-center space-x-4">
+            <div key={cert.id} className="bg-white border border-slate-200 p-5 sm:p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 hover:border-slate-300 transition-all w-full">
+              <div className="flex items-start sm:items-center space-x-4 w-full sm:w-auto min-w-0">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-[#196A54] flex items-center justify-center font-bold flex-shrink-0">
                   <Award className="w-6 h-6" />
                 </div>
-                <div>
-                  <h3 className="font-bold text-sm text-slate-900">{cert.courseTitle}</h3>
-                  <p className="text-xs text-slate-500 mt-0.5">
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-bold text-sm text-slate-900 truncate">{cert.courseTitle}</h3>
+                  <p className="text-xs text-slate-500 mt-0.5 truncate">
                     Instructor: {cert.instructorName} · Issued: {cert.completedAt}
                   </p>
                   <p className="text-[10px] font-mono text-slate-400 mt-1">{cert.certificateId}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 w-full sm:w-auto justify-end pt-2 sm:pt-0 border-t sm:border-0 border-slate-100">
                 <button
                   onClick={() => setSelectedCert(cert)}
-                  className="px-4 py-2 bg-[#196A54] hover:bg-[#12503F] text-white rounded-xl text-xs font-semibold transition-all"
+                  className="flex-1 sm:flex-initial px-4 py-2 bg-[#196A54] hover:bg-[#12503F] text-white rounded-xl text-xs font-semibold transition-all text-center"
                 >
                   View
                 </button>
                 <button
                   onClick={() => { setSelectedCert(cert); setTimeout(handleDownload, 200); }}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-all"
+                  className="flex-1 sm:flex-initial px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-all text-center"
                 >
                   Download
                 </button>

@@ -195,7 +195,7 @@ useEffect(() => {
               )}
             </button>
             {showNotifications && (
-              <div className="absolute right-0 z-30 mt-2 w-80 sm:w-96 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl ring-1 ring-black/5">
+              <div className="absolute -right-2 sm:right-0 z-30 mt-2 w-[calc(100vw-2rem)] sm:w-96 max-w-sm overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl ring-1 ring-black/5">
                 
                 {/* Dropdown Header */}
                 <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-3">

@@ -10,7 +10,8 @@ import { LoadingSkeleton } from "@/components/ui/LoadingSkeleton";
 import type { InstructorProfile } from "@/types/instructor";
 
 export default function InstructorSettingsPage() {
-  const authStore = useAuthStore() as { user?: { fullName?: string }; setUser?: (u: unknown) => void };
+  // 1. Cleaned up global store import
+  const { updateUser } = useAuthStore();
   const [profile, setProfile] = useState<InstructorProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -36,8 +37,10 @@ export default function InstructorSettingsPage() {
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     if (!profile) return;
+    
     setSaving(true);
     setSuccess(null);
+    
     try {
       const res = await api.patch("/instructor/profile", {
         fullName: profile.fullName,
@@ -51,14 +54,15 @@ export default function InstructorSettingsPage() {
         instructorCategory: profile.instructorCategory ?? "",
         region: profile.region ?? undefined,
       });
+      
       setProfile(res.data.profile);
-      if (authStore.setUser && authStore.user) {
-        authStore.setUser({ 
-          ...authStore.user, 
-          fullName: res.data.profile.fullName, 
-          avatarUrl: res.data.profile.avatarUrl 
-        });
-      }
+      
+      // 2. Instantly push name/avatar changes to TopBar
+      updateUser({ 
+        fullName: res.data.profile.fullName, 
+        avatarUrl: res.data.profile.avatarUrl 
+      });
+      
       setSuccess("Profile updated successfully.");
       setTimeout(() => setSuccess(null), 4000);
     } finally {
@@ -66,7 +70,7 @@ export default function InstructorSettingsPage() {
     }
   }
 
- async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handleAvatarUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || !profile) return;
     
@@ -74,11 +78,11 @@ export default function InstructorSettingsPage() {
     try {
       const url = await uploadAvatar(file);
       
-      // 1. Update local form profile state
+      // Update local form profile state
       const updatedProfile = { ...profile, avatarUrl: url };
       setProfile(updatedProfile);
 
-      // 2. Instantly persist to the instructor profile backend endpoint
+      // Persist to the instructor profile backend endpoint
       await api.patch("/instructor/profile", {
         fullName: updatedProfile.fullName,
         avatarUrl: url,
@@ -92,9 +96,7 @@ export default function InstructorSettingsPage() {
       });
 
       // 3. Instantly update global auth store so the TopBar reflects it immediately
-      if (authStore.setUser && authStore.user) {
-        authStore.setUser({ ...authStore.user, avatarUrl: url });
-      }
+      updateUser({ avatarUrl: url });
 
       setSuccess("Profile photo updated successfully.");
       setTimeout(() => setSuccess(null), 4000);
