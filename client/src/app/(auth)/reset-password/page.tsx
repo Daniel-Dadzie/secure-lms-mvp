@@ -102,6 +102,8 @@ export default function ResetPasswordPage() {
           {/* Error Message Display */}
           {error && (
             <div role="alert" className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg text-center">
+              {error}
+            </div>
           )}
 
           {/* Submit Button */}
