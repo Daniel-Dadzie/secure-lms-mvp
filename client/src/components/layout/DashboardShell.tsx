@@ -48,7 +48,8 @@ export function DashboardShell({
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F4F9F7]">
+    // THE FIX: Changed h-screen overflow-hidden to min-h-screen w-full
+    <div className="flex min-h-screen w-full bg-[#F4F9F7]">
       <Sidebar
         navItems={navItems}
         portalLabel={portalLabel}
@@ -58,7 +59,7 @@ export function DashboardShell({
         collapsed={sidebarCollapsed}
         onToggleCollapse={toggleSidebarCollapse}
       />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col min-w-0">
         <TopBar
           title={topBarTitle}
           breadcrumb={breadcrumb}
@@ -70,7 +71,7 @@ export function DashboardShell({
           searchPath={searchPath}
           notificationBadge={notificationBadge}
         />
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1">{children}</main>
       </div>
     </div>
   );
