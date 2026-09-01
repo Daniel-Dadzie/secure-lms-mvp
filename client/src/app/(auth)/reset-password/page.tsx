@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-// Assuming you use Next.js navigation
-import { useRouter, useSearchParams } from "next/navigation"; 
+import { useRouter, useSearchParams } from "next/navigation";
+import { resetPassword } from "@/lib/auth.api";
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState("");
