@@ -206,10 +206,11 @@ export function Sidebar({
 
   return (
     <>
-      <aside className="hidden md:flex h-full border-r border-[#0A4A3A]">
+      <aside className="hidden md:flex sticky top-0 h-screen shrink-0 border-r border-[#0A4A3A]">
         {renderSidebarContent(collapsed, true)}
       </aside>
 
+      
       {isOpen && (
         <div className="fixed inset-0 z-50 flex md:hidden">
           <div
