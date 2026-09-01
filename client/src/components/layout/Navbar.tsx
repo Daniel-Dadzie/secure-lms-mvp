@@ -1,4 +1,3 @@
- 
 "use client";
 
 import Link from "next/link";
@@ -18,13 +17,6 @@ export default function Navbar() {
   const isActive = (path: string) =>
     pathname === path || pathname.startsWith(`${path}/`);
 
-  /**
-   * Fetch the student's cart count.
-   *
-   * We intentionally do not call setCartCount synchronously when the
-   * user is unauthenticated. The effect only performs the external
-   * API synchronization when authentication is available.
-   */
   useEffect(() => {
     if (!isAuthenticated) {
       return;
@@ -75,11 +67,11 @@ export default function Navbar() {
         ? "/instructor"
         : "/student";
 
-  // Never show a stale cart count after authentication is lost.
   const displayedCartCount = isAuthenticated ? cartCount : 0;
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+    // THE FIX: Added w-full to guarantee width across all mobile viewports
+    <nav className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex h-20 max-w-[1400px] items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
         <Link
@@ -291,4 +283,3 @@ export default function Navbar() {
     </nav>
   );
 }
- 

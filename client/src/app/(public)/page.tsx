@@ -41,8 +41,10 @@ export default function HomePage() {
     };
     fetchCategories();
   }, []);
+  
   return (
-    <div className="w-full bg-[#F4F9F7]">
+    // THE FIX: Added overflow-x-hidden, flex flex-col, and min-h-screen to the root wrapper
+    <div className="w-full overflow-x-hidden flex flex-col min-h-screen bg-[#F4F9F7]">
 
       {/* 1. HERO SECTION */}
       <section className="relative min-h-[85vh] sm:min-h-[90vh] flex items-center pt-20 sm:pt-24 pb-16 sm:pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
@@ -142,7 +144,7 @@ export default function HomePage() {
       </section>
 
       {/* 2. BROWSE BY CATEGORY */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
         <div className="flex justify-between items-end mb-12">
           <div>
             <p className="text-sm font-bold text-[#196A54] tracking-wider uppercase mb-2">Explore Topics</p>
@@ -184,7 +186,6 @@ export default function HomePage() {
                 <path key="check" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
               ];
 
-              // Assign colors ensuring no two adjacent have the same color
               const colorIndex = index % colorPalette.length;
               const style = colorPalette[colorIndex];
               const icon = icons[colorIndex];
@@ -215,7 +216,7 @@ export default function HomePage() {
       <FeaturedCoursesSection />
 
       {/* 4. WHY CHOOSE MECH SPEC */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
+      <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full text-center">
         <p className="text-sm font-bold text-[#196A54] tracking-wider uppercase mb-2">Platform Features</p>
         <h2 className="text-4xl font-extrabold text-[#0A4A3A] mb-4">Why Choose Mech Spec</h2>
         <p className="text-slate-500 text-lg mb-16">A comprehensive platform designed for modern engineering professionals.</p>
@@ -267,8 +268,8 @@ export default function HomePage() {
       </section>
 
       {/* 5. POPULAR INSTRUCTORS */}
-      <section className="bg-white py-24 px-4 sm:px-6 lg:px-8 border-t border-slate-100">
-        <div className="max-w-7xl mx-auto">
+      <section className="bg-white py-24 px-4 sm:px-6 lg:px-8 border-t border-slate-100 w-full">
+        <div className="max-w-7xl mx-auto w-full">
           <div className="flex justify-between items-end mb-12">
             <div>
               <p className="text-sm font-bold text-[#196A54] tracking-wider uppercase mb-2">Learn from the best</p>
@@ -281,9 +282,8 @@ export default function HomePage() {
             </Link>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
             {isLoadingInstructors ? (
-              // Loading skeleton
               [1, 2, 3, 4].map((i) => (
                 <div key={i} className="bg-white rounded-2xl border border-slate-200 p-6 text-center animate-pulse">
                   <div className="w-24 h-24 mx-auto rounded-full bg-slate-200 mb-4" />
@@ -295,7 +295,7 @@ export default function HomePage() {
               ))
             ) : popularInstructors.length > 0 ? (
               popularInstructors.map((instructor, i) => (
-                <div key={instructor.id} className="bg-white rounded-2xl border border-slate-200 p-6 text-center hover:shadow-xl transition-shadow group">
+                <div key={instructor.id} className="bg-white rounded-2xl border border-slate-200 p-6 text-center hover:shadow-xl transition-shadow group w-full overflow-hidden">
                   <div className="relative w-24 h-24 mx-auto rounded-full overflow-hidden mb-4 border-4 border-[#F4F9F7] animate-pulse bg-slate-200">
                     <Image
                       src={instructor.avatarUrl}
@@ -309,8 +309,8 @@ export default function HomePage() {
                       }}
                     />
                   </div>
-                  <h3 className="font-bold text-slate-900 text-lg">{instructor.fullName}</h3>
-                  <p className="text-sm text-slate-500 mb-4">{instructor.specialization}</p>
+                  <h3 className="font-bold text-slate-900 text-lg truncate">{instructor.fullName}</h3>
+                  <p className="text-sm text-slate-500 mb-4 truncate">{instructor.specialization}</p>
 
                   <div className="flex items-center justify-center gap-3 text-xs font-semibold text-slate-600 mb-6">
                     <span>{instructor.experienceYears}</span>
@@ -323,7 +323,6 @@ export default function HomePage() {
                     <span>{instructor.studentsCount}</span>
                   </div>
 
-                  {/* Updated to Link targeting the instructor profile */}
                   <Link
                     href={`/instructors/${instructor.slug}`}
                     className="block w-full text-center py-2.5 border-2 border-slate-200 rounded-lg text-sm font-bold text-slate-700 hover:border-[#196A54] hover:text-[#196A54] transition-colors"
@@ -340,7 +339,7 @@ export default function HomePage() {
       </section>
 
       {/* 6. TESTIMONIALS */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
+      <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full text-center">
         <p className="text-sm font-bold text-[#196A54] tracking-wider uppercase mb-2">Success Stories</p>
         <h2 className="text-4xl font-extrabold text-[#0A4A3A] mb-4">What Our Students Say</h2>
         <p className="text-slate-500 text-lg mb-16">Real results from engineers who advanced their careers</p>
@@ -379,8 +378,7 @@ export default function HomePage() {
       </section>
 
       {/* 7. CTA & LOGOS SECTION */}
-      {/* Removed the border-t-8 border-[#C2F25B] from the section container */}
-      <section className="bg-[#0A4A3A] relative overflow-hidden py-24">
+      <section className="bg-[#0A4A3A] relative overflow-hidden py-24 w-full">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#196A54]/40 via-transparent to-transparent"></div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
