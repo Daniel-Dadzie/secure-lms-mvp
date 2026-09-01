@@ -26,6 +26,12 @@ interface AuthState {
   clearAuth: () => void;
 
   setSession: (user: SafeUser) => void;
+
+  // NEW: Added to match the function your profile pages are trying to call
+  setUser: (user: SafeUser) => void;
+
+  // NEW: Safely merges single fields (like avatarUrl) into the existing user object
+  updateUser: (updatedFields: Partial<SafeUser>) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -144,5 +150,17 @@ export const useAuthStore = create<AuthState>((set) => ({
       isAuthenticated: true,
       isLoading: false,
     });
+  },
+
+  // NEW: Directly sets the user object, fixing the silent failure in StudentProfilePage
+  setUser: (user) => {
+    set({ user });
+  },
+
+  // NEW: Allows you to do useAuthStore.getState().updateUser({ avatarUrl: '...' })
+  updateUser: (updatedFields) => {
+    set((state) => ({
+      user: state.user ? { ...state.user, ...updatedFields } : null,
+    }));
   },
 }));
