@@ -200,7 +200,7 @@ export default function InstructorSettingsPage() {
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1">Experience (years)</label>
               <input
-                type="number"
+                type="text"
                 min={0}
                 value={profile.experienceYears ?? ""}
                 onChange={(e) => setProfile({ ...profile, experienceYears: e.target.value || null })}
